@@ -8,7 +8,10 @@
 
 Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. They can also be used separately as needed. They're separate skills to manage performance.
 
-## Recommended Workflow
+
+## 1. `seo-site-audit` — Site Audit & AEO Analysis
+
+### Recommended Workflow
 
 ```
 1. seo-competitor-keywords  →  Find what to target
@@ -16,8 +19,6 @@ Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` are meant to b
 3. seo-site-audit           →  Confirm it's optimized
 4. Publish → measure → repeat
 ```
-
-## 1. `seo-site-audit` — Site Audit & AEO Analysis
 
 **File:** `seo-site-audit/SKILL.md`
 
