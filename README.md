@@ -1,6 +1,7 @@
 # Claude Skills
 
-- This directory contains Claude skills that I've tested, iterated on, gotten value from. I'll aim to keep them updated as I refine performance.
+- This project contains Claude skills that I've tested, iterated on, and found valuable. I'll aim to keep them updated.
+- To use, download the individual SKILL.md files, then upload to your environment (eg Claude Web -> Settings -> Capabilities) 
 - Skills generally require Claude to have internet access via `web_fetch` and `web_search`
 - Output is saved as Markdown by default; Word (`.docx`) or spreadsheet formats available on request
 
