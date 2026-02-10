@@ -1,6 +1,6 @@
-# claude-skills
+# Claude Skills
 
-- This directory contains Claude skills that I've tested, iterated on, and used. I'll aim to keep them updated as I refine performance.
+- This directory contains Claude skills that I've tested, iterated on, gotten value from. I'll aim to keep them updated as I refine performance.
 - Skills generally require Claude to have internet access via `web_fetch` and `web_search`
 - Output is saved as Markdown by default; Word (`.docx`) or spreadsheet formats available on request
 
