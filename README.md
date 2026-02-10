@@ -5,7 +5,7 @@
 
 ---
 
-Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. They can also be used separately as needed. They're separate skills to manage performance.
+Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans included in a free Ahrefs account are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. 
 
 
 ## 1. `seo-site-audit` — Site Audit & AEO Analysis
@@ -13,6 +13,7 @@ Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` are meant to b
 ### Recommended Workflow
 
 ```
+0. Run technical SEO analysis using a free Ahrefs/Semrush account
 1. seo-competitor-keywords  →  Find what to target
 2. Create content
 3. seo-site-audit           →  Confirm it's optimized
