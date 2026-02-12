@@ -13,10 +13,10 @@ Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans 
 ### Recommended Workflow
 
 ```
-0. Run technical SEO analysis using a free Ahrefs/Semrush account
-1. seo-competitor-keywords  →  Find what to target
+0. Scan your site with a free Ahrefs account → scans ALL your pages for technical SEO 
+1. seo-competitor-keywords  →  Find what keywords to target
 2. Create content
-3. seo-site-audit           →  Confirm it's optimized
+3. seo-site-audit           →  Looks at specific pages for technical SEO, content SEO, and AEO
 4. Publish → measure → repeat
 ```
 
