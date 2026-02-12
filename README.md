@@ -5,7 +5,7 @@
 
 ---
 
-Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans included in a free Ahrefs account are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. 
+Note: Use 1. `seo-competitor-keywords` and 2. `seo-site-audit` and the scans included in a free Ahrefs account to create a complete beginner-level, baseline SEO/AEO audit and strategy. 
 
 ### Recommended Workflow
 
@@ -17,36 +17,9 @@ Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans 
 4. Publish → measure → repeat
 ```
 
-
-## 1. `seo-site-audit` — Site Audit & AEO Analysis
-
-
-**File:** `seo-site-audit/SKILL.md`
-
-### Goal
-Crawls a target website and produces a prioritized audit covering technical SEO, content quality, and Answer Engine Optimization (AEO) — the emerging practice of optimizing for AI-generated search results (ChatGPT, Perplexity, Google AI Overviews).
-
-### Input
-- A list of your site's URLs, or provide base URL(s) and ask the agent to crawl a small sample of the linked pages. 
-*Be mindful of your account level's context window, and don't crawl your entire site!*
-
-### What it analyzes
-- **Technical SEO** — title tags, meta descriptions, heading structure, internal linking, schema markup, image alt text
-- **Content quality** — depth, freshness, E-E-A-T signals, readability
-- **AEO** — FAQ/HowTo schema, author credentials, direct-answer formatting, citability signals
-
-### Output
-A structured report with a scored summary (0–100), findings grouped by severity (🔴 High / 🟡 Medium / 🟢 Low), and a phased action plan with implementation examples.
-
-### When to use it
-- Before launching or relaunching a site
-- To diagnose a traffic drop
-- To audit a competitor's on-page optimization
-- After publishing new content to validate SEO hygiene
-
 ---
 
-## 2. `seo-competitor-keywords` — Competitor Analysis & Keyword Research
+## 1. `seo-competitor-keywords` — Competitor Analysis & Keyword Research
 
 **File:** `seo-competitor-keywords/SKILL.md`
 
@@ -83,3 +56,31 @@ A strategy document containing a competitor summary, keyword tiers (Quick Wins /
 
 ---
 
+
+## 2. `seo-site-audit` — Site Audit & AEO Analysis
+
+
+**File:** `seo-site-audit/SKILL.md`
+
+### Goal
+Crawls a target website and produces a prioritized audit covering technical SEO, content quality, and Answer Engine Optimization (AEO) — the emerging practice of optimizing for AI-generated search results (ChatGPT, Perplexity, Google AI Overviews).
+
+### Input
+- A list of your site's URLs, or provide base URL(s) and ask the agent to crawl a small sample of the linked pages. 
+*Be mindful of your account level's context window, and don't crawl your entire site!*
+
+### What it analyzes
+- **Technical SEO** — title tags, meta descriptions, heading structure, internal linking, schema markup, image alt text
+- **Content quality** — depth, freshness, E-E-A-T signals, readability
+- **AEO** — FAQ/HowTo schema, author credentials, direct-answer formatting, citability signals
+
+### Output
+A structured report with a scored summary (0–100), findings grouped by severity (🔴 High / 🟡 Medium / 🟢 Low), and a phased action plan with implementation examples.
+
+### When to use it
+- Before launching or relaunching a site
+- To diagnose a traffic drop
+- To audit a competitor's on-page optimization
+- After publishing new content to validate SEO hygiene
+
+---
