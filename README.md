@@ -7,9 +7,6 @@
 
 Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans included in a free Ahrefs account are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. 
 
-
-## 1. `seo-site-audit` — Site Audit & AEO Analysis
-
 ### Recommended Workflow
 
 ```
@@ -19,6 +16,10 @@ Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` and the scans 
 3. seo-site-audit           →  Looks at specific pages for technical SEO, content SEO, and AEO
 4. Publish → measure → repeat
 ```
+
+
+## 1. `seo-site-audit` — Site Audit & AEO Analysis
+
 
 **File:** `seo-site-audit/SKILL.md`
 
