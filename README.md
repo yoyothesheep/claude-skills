@@ -1,7 +1,7 @@
 # Claude Skills
 
 - This project contains Claude skills that I've tested, iterated on, and found valuable. I'll aim to keep them updated.
-- To use, download the individual SKILL.md files, then upload to your environment (eg Claude Web -> Settings -> Capabilities) 
+- To use, download the individual SKILL.md files, then upload to your environment (eg Claude Web -> Settings -> Capabilities -> Skills -> Add (upload), then call it in a chat!) 
 
 ---
 
