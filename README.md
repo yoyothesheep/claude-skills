@@ -1,7 +1,8 @@
 # Claude Skills
 
 - This project contains Claude skills that I've tested, iterated on, and found valuable. I'll aim to keep them updated.
-- To use, download the individual SKILL.md files, then upload to your environment (eg Claude Web -> Settings -> Capabilities -> Skills -> Add (upload), then call it in a chat!) 
+- To use, download the individual SKILL.md files, then upload to your environment (eg Claude Web -> Settings -> Capabilities -> Skills -> Add (upload), then call it in a chat!)
+- If using Claude Web, make sure you turn on "Network Egress" in settings, then add *.yourdomain.com to the allow list. This allows the Claude agent to check the Schema markup, and not just HTML
 
 ---
 
