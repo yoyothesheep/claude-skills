@@ -512,23 +512,19 @@ For each issue, include:
 Create a well-structured document (markdown or docx) with:
 
 ### Executive Summary
-- **Tone:** Analytical and data-driven. Avoid promotional language.
+- **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed tone guidelines)
 - Total pages analyzed (target + crawled)
 - Overall SEO health score (based on issues found) - state as metric, not value judgment
 - Top 3-5 critical issues to fix first - order by measurable impact and effort
 - Estimated improvement potential - use conservative projections with data sources
-- **Example opening (BAD):** "This site has great potential with some critical fixes"
-- **Example opening (GOOD):** "Based on analysis of X pages, the site has a health score of 38/100. The top 3 issues affecting 100% of pages are..."
 
 ### Detailed Findings
 
-**Writing style guidelines for all findings sections:**
-- State issues factually without editorial language: "No H1 tags found on 12 pages" (not "Critical: This site desperately needs H1 tags")
-- Explain *mechanism* of impact, not opinion: "H1 tags signal page topics to crawlers; their absence reduces topical relevance scoring by ~15-20%"
-- Avoid subjective emphasis: Never use "major," "significant," "powerful," "devastating," "critical" without quantified impact data
-- Use metrics to convey severity (affected % of pages, measured impact on scores), not emotional language
-- Quantify specificity: "7 of 10 pages missing X" is stronger than "most pages lack X"
-- For example fixes, be specific about expected outcomes: "Adding H1 tags typically improves topic clarity for ~30% of queries" (with data source)
+**Writing style guidelines for all findings sections:** See [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed style guidelines. Key principles:
+- State issues factually without editorial language
+- Explain mechanism of impact, not opinion
+- Use metrics to convey severity, not emotional language
+- Quantify specificity: "7 of 10 pages" not "most pages"
 
 #### Technical SEO Issues
 For each category (Meta Tags, Headings, Links, Images, etc.):
@@ -552,12 +548,11 @@ For each category (Meta Tags, Headings, Links, Images, etc.):
 
 ### Prioritized Recommendations
 
-**Writing style for recommendations:**
-- Use neutral language: "Add H1 tags to 12 pages" not "Critical: You must add H1 tags!"
-- Quantify impact with data: "Estimated impact: +15-20% improvement in topic clarity score" (with reasoning)
-- Avoid vague benefits: Don't say "better SEO" without specifics
-- Example BAD: "This will dramatically improve your organic traffic"
-- Example GOOD: "Adding H1 tags improves topic relevance scoring by ~15%; based on current ranking position, this could increase click-through by 2-5% on 40 target keywords"
+**Writing style for recommendations:** See [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed style guidelines. Key principles:
+- Use neutral language without dramatic framing
+- Quantify impact with specific data
+- Avoid vague benefits (no "better SEO" without specifics)
+- Explain mechanisms and provide realistic effort estimates
 
 A single ranked list of all issues and improvements, ordered by impact and effort. Each item includes:
 - Issue description and affected pages (with counts)
@@ -628,20 +623,14 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 - Don't make assumptions about backend or server-side issues
 
 ### User Communication
-- **Tone:** Use neutral, analytical language. Avoid promotional or enthusiastic framing. Focus on data and metrics rather than subjective praise.
-- **Avoid:** Hyperbolic descriptors ("genuinely," "significant," "powerful"), exclamation points, marketing language ("the good news is," "massive opportunity"), unsubstantiated adjectives
-- **Prefer:** Factual statements, measurable metrics, quantified impact, neutral comparisons
-- Examples of poor tone vs good tone:
-  - ❌ "This is a critical asset that will transform the site"
-  - ✅ "This baseline metric improves from 10 to 15 points, a 50% gain"
-  - ❌ "The good news is the site has great content"
-  - ✅ "The site has 520 words of crawlable content on the /about page"
-  - ❌ "genuinely differentiated product"
-  - ✅ "free platform with no course sales, unlike direct competitors"
+**Refer to [TONE-GUIDE.md](./TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
+
+Key principles:
+- Use neutral, analytical language
+- Focus on data and metrics rather than subjective praise
+- Avoid promotional or enthusiastic framing
 - Explain SEO and AEO terms in plain language
 - Provide context for why each issue matters with data
-- Give specific examples of good vs bad implementations
-- Present issues objectively without editorial emphasis
 
 ### Scope Management
 - If user wants to analyze >20 target pages, suggest breaking into batches
