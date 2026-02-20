@@ -1,5 +1,5 @@
 ---
-name: seo-competitor-keywords
+name: core-seo-keyword-research
 description: Analyze competitor websites to identify their SEO strategies, content gaps, and generate prioritized target keywords with ranking potential. Use when users want to understand competitor SEO tactics, find keyword opportunities, identify content gaps, or build a keyword strategy based on competitive intelligence.
 ---
 
@@ -989,7 +989,48 @@ Group keywords into tiers:
 - Unique angles no one is taking
 - Emerging trends competitors haven't covered yet
 
-## Step 9: Generate Strategy Document
+## Step 9: Information Architecture Recommendations
+
+Based on competitor content patterns, keyword clustering analysis, and content gaps, surface information architecture (IA) recommendations. These are structural/navigation improvements to how the user's site should be organized.
+
+### Navigation Structure
+- Which keyword clusters should be top-level navigation items?
+- Are competitors surfacing certain topics in main nav that the user has buried?
+- What topics are overshadowed by less-important content in the user's current hierarchy?
+- **Recommendation**: Suggest elevating high-opportunity keyword clusters to main navigation based on search volume and user demand
+
+### URL Architecture
+- Do competitors use clean, topic-based URL structures (e.g., `/guides/email-marketing/`)?
+- Are the user's URLs descriptive and hierarchical, or parameter-heavy?
+- Does the user's URL structure align with their keyword clusters?
+- **Recommendation**: Suggest URL restructuring if competitors are clearly winning with semantic URL patterns
+
+### Topic Cluster Hub Pages
+- Based on keyword clustering (from Step 8 grouping), what hub pages are missing?
+- Are there strong clusters of 5-10 related keywords that should be unified under a hub/pillar page?
+- Are any clusters orphaned (spoke content without a hub)?
+- **Recommendation**: Identify 2-4 new hub pages to create and map which content should link to them
+
+### Internal Linking Gaps
+- Within each keyword cluster, which pages should link to each other but currently don't?
+- Are there natural topic relationships competitors are leveraging that the user hasn't connected?
+- **Recommendation**: Suggest internal linking patterns that would improve both UX and SEO (e.g., "all [Tier 1 keywords] should link to [hub page]")
+
+### Content Silos
+- Would grouping content into topical silos improve both rankings and user navigation?
+- Which silos make sense for the user's keyword clusters?
+- **Recommendation**: Suggest 2-3 silos to implement (e.g., "Beginner Guides" silo, "Comparisons" silo, "Advanced Strategies" silo)
+
+### Output: Information Architecture Recommendations
+Include a short section in the report (3-5 items max) titled "**Information Architecture Recommendations**" that lists:
+- 1-2 navigation structure changes (e.g., "Elevate 'Email Automation' to main nav; rank-driving cluster with 15+ keywords")
+- 1 hub page recommendation (e.g., "Create hub page for '[Topic]' cluster with 12 related keywords")
+- 1-2 internal linking improvements (e.g., "Link all 'Best Tool' articles to main '[Tool Category]' comparison page")
+- 1 silo structure recommendation (e.g., "Create 'Beginner Guides' silo for Tier 1 quick-win keywords")
+
+---
+
+## Step 10: Generate Strategy Document
 
 Create comprehensive keyword strategy report:
 
@@ -1060,6 +1101,24 @@ For each keyword:
 - Estimated traffic value @ $2/visit: $[Number]/month
 - Content investment: [Number of articles] × $[Cost per article]
 - **Estimated ROI:** [X]% in 6 months
+
+### Information Architecture Recommendations
+
+**Navigation Structure:**
+- Top-level nav changes (e.g., "Elevate '[Topic Cluster]' to main nav based on 15+ ranking keywords")
+- Buried topics that should be surfaced (e.g., "Move '[Topic]' from deep in site hierarchy to secondary nav")
+
+**Hub & Spoke Pages:**
+- New hub pages recommended (e.g., "Create hub page for '[Cluster Name]' to link 12 related spoke pages")
+- Clusters lacking a hub that need one
+
+**Internal Linking Strategy:**
+- Links to establish between keyword-related pages (e.g., "All '[Type A]' pages should link to '[Hub]' page")
+- Topic clusters that need internal linking reinforcement
+
+**Content Silos:**
+- Recommended silos based on keyword clustering (e.g., "Create 'Beginner Guides' silo for Tier 1 keywords")
+- Pages that should be reorganized into silos
 
 ### Content Gap Analysis
 
@@ -1329,13 +1388,13 @@ A successful analysis includes:
 These skills work together:
 
 **Workflow:**
-1. Use **seo-competitor-keywords** to identify opportunities
+1. Use **core-seo-keyword-research** to identify opportunities
 2. Create content targeting those keywords
-3. Use **seo-site-audit** to ensure content is optimized
+3. Use **core-aeo-seo-site-audit** to ensure content is optimized
 4. Repeat and iterate
 
 **Cross-references:**
 - Site audit identifies current keyword targeting
-- Competitor analysis identifies new opportunities
+- Keyword research identifies new opportunities
 - Both assess content quality and structure
 - Both provide prioritized action plans

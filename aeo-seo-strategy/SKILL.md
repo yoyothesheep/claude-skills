@@ -1,21 +1,19 @@
 ---
-name: full-seo-aeo-strategy
-description: Run a complete SEO/AEO strategy audit by orchestrating all three core skills, synthesizing findings into one unified roadmap, and analyzing site functionality for technical and UX improvements. Use when you need a comprehensive, executive-ready strategy that covers content strategy, competitive positioning, on-page optimization, and site functionality in a single report.
+name: aeo-seo-strategy
+description: Run a complete SEO/AEO strategy audit by orchestrating all three core skills, and synthesizing findings into one unified set of recommendations. 
 ---
 
 # Full SEO/AEO Strategy Skill
 
-This skill is the comprehensive, all-in-one SEO/AEO and product strategy audit. It orchestrates the three core skills (`core-aeo-topic-research`, `core-seo-competitor-keywords`, and `core-aeo-seo-site-audit`), synthesizes their findings into a unified strategic roadmap, and goes beyond content by analyzing site functionality and recommending structural/UX improvements.
+This skill is the all-in-one SEO/AEO and product strategy audit. It orchestrates the three core skills (`core-aeo-topic-research`, `core-seo-keyword-research`, and `core-aeo-seo-site-audit`), each of which includes domain-specific recommendations, then synthesizes all findings into a unified list.
 
 ## When to Use This Skill
 
 Trigger this skill when the user:
 - Asks for a "complete SEO/AEO strategy"
-- Wants a "full audit with roadmap and recommendations"
+- Wants a "full audit with recommendations"
 - Needs a "comprehensive SEO strategy" that covers everything
 - Requests "SEO strategy including site improvements"
-- Wants to "overhaul our SEO and improve our website"
-- Needs an "executive-ready strategic report" for stakeholders
 - Asks for "SEO + product/UX recommendations in one strategy"
 - Says "audit my site and competitors, then tell me what to do"
 
@@ -23,60 +21,10 @@ Trigger this skill when the user:
 
 ## Core Workflow
 
-1. **Gather Comprehensive Input**
-   - Target brand/domain
-   - 2–5 competitor domains
-   - Current website URLs to audit
-   - Market/niche information
-   - Target AI engines (optional)
-   - Current site/app pain points or goals (optional)
-   - Ahrefs account credentials (optional, but recommended)
-
-2. **Run core-aeo-topic-research**
-   - Discover what topics AI engines are answering in the niche
-   - Mine cited domains and pages
-   - Identify content gaps and opportunities
-   - Generate topic priorities
-
-3. **Run core-seo-competitor-keywords**
-   - Analyze competitor SEO strategies
-   - Identify keyword gaps and opportunities
-   - Rank keywords by difficulty, volume, and potential
-   - Surface quick-win and strategic opportunities
-
-4. **Run core-aeo-seo-site-audit**
-   - Crawl target website pages
-   - Analyze technical SEO, content quality, and AEO optimization
-   - Identify on-page issues and improvement opportunities
-   - Score current optimization level
-
-5. **Analyze Site Functionality & UX**
-   - Review site architecture and navigation
-   - Identify conversion funnel bottlenecks
-   - Assess mobile responsiveness and usability
-   - Evaluate technical performance (speed, accessibility, core web vitals)
-   - Identify feature gaps or friction points related to user journey
-   - Recommend product/feature changes that support SEO and conversion
-
-6. **Synthesize into Unified Strategy**
-   - Create integrated, cross-functional prioritized recommendations list
-   - Rank recommendations by impact and effort
-   - Show relationships between content, SEO, AEO, and product improvements
-
-7. **Generate Executive Report**
-   - Strategic overview and key metrics
-   - Prioritized recommendations list (unified, ranked across all categories)
-   - Detailed findings grouped by category
-
-## Key Differentiator
-
-**Functionality Analysis:** Goes beyond on-page SEO to recommend:
-- Site architecture changes (e.g., better internal linking structure, new pillar pages)
-- Feature additions (e.g., tools, calculators, filters that improve user experience and AEO citations)
-- Technical infrastructure (e.g., pagination, canonicalization, structured data automation)
-- Conversion funnel improvements (how SEO/AEO strategy ties to business outcomes)
-- Mobile and accessibility enhancements
-- Content delivery mechanisms (e.g., interactive tools, API-driven content)
+1. Run `core-aeo-topic-research` → identify AI-driven content opportunities (includes Content Presentation Recommendations)
+2. Run `core-seo-keyword-research` → surface keyword gaps and quick wins (includes Information Architecture Recommendations)
+3. Run `core-aeo-seo-site-audit` → assess technical SEO, content, and AEO optimization (includes Technical UX Recommendations)
+4. Synthesize all findings into one unified, ranked strategy report
 
 ## Inputs
 
@@ -100,7 +48,6 @@ Trigger this skill when the user:
 - Current state assessment
 - Key opportunities and gaps
 - Strategic priorities and expected impact
-- Resource and timeline estimates
 
 ### 2. Prioritized Recommendations
 
@@ -129,13 +76,22 @@ A single unified list of recommendations ranked by impact and effort, drawing fr
 - Current AEO optimization level
 - On-page quick fixes vs. strategic improvements
 
-#### Functionality & UX Recommendations
-- Site architecture improvements
-- Feature recommendations (with business case)
-- Technical infrastructure changes
-- Performance and mobile optimizations
-- Conversion funnel recommendations
-- Estimated effort and impact for each recommendation
+#### Functionality & UX Recommendations (Synthesized)
+Unified recommendations synthesized from all three core skills:
+
+**From Topic Research:**
+- Content presentation improvements (format, navigation, multimedia, scannability)
+
+**From Keyword Research:**
+- Information architecture changes (navigation structure, hub pages, internal linking, silos)
+
+**From Site Audit:**
+- Technical UX improvements (page load, mobile optimization, navigation UX, CTAs, accessibility)
+
+Each recommendation includes:
+- Specific change with affected pages/sections
+- Why it matters (impact on users or rankings)
+- Estimated effort and impact
 
 ### 4. Implementation Details
 - Content brief templates
@@ -146,29 +102,3 @@ A single unified list of recommendations ranked by impact and effort, drawing fr
 ## User Communication
 
 **Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
-
-Key principles for strategy output:
-- Present strategic analysis as objective assessment backed by data
-- Use quantified metrics for all impact claims ("Expected +15-20% CTR improvement" not "huge improvement")
-- Explain mechanisms of competitive advantage with data (citation counts, ranking positions, search volume)
-- Neutral language: "Competitors rank for 250 keywords we don't" not "huge opportunity gap"
-- All recommendations must include effort estimates and measurable outcomes
-
----
-
-## Common Questions
-
-**Q: Do I need Ahrefs for this skill?**
-A: No, but it's strongly recommended. Without Ahrefs, keyword volume and difficulty are estimates. With Ahrefs, you get exact data and more accurate prioritization. Optional, but highly valuable.
-
-**Q: How long does this take to run?**
-A: Typically 45–90 minutes depending on site size, number of competitors, and Ahrefs availability. Plan for a full async session with this skill.
-
-**Q: Will this give me a content plan?**
-A: Yes. The prioritized recommendations list includes content creation priorities synthesized from all three skills' findings.
-
-**Q: Can this recommend specific product features?**
-A: Yes, and it will. The skill evaluates how competitors use features (tools, calculators, comparisons, filters, etc.) to win rankings and citations, then recommends which features would most improve your competitive position.
-
-**Q: What if recommendations conflict?**
-A: The skill resolves conflicts by prioritizing business impact and ease of implementation. For example, if content strategy says "write a comparison guide" but your site lacks filtering UI, the roadmap will sequence: build filter feature → write comparison guide.

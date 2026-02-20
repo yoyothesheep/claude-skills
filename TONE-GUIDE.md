@@ -30,7 +30,7 @@ This guide establishes the communication style for all skill outputs and user-fa
 > "Based on analysis of 12 pages, the site has a health score of 38/100. The top 3 issues affecting 100% of pages are missing H1 tags, client-side rendering, and undersized title tags."
 
 ❌ **POOR** (Vague):
-> "altPath is a genuinely differentiated product that is almost completely invisible to search engines"
+> "This is a genuinely differentiated product that is almost completely invisible to search engines"
 
 ✅ **GOOD** (Specific):
 > "The site exhibits significant technical limitations that reduce visibility to both search engines and AI systems. An estimated 99% of site content is invisible to crawlers due to client-side rendering."
@@ -124,49 +124,6 @@ Expected Outcome
 
 ✅ **GOOD** (With data):
 > "Adding H1 tags improves topic relevance scoring by ~15%; based on current ranking position, this could increase click-through by 2-5% on 40 target keywords. Effort: 2-4 hours."
-
----
-
-## User Communication Guidelines
-
-**Overall tone:**
-- Neutral and analytical (not enthusiastic or promotional)
-- Focus on **data and metrics** rather than subjective praise
-- **Explain why** each issue matters (mechanism, not opinion)
-- Provide **context** for recommendations
-- Be **specific** with examples
-
-**Avoid:**
-- Hyperbolic descriptors: "genuinely," "significant," "powerful," "devastating," "critical"
-- Exclamation points
-- Marketing language: "good news," "opportunity," "potential," "untapped"
-- Unsubstantiated adjectives: "great," "wonderful," "excellent"
-- Emotional framing: "This will transform," "This is devastating," "This changes everything"
-
-**Prefer:**
-- Factual statements
-- Measurable metrics
-- Quantified impact
-- Neutral comparisons
-- Mechanism explanations
-- Data sources and citations
-
-**Term explanations:**
-- Always explain technical terms in plain language
-- Don't assume user knows specialized jargon
-- Provide examples of good vs bad implementations
-- Present issues objectively without editorial emphasis
-
-**Examples of Tone Shifts:**
-
-| What You Might Say | What to Say Instead |
-|---|---|
-| "altPath is a genuinely differentiated product" | "Free platform with no course sales, unlike direct competitors" |
-| "This represents a significant competitive asset" | "Schema is valid and complete; provides foundation for AI extraction" |
-| "All recommendations have been updated to reflect this corrected baseline" | "Baseline metric updated: FAQ schema adds 10 points to AEO score" |
-| "This is the root cause of altPath's invisibility" | "This is the root cause of low organic visibility. [Followed by specific metrics]" |
-| "Wrapped in a technically invisible package" | "99%+ of site content is invisible to crawlers due to client-side rendering" |
-| "Significantly improves the starting AEO position" | "Updated AEO score baseline from 15/50 (30%) to 25/50 (50%)" |
 
 ---
 

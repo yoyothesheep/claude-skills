@@ -2,6 +2,17 @@
 
 SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
 
+## Table of Contents
+
+- [Setup](#setup)
+- [Quick Start](#quick-start)
+- [0. aeo-seo-strategy](#0-aeo-seo-strategy--complete-seoaeo-strategy--roadmap-orchestrator)
+- [1. core-aeo-topic-research](#1-core-aeo-topic-research--aeo-topic-research--opportunities)
+- [2. core-seo-keyword-research](#2-core-seo-keyword-research--competitor-analysis--keyword-research)
+- [3. core-aeo-seo-site-audit](#3-core-aeo-seo-site-audit--site-audit--aeo-optimization)
+
+---
+
 ## Setup
 
 ### 1. Load a skill
@@ -33,11 +44,39 @@ Skills use `web_fetch` and `web_search` to fetch and analyze web pages.
 
 ### 3. Connect Ahrefs MCP (optional)
 
-- A paid Ahrefs account gives you access to real keyword data in `core-seo-competitor-keywords`. 
+- A paid Ahrefs account gives you access to real keyword data in `core-seo-keyword-research`. 
 - A paid or free account gives you access to AI engine visibility in `aeo-seo-strategy`. 
 - Without either, those skills use web-scraped estimates instead of actual search volumes, difficulty scores, and competitor traffic.
 
 Connect and authenticate via the Ahrefs MCP server in your Claude Code or Web settings.
+
+---
+
+### 4. Grant tool access to subagents (Claude Code only)
+
+When Claude Code runs skills as background agents (e.g., using the Task tool to parallelize research), subagents cannot prompt you interactively for tool approval. Tools not in your `permissions.allow` list will be auto-denied, causing the agent to fail silently.
+
+To grant subagents automatic access to the tools these skills need, add the following to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "WebFetch",
+      "WebSearch",
+      "Bash",
+      "Write",
+      "Read",
+      "Edit",
+      "Glob",
+      "Grep",
+      "mcp__claude_ai_AHREFs__*"
+    ]
+  }
+}
+```
+
+Without this, subagents running `core-aeo-topic-research`, `core-seo-keyword-research`, or `core-aeo-seo-site-audit` will be unable to fetch pages, run shell commands, write output files, or call Ahrefs tools.
 
 ---
 
@@ -60,17 +99,12 @@ Claude Web can run these skills, but with reduced capability when running `core-
 ## Quick Start
 
 ### Want Everything in One Report?
-Use **`aeo-seo-strategy`** for a unified audit that runs all three core skills, synthesizes recommendations into one list, and includes site/product improvements alongside content strategy.
+Use **`aeo-seo-strategy`** for a unified audit that runs all three core skills, then synthesizes recommendations into one list.
 
-```
-aeo-seo-strategy  →  Complete strategy with research, competitive analysis, 
-                      site audit, and product recommendations in one report
-```
-
-Or, run each core skill separately. Then publish → measure → iterate .
+Or, run each core skill separately. 
 ```
 * core-aeo-topic-research           →  Discover what topics to target for AEO
-* core-seo-competitor-keywords      →  Find competitive keywords and content gaps
+* core-seo-keyword-research      →  Find competitive keywords and content gaps
 * core-aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
 ```
 
@@ -81,7 +115,7 @@ Or, run each core skill separately. Then publish → measure → iterate .
 **File:** `aeo-seo-strategy/SKILL.md`
 
 ### Goal
-An all-in-one strategy. This orchestrates all three core skills (`core-aeo-topic-research`, `core-seo-competitor-keywords`, `core-aeo-seo-site-audit`), analyzes your site's functionality, then synthesizes structural/UX improvements alongside content recommendations.
+An all-in-one strategy. This orchestrates all three core skills (`core-aeo-topic-research`, `core-seo-keyword-research`, `core-aeo-seo-site-audit`), then synthesizes recommendations.
 
 ### Input
 - Your domain (i.e. your homepage URL)
@@ -90,13 +124,6 @@ An all-in-one strategy. This orchestrates all three core skills (`core-aeo-topic
 - [Optional] Ahrefs account for real keyword data
 - [Optional] Market/niche and business goals
 - [Optional] Current site pain points or goals
-
-### What it synthesizes
-- **Topic research** — what AI engines are answering, what's being cited
-- **Competitive analysis** — keyword gaps, ranking opportunities, quick wins
-- **Site audit** — technical SEO, content quality, current AEO level
-- **Functionality analysis** — site architecture, feature gaps, UX friction points
-- **Unified strategy** — integrated list of prioritized recommendations
 
 ### Output
 A strategic report with:
@@ -131,9 +158,9 @@ A prioritized content opportunity brief with topics ranked by citation potential
 
 ---
 
-## 2. `core-seo-competitor-keywords` — Competitor Analysis & Keyword Research
+## 2. `core-seo-keyword-research` — Competitor Analysis & Keyword Research
 
-**File:** `core-seo-competitor-keywords/SKILL.md`
+**File:** `core-seo-keyword-research/SKILL.md`
 
 ### Goal
 Analyzes competitor websites to reverse-engineer their SEO strategies, identifies content gaps and keyword opportunities, and produces a prioritized list of target keywords with ranking and traffic potential.

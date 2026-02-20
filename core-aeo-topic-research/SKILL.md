@@ -1,11 +1,11 @@
 ---
-name: aeo-topic-research
+name: core-aeo-topic-research
 description: Research AEO (Answer Engine Optimization) opportunities by discovering what questions AI engines are actually answering in your niche, which domains and pages they're citing, and what content formats are winning citations. 
 ---
 
 # AEO Topic Research Skill
 
-This skill identifies *what to create* for AEO — not how to fix existing pages. It answers the question: "Which topics and content formats give me the best chance of being cited by AI engines in my niche?"
+This skill identifies what to create for AEO, and how to present it. 
 
 It uses the **Ahrefs Brand Radar** tools to pull real data: what AI engines are being asked, who they're citing, and what pages are winning citations. Then it synthesizes that into a prioritized content opportunity list.
 
@@ -194,7 +194,7 @@ cited_pages = AHREFs.brand_radar_cited_pages(
 2. High `volume` (cited on high-demand queries = more impact)
 3. Pages from domains with low domain rating (= easier to compete with)
 
-Collect the top 15-20 cited URLs for crawling in Step 5.
+Collect the top 15-20 cited URLs for crawling in Step 6.
 
 ---
 
@@ -309,11 +309,56 @@ Rank content opportunities using a simple scoring model:
 - 🟡 **Plan Soon** (Score 4-6): Good opportunities that need more effort or planning
 - 🟢 **Monitor** (Score 1-3): Lower priority — watch to see if competition weakens
 
-For each high-priority opportunity, write a brief content brief (see Step 8).
+For each high-priority opportunity, write a brief content brief (see Step 10).
 
 ---
 
-## Step 9: Generate Report
+## Step 9: Content Presentation Recommendations
+
+Based on the winning content formula and patterns identified in Step 6, surface content presentation and structure recommendations for the user's site. These are UX-focused improvements to how content should be delivered.
+
+### Content Navigation
+- Do top-cited pages include a table of contents for longer content?
+- Are there jump links (#anchor links) to sections?
+- Is sticky navigation used for quick access to key sections?
+- **Recommendation**: Suggest adding these navigation aids if they appear in winning content but not in the user's existing content
+
+### Content Format & Structure
+- What format do winning pages use? (Expandable FAQs, collapsible sections, tabs, inline definitions, accordion-style Q&A)
+- Are these formats more scannable or engaging than what the user currently has?
+- **Recommendation**: Suggest adopting formats that appear frequently in cited content if they improve scannability
+
+### Visual Hierarchy Signals
+- Do cited pages use callout boxes, highlighted statistics, summary cards, or "key takeaways" boxes?
+- Are there visual breaks (rules, spacing) that improve readability?
+- **Recommendation**: Note if the user's content lacks visual breaks compared to competitors
+
+### Multimedia Integration
+- Do top-cited pages use video, diagrams, infographics, screenshots, or interactive elements?
+- Where are these elements positioned (near key concepts, at the beginning, scattered)?
+- **Recommendation**: Suggest adding multimedia to specific sections of planned content to match citation-winning pages
+
+### Scannability Patterns
+- Are short paragraphs more common than long blocks of text in cited pages?
+- Do cited pages use bold key phrases, pull-quotes, or highlighted stats?
+- **Recommendation**: Suggest adopting these patterns if planning long-form content
+
+### Output: Content Presentation Recommendations
+Include a short section in the report (3-5 bullet points max) titled "**Content Presentation Recommendations**" that lists:
+- 1-2 navigation improvements (TOC, jump links, etc.)
+- 1-2 format/structure improvements (accordions, callout boxes, etc.)
+- 1 multimedia gap to address
+- 1 scannability improvement
+
+Example:
+- "Add table of contents with jump links to all 'How to X' guides based on winning formats"
+- "Use collapsible FAQ sections for Q&A content instead of inline paragraphs (matches cited pages)"
+- "Include 1-2 comparison tables per guide (100% of cited competitors use these)"
+- "Use short paragraphs (2-4 sentences max) and bold key terms (matches 8 of 10 top-cited pages)"
+
+---
+
+## Step 10: Generate Report
 
 Create a structured report with:
 
@@ -344,6 +389,15 @@ Create a structured report with:
 - The 2-3 dominant content formats getting cited in your niche
 - Structural patterns (H1 style, FAQ presence, schema, author bios, etc.)
 - Average depth and length of cited content
+
+### Content Presentation Recommendations
+
+A short list (3-5 items) of structural and format recommendations based on Step 9 analysis. Example items:
+- "Add table of contents with jump links to long-form guides"
+- "Use collapsible FAQ sections instead of inline Q&A paragraphs"
+- "Include comparison tables in competitive analysis content"
+- "Implement short-paragraph formatting with bolded key terms"
+- "Add 1-2 diagrams or infographics per technical guide"
 
 ### Prioritized Recommendations
 
@@ -379,12 +433,6 @@ Optional additions if user requests:
 
 **Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
 
-Key principles for research output:
-- Present findings as objective data analysis, not marketing pitches
-- Quantify citation opportunities with specific metrics ("8-15 citations" not "significant opportunity")
-- Explain why each topic matters with data (search volume, citation frequency, competition level)
-- Use neutral language: "Competitors are being cited 5-10 times" not "huge opportunity"
-
 ---
 
 ## Important Notes
@@ -408,11 +456,9 @@ If Brand Radar tools are unavailable, fall back to:
 
 This skill is the **research phase** in a three-part workflow:
 
-1. **`aeo-topic-research`** (this skill) → Discover what topics to create
-2. **`seo-aeo-site-audit`** → Audit existing content for AEO compliance
-3. **`seo-competitor-keywords`** → Validate topics against traditional SEO demand
-
-For maximum impact, run this skill first, then use `seo-aeo-site-audit` to optimize the pages you create based on this research.
+1. **`core-aeo-topic-research`** (this skill) → Discover what topics to create
+2. **`core-aeo-seo-site-audit`** → Audit existing content for AEO compliance
+3. **`core-seo-keyword-research`** → Validate topics against traditional SEO demand
 
 ### Communicating Results
 

@@ -1,37 +1,44 @@
 ---
-name: seo-aeo-site-audit
-description: Crawl a set of webpages and their internal links, analyze technical SEO, content quality, and AEO (Answer Engine Optimization), then generate prioritized recommendations. Use when users want to audit their website for SEO issues, optimize for AI search engines (ChatGPT, Perplexity, Google AI Overviews), identify optimization opportunities, or get actionable advice to improve search rankings.
+name: core-aeo-seo-site-audit
+description: Analyze webpages for content quality, schema markup completeness, and AEO (Answer Engine Optimization). Designed to complement Ahrefs Site Audit findings.
 ---
 
-# SEO AEO Site Audit Skill
+# AEO & Content Analysis Skill (Ahrefs Complement)
 
-This skill performs comprehensive on-page SEO and AEO analysis by crawling specified pages and selected internal links, then generating prioritized, actionable recommendations for both traditional search engines and AI-powered answer engines. 
+This skill analyzes content quality, JSON-LD schema validation, and AEO (Answer Engine Optimization) for pages you specify. It complements Ahrefs Site Audit (which handles technical SEO) by focusing on aspects that require content analysis and AI-readiness assessment.
 
-Note this is an on-page analysis only (not backlinks, domain authority, off-page factors).
+**Use this skill when Ahrefs Site Audit cannot:**
+- Validate JSON-LD schema completeness and correctness
+- Assess content quality and depth
+- Evaluate how well pages answer user questions directly
+- Identify authority/expertise signals
+- Recommend AI-friendly content restructuring
+- Assess natural language optimization
+- Flag citability gaps
 
 ## When to Use This Skill
 
 Trigger this skill when the user:
-- Asks to "audit my website for SEO"
-- Wants to know "what's wrong with my site's SEO"
-- Requests "SEO analysis" or "SEO recommendations"
-- Asks "how can I improve my rankings" or "why isn't my site ranking"
-- Mentions "crawl my site and analyze SEO"
-- Asks about "AEO" or "Answer Engine Optimization"
+- Has run an Ahrefs Site Audit and wants to go deeper on content
+- Asks "why isn't my content ranking for [query]?"
 - Wants to "optimize for AI search" or "ChatGPT search"
 - Asks "how do I get cited by AI" or "appear in AI overviews"
+- Wants to "improve schema markup for content types"
+- Asks "how can I make my content more AI-friendly?"
+- Wants "content quality analysis" beyond technical SEO
 
 ## Core Workflow
 
-1. **Gather Input** - Get target URLs and preferences from user
-2. **Crawl Target Pages** - Fetch all specified URLs
-3. **Extract & Parse** - Extract SEO-relevant elements from HTML
-4. **Crawl Internal Links** - Selectively crawl linked pages (5-10 per target)
-5. **Analyze Technical SEO** - Evaluate meta tags, headers, structure, performance
-6. **Analyze Content** - Assess quality, keywords, readability, topic coverage
-7. **Analyze AEO** - Evaluate optimization for AI search engines (answer formats, citations, clarity)
-8. **Prioritize Issues** - Rank by impact (high/medium/low) and effort (quick win/moderate/major)
-9. **Generate Report** - Create actionable recommendations document
+1. **Gather Input** - Get target URLs, Ahrefs project ID (optional), and business context
+2. **Fetch Ahrefs Audit Issues** (if project ID provided) - Pull technical audit findings via Ahrefs API
+3. **Crawl Target Pages & Extract JSON-LD** - Fetch URLs (Bash curl or WebFetch), extract schema in ONE pass
+4. **Parse Content & Validate Schema** - Extract content elements, validate schema completeness and accuracy
+5. **Content Quality Analysis** - Assess content depth, structure, direct answer formats
+6. **Authority & Citability Assessment** - Evaluate expertise signals, source attribution, date freshness
+7. **AI-Friendly Patterns** - Identify missing FAQ, HowTo, comparison schemas and content structures
+8. **Natural Language Optimization** - Check conversational tone, clarity, extractability
+9. **Prioritize Content Gaps** - Rank recommendations by AEO impact and effort
+10. **Generate Augmented Report** - Create report integrating Ahrefs findings + content analysis
 
 ## Environment Detection
 
@@ -49,502 +56,453 @@ Before starting the audit, check which tools are available and adjust accordingl
 Ask the user for:
 
 **Required:**
-- **Target URLs**: The main pages to analyze (homepage, key landing pages, important content)
+- **Target URLs**: The pages to analyze (homepage, key landing pages, important content)
   - If user says "my website" without URLs, ask them to provide 2-5 specific pages to start with
 
-**Optional (ask if not clear):**
-- **Crawl depth**: How many internal links to follow per page? (default: 5-10)
-- **Focus areas**: "technical SEO", "content quality", "AEO", "all" (default: all)
-- **Business context**: What does the site do? What keywords/topics are important?
-- **AEO priority**: Is optimizing for AI search engines a priority? (helps determine report emphasis)
+**Optional:**
+- **Ahrefs Project ID** (recommended): If you have Ahrefs Site Audit set up, provide the project ID
+  - Skill will automatically fetch technical audit findings (titles, H1s, broken links, crawl issues, etc.)
+  - Report combines Ahrefs technical findings + this skill's content/AEO analysis
+  - No need to manually export/attach CSV—we pull directly from Ahrefs API
+- **Business context**: What does the site do? What keywords/topics matter most?
+- **Content goals**: Are you targeting AI search engines (ChatGPT, Perplexity, AI Overviews)?
+- **Current pain points**: "Content not ranking well" / "Low AI citations" / "Thin content" etc.
 
-## Step 2: Crawl Target Pages
+**Note:** This skill complements Ahrefs Site Audit (which checks titles, meta descriptions, H1 tags, broken links, etc.). Focus here is content depth, schema, and AEO.
+
+## Step 2: Fetch Ahrefs Audit Issues (Optional)
+
+If user provided an Ahrefs project ID, pull technical audit findings:
+
+```python
+# Use Ahrefs MCP to fetch Site Audit issues
+ahrefs_issues = site_audit_issues(
+    project_id=user_project_id,
+    date=None  # Get latest crawl
+)
+
+# Parse issues by type:
+# - Title/meta description issues
+# - H1/heading hierarchy issues
+# - Broken links
+# - Mobile optimization issues
+# - Crawlability issues
+# Store for reference in final report
+```
+
+**If user doesn't have Ahrefs project ID:**
+- Skip this step
+- Continue with content-only analysis
+- Report will focus on content gaps and schema without technical SEO context
+
+---
+
+## Step 3: Crawl Target Pages & Extract JSON-LD
+
+**⚠️ CRITICAL: JSON-LD extraction is mandatory on every page. Do ONE fetch per URL (not two) to ensure efficiency.**
 
 For each target URL:
 
+### Environment Detection & Fetch Strategy
+
+Before fetching, detect which tools are available:
+
+- **Claude Code (Bash available):** Use `curl` to fetch raw HTML, extract JSON-LD immediately
+- **Claude Web (WebFetch only):** Use `web_fetch`, JSON-LD will be stripped during conversion
+
+### Fetch & Extract Implementation
+
+**If `Bash` is available (Claude Code):**
+```bash
+curl -s "https://example.com" 2>&1 | python3 << 'EOF'
+import sys, re, json
+html = sys.stdin.read()
+# Find all JSON-LD blocks
+blocks = re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.DOTALL)
+extracted_jsonld = []
+if blocks:
+  for i, block in enumerate(blocks):
+    try:
+      data = json.loads(block.strip())
+      extracted_jsonld.append(data)
+      print(f"=== JSON-LD Block {i+1} ===")
+      print(json.dumps(data, indent=2))
+    except json.JSONDecodeError as e:
+      print(f"Error parsing JSON-LD block {i+1}: {e}")
+else:
+  print("No JSON-LD found")
+EOF
+```
+
+**Store for Step 4:**
+- Full HTML from curl response
+- Extracted JSON-LD blocks (parsed into dictionary/list)
+- Page response status and headers
+
+**If only `WebFetch` is available (Claude Web):**
 ```python
-# Use web_fetch to retrieve the page
 result = web_fetch(url, text_content_token_limit=50000)
-
-# Store the full HTML and extracted text for analysis
+# Note: JSON-LD is stripped during conversion. Store HTML as-is.
+# Extracted schema will be empty; will note limitation in report.
 ```
 
-**What to extract:**
-- Full HTML source
-- Visible text content
-- Response status (200, 301, 404, etc.)
-- Headers (if available)
+**Store for Step 4:**
+- Visible text content from web_fetch
+- Empty JSON-LD blocks (or ask user to provide schema via Google Rich Results Test)
+- Page metadata
 
-## Step 3: Extract & Parse SEO Elements
+### Extract Internal Links from Stored HTML
 
-**⚠️ CRITICAL: JSON-LD extraction is mandatory. Do not proceed without checking for schema markup on every page.**
-
-For each crawled page, extract:
-
-### Meta Elements
 ```python
-# Parse from HTML:
-- <title> tag
-- <meta name="description"> 
-- <meta name="robots">
-- <meta name="viewport">
-- <link rel="canonical">
-- Open Graph tags: <meta property="og:*">
-- Twitter Card tags: <meta name="twitter:*">
-```
-
-### Header Structure
-```python
-# Extract all headings:
-- <h1> tags (should be exactly 1)
-- <h2> through <h6> tags
-- Check hierarchy: no skipping levels (H1→H2→H3, not H1→H3)
-```
-
-### Content Structure
-```python
-# Parse:
-- Word count of main content
-- Paragraph structure
-- Lists (<ul>, <ol>)
-- Images: <img> tags with src and alt attributes
-- Links: <a> tags with href and anchor text
-- Internal vs external links
-
-### Schema.org Structured Data (CRITICAL - Always Extract)
-**JSON-LD extraction is NOT optional.** All schema markup must be extracted and analyzed.
-
-- **If `Bash` is available (Claude Code):** MUST use curl to fetch raw HTML and extract JSON-LD
-  ```bash
-  curl -s "https://example.com" | grep -o '<script[^>]*type="application/ld+json"[^>]*>.*</script>' | head -5
-  ```
-  Or use this more robust Python extraction:
-  ```bash
-  curl -s "https://example.com" 2>&1 | python3 << 'EOF'
-  import sys, re, json
-  html = sys.stdin.read()
-  # Find all JSON-LD blocks
-  blocks = re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.DOTALL)
-  if blocks:
-    for i, block in enumerate(blocks):
-      try:
-        data = json.loads(block.strip())
-        print(f"=== JSON-LD Block {i+1} ===")
-        print(json.dumps(data, indent=2))
-      except json.JSONDecodeError as e:
-        print(f"Error parsing JSON-LD block {i+1}: {e}")
-  else:
-    print("No JSON-LD found")
-  EOF
-  ```
-
-- **If only `WebFetch` is available (Claude Web):** JSON-LD is stripped during conversion. This is a significant limitation. For accurate schema analysis in web environment:
-  - Use `strings` command piped to grep if bash available: `curl -s "url" 2>&1 | strings | grep -A5 "FAQPage\|Article\|Organization\|Product"`
-  - Ask user to run [Google's Rich Results Test](https://search.google.com/test/rich-results) and share output
-  - Note clearly in report: "⚠️ JSON-LD schema extraction not available in this environment. See appendix for manual verification steps."
-
-**Do not report "No structured data" without explicitly attempting to extract JSON-LD first.**
-```
-
-### Internal Links for Crawling
-```python
-# Extract <a href="..."> where:
+# From stored HTML, extract <a href="..."> where:
 - href starts with "/" or contains the same domain
 - Not pointing to: #anchors, mailto:, tel:, javascript:, files (.pdf, .jpg, etc.)
 - Not duplicate URLs
+# Store for optional content sampling (Step 5)
 ```
 
-## Step 4: Selective Link Crawling
+## Step 4: Parse Content & Validate Schema
 
-For each target page, select 5-10 internal links to crawl based on priority:
+For each crawled page (using stored HTML from Step 3):
 
-**Priority 1: Navigation & Structure** (2-3 links)
-- Header/footer navigation links
-- Main menu items
-- Breadcrumb links
-- Category/section pages
+### Content Elements (for AEO analysis)
+```python
+# Parse from stored HTML:
+- Total word count of main content
+- Paragraph structure and sentence complexity
+- Lists (<ul>, <ol>) and tables
+- Presence of FAQ sections, direct answers to questions
+- Formatting: bold, code blocks, callouts
+- Links: internal links, citation links, source attribution
+- Images: presence of descriptive captions
+```
 
-**Priority 2: High-Value Content** (2-3 links)
-- About page, Services/Products pages
-- Popular content (if indicated by link prominence)
-- Pages linked multiple times
+### Authority & Freshness Signals
+```python
+# Look for in stored HTML:
+- Author information (name, title, credentials)
+- Publication date (<meta name="article:published_time"> or datePublished in schema)
+- Last updated date (dateModified or "Updated:" text)
+- Organization/author credentials or bio
+- External citations and source links
+```
 
-**Priority 3: Content Diversity** (1-2 links)
-- Blog posts (if site has blog)
-- Different content types (product vs article vs landing page)
+### Schema.org Structured Data Validation
+
+**Using JSON-LD extracted in Step 3:**
+- Validate schema structure and completeness
+- Check if schema type matches content type (FAQPage for FAQs, Article for blog posts, etc.)
+- Identify missing required fields (author, datePublished, answer properties, etc.)
+- Flag schema that doesn't match visible content
+
+**Do not validate "no schema found" without Step 3 extraction attempt.**
+
+## Step 5: Optional Content Sampling
+
+If user wants broader content analysis, optionally crawl 3-5 related pages to assess content patterns:
+
+**When to sample related pages:**
+- User wants to understand content quality across site
+- Site has multiple content types (blog posts, product pages, guide pages)
+- Ahrefs report shows consistent issues across pages
+
+**Sample selection:**
+- Different content types (if applicable): blog post, product page, guide, FAQ
+- Representative pages that user mentions as important
+- Pages that should have schema but might be missing it
 
 **Crawl Limits:**
-- Maximum 10 links per target URL
-- Maximum 50 total pages across entire audit
-- Skip already-crawled URLs (track in a set)
-- If web_fetch fails, note it and continue
+- Maximum 5 additional pages (beyond specified target URLs)
+- If fetch fails, note and continue
+- Skip if user only wants analysis of specific URLs
 
-For each crawled link, extract the same SEO elements as Step 3.
+**For each sampled page:** Use Step 3 methodology (environment-aware fetch + JSON-LD extraction, store HTML for parsing in Step 4).
 
-## Step 5: Technical SEO Analysis
+## Step 5: Schema Markup & Structure Validation
 
-Analyze all crawled pages against these criteria:
+Analyze all crawled pages for JSON-LD completeness and AEO readiness:
 
-### Critical Issues (High Impact)
+### Schema Validation (HIGH PRIORITY)
 
-**Missing or Poor Title Tags**
-- ❌ No title tag
-- ❌ Title <30 characters or >70 characters
-- ❌ Duplicate titles across pages
-- ❌ Generic titles like "Home" or "Welcome"
-- ✅ Good: 50-60 characters, unique, includes target keyword
+**Missing Schema for Content Type:**
+- ❌ FAQ/Q&A content with no `FAQPage` schema
+- ❌ Articles with no `Article` or `BlogPosting` schema
+- ❌ How-to content with no `HowTo` schema
+- ❌ Product pages with no `Product` schema
+- ❌ Organization pages with no `Organization` schema
+- ❌ Reviews with no `Review` or `AggregateRating` schema
+- ✅ Good: Schema matches content type with all required properties
 
-**Missing or Poor Meta Descriptions**
-- ❌ No meta description
-- ❌ Description <120 characters or >165 characters
-- ❌ Duplicate descriptions
-- ✅ Good: 150-160 characters, compelling, includes keyword
+**Incomplete Schema:**
+- ❌ `FAQPage` present but missing author, datePublished, or mainEntity
+- ❌ `Article` missing datePublished or author information
+- ❌ Schema properties incomplete or marked with placeholder values
+- ✅ Good: Schema has all required fields + recommended fields (author, date, description)
 
-**H1 Issues**
-- ❌ No H1 tag
-- ❌ Multiple H1 tags on same page
-- ❌ H1 is generic or not descriptive
-- ✅ Good: Single H1, descriptive, includes primary keyword
+**Schema Quality:**
+- ❌ Schema doesn't match visible content (e.g., FAQPage claims 10 Q&As but page shows 3)
+- ❌ Nested schema incorrectly structured (e.g., Answer not properly nested in Question)
+- ✅ Good: Schema structure is valid and matches content accurately
 
-**Heading Hierarchy Problems**
-- ❌ Skipping levels (H1 → H3, skipping H2)
-- ❌ Using headings for styling instead of structure
-- ✅ Good: Logical progression H1→H2→H3→H4
+### Content Structure for AI (MEDIUM PRIORITY)
 
-**Broken or Poor Internal Linking**
-- ❌ Internal links with generic anchor text ("click here", "read more")
-- ❌ No internal links to other important pages
-- ❌ Broken internal links (404s)
-- ✅ Good: Descriptive anchor text, strategic linking
+**Direct Answer Formats:**
+- ❌ Content doesn't answer main question in first paragraph
+- ❌ Answers buried in prose; no clear Q&A or summary
+- ✅ Good: First sentence answers the question; FAQ/TL;DR at top
 
-### Important Issues (Medium Impact)
+**Scannable Formatting:**
+- ❌ Content is all prose; no lists, tables, or visual breaks
+- ❌ No numbered steps for how-to content
+- ✅ Good: Bulleted lists, comparison tables, numbered steps, short paragraphs
 
-**Content Length**
-- ⚠️ Thin content (<300 words for informational pages)
-- ⚠️ Overly long without structure (>2500 words without subheadings)
-- ✅ Good: Sufficient depth for topic, well-structured
+**Topic Coherence:**
+- ❌ Content jumps between unrelated subtopics
+- ❌ Sections don't connect logically
+- ✅ Good: Clear section topics; content flows logically; related pages linked
 
-**Image Optimization**
-- ⚠️ Images missing alt text
-- ⚠️ Alt text is generic ("image1.jpg", "photo")
-- ✅ Good: Descriptive alt text for all images
+## Step 6: Content Quality and Structure (SEO and AEO)
 
-**Mobile Optimization**
-- ⚠️ Missing viewport meta tag
-- ⚠️ Fixed-width layouts (evidence in HTML/CSS)
-- ✅ Good: Responsive meta tag present
+Evaluate all content for SEO quality and AEO (Answer Engine Optimization)—how well it serves both traditional search engines and AI systems like ChatGPT, Perplexity, and Google AI Overviews.
 
-**Canonical Tags**
-- ⚠️ No canonical tag (can cause duplicate content issues)
-- ⚠️ Canonical pointing to wrong URL
-- ✅ Good: Self-referencing canonical or correct canonical
+### Topic Coverage & Clarity
 
-**Structured Data (JSON-LD) — MUST ALWAYS CHECK**
-- ⚠️ **No schema.org markup when appropriate** (articles, products, FAQ, local business, organization)
-  - FAQ pages/Q&A content should have `FAQPage` schema
-  - Articles should have `Article`, `BlogPosting`, or `NewsArticle` schema
-  - Organizations should have `Organization` schema on homepage
-  - Products should have `Product` schema
-  - How-to content should have `HowTo` schema
-  - Reviews should have `Review` or `AggregateRating` schema
-- ⚠️ Incomplete or invalid schema (doesn't match content or missing required properties)
-- ⚠️ Schema present but poorly structured (not extractable by AI/crawlers)
-- ✅ Good: Complete, valid schema.org markup relevant to page content
-- ✅ Good: Multiple relevant schema types (e.g., Article + FAQPage on a Q&A article)
-- ✅ Good: Schema uses required properties (name, description, author, datePublished, etc.)
+**User Intent & Comprehensiveness**
+- ❌ Content doesn't clearly address the stated topic (from title/H1)
+- ❌ Content is too shallow for user intent
+- ✅ Good: Comprehensive coverage matching search intent
+- ✅ Good: First paragraph directly answers the main question
 
-### Enhancement Opportunities (Lower Priority)
-
-**Social Meta Tags**
-- No Open Graph or Twitter Card tags (affects social sharing)
-- ✅ Good: OG tags for title, description, image
-
-**Content Readability**
-- Large walls of text without breaks
-- No use of lists for scannable content
-- ✅ Good: Short paragraphs, bullet points, clear structure
-
-**URL Structure** (if visible in links)
-- Long, parameter-heavy URLs
-- Non-descriptive URLs
-- ✅ Good: Clean, descriptive URLs with keywords
-
-**Page Performance Indicators**
-- Excessive HTML size (>1MB uncompressed)
-- Huge number of DOM elements (rough indicator if HTML is very large)
-
-## Step 6: Content Quality Analysis
-
-Evaluate content against these criteria:
-
-### Topic Coverage & Relevance
-- Does the content clearly address the page's stated topic (from title/H1)?
-- Is the content comprehensive enough to answer user intent?
-- Are there keyword opportunities being missed? (Look for partial mentions that could be expanded)
-
-### Keyword Usage
-- Are target keywords used naturally in:
-  - Title tag
-  - H1 and H2 headings
-  - First paragraph
-  - Throughout content (without overstuffing)
-- Are related/semantic keywords present?
-
-### Content Quality Signals
-- Is content original and valuable (not generic/thin)?
-- Does it provide specific information, examples, or data?
-- Is there an expertise indicator (author credentials, specific details)?
-- Does content match user intent (informational, commercial, transactional)?
-
-### User Experience
-- Is content scannable (headings, short paragraphs, lists)?
-- Is the writing clear and accessible?
-- Does it have a clear call-to-action where appropriate?
-
-### Freshness (if date indicators present)
-- Is the content dated or reference recent information?
-- Are there opportunities to update with current data?
-
-## Step 7: AEO (Answer Engine Optimization) Analysis
-
-Evaluate content for AI search engine optimization. AEO focuses on how well content can be understood, extracted, and cited by AI systems like ChatGPT, Perplexity, Google AI Overviews, and other LLM-powered search tools.
-
-### Direct Answer Formats
-
-**Question-Answer Structure**
-- ❌ Content doesn't answer specific questions directly
-- ❌ Answers buried deep in paragraphs
-- ✅ Good: Clear questions as H2/H3 headings with concise answers immediately following
+**Direct Answer Formats (AEO Priority)**
+- ❌ Content doesn't answer specific questions directly; answers buried in prose
+- ❌ No summary or abstract at the beginning
+- ✅ Good: Clear questions as H2/H3 headings with immediate answers
+- ✅ Good: Executive summary or TL;DR at top; definitions early in content
 - ✅ Good: FAQ sections with explicit Q&A format
 
-**Concise Summaries**
-- ❌ No summary or abstract at the beginning
-- ❌ Summary is generic or vague
-- ✅ Good: Executive summary or TL;DR at top of page
-- ✅ Good: First paragraph directly answers the main topic question
+### Keyword & Semantic Usage
 
-**Definition Clarity**
-- ❌ Key terms not defined
-- ❌ Definitions scattered throughout text
-- ✅ Good: Clear definitions early in content
-- ✅ Good: Glossary or "What is X?" sections
+**Keyword Placement**
+- ❌ Target keywords missing or poorly placed
+- ✅ Good: Keywords naturally used in title, H1, H2s, and first paragraph
+- ✅ Good: Related/semantic keywords present throughout
 
-### Content Structure for AI Extraction
+**Content Originality & Specificity**
+- ❌ Generic, thin content; only rehashed information
+- ✅ Good: Original research, specific examples, data, or expert analysis
+- ✅ Good: Matches user intent (informational vs. commercial vs. transactional)
 
-**Semantic HTML & Schema (JSON-LD)**
-**CRITICAL: These are the #1 issues AI systems care about. Verify schema extraction before marking as missing.**
+### Content Structure & Scannability
 
-- ❌ **No FAQ schema** for question-answer content (major AEO issue)
+**Heading Hierarchy & Descriptiveness**
+- ❌ Flat structure, generic headings, skipped heading levels
+- ✅ Good: Descriptive headings that can stand alone; logical H2 → H3 progression
+- ✅ Good: Each section addresses one clear subtopic
+
+**List-Based & Semantic Structure (AEO Priority)**
+- ❌ Information only in prose; no lists, comparisons, or checklists
+- ❌ Content jumps between unrelated topics
+- ✅ Good: Key points in numbered/bulleted lists; comparison tables; checklists
+- ✅ Good: Content stays focused; related subtopics logically connected
+- ✅ Good: Short paragraphs with varied formatting for scannability
+
+**Schema Markup for AI Extraction (CRITICAL)**
+**These are the #1 issues AI systems care about. Verify schema extraction before marking as missing.**
+
+- ❌ **No FAQ schema** on Q&A content (major AEO issue)
 - ❌ **No HowTo schema** for step-by-step guides
-- ❌ **Missing Article/BlogPosting schema** with author, date, and content structure
+- ❌ **Missing Article/BlogPosting schema** with author, date, and structure
 - ❌ **Missing Organization schema** on homepage
-- ❌ **No BreadcrumbList schema** for navigation (helps AI understand site structure)
+- ❌ **No BreadcrumbList schema** for navigation
 - ✅ Good: `FAQPage` schema with complete Q&A pairs
-- ✅ Good: `HowTo` schema with `HowToStep` items clearly marked
-- ✅ Good: `Article`/`BlogPosting` schema with author info and publication dates
-- ✅ Good: `Organization` schema with full metadata (name, logo, contact, social profiles)
-- ✅ Good: `BreadcrumbList` schema enabling navigation clarity
+- ✅ Good: `HowTo` schema with `HowToStep` items
+- ✅ Good: `Article`/`BlogPosting` with author info and publication dates
+- ✅ Good: `Organization`, `BreadcrumbList`, or other relevant schema types
 
-**List-Based Content**
-- ❌ Information presented only in prose
-- ❌ No use of numbered or bulleted lists
-- ✅ Good: Key points in lists (top 5, best practices, steps)
-- ✅ Good: Comparison tables for multiple options
-- ✅ Good: Checklist format for actionable items
+### Authority & Citability (AEO Priority)
 
-**Clear Hierarchy**
-- ❌ Flat content structure without clear sections
-- ❌ Generic headings that don't indicate content
-- ✅ Good: Descriptive headings that can stand alone
-- ✅ Good: Logical H2 → H3 progression with clear topics
-- ✅ Good: Each section addresses one specific subtopic
-
-### Citability & Authority
-
-**Expertise Indicators**
-- ❌ No author information
-- ❌ No credentials or expertise signals
-- ❌ Generic "by admin" or no attribution
-- ✅ Good: Author bio with relevant credentials
-- ✅ Good: "Written by [Expert Name], [Title/Credentials]"
+**Expertise & Author Signals**
+- ❌ No author information, credentials, or expertise signals
+- ✅ Good: Author bio with relevant credentials; "Written by [Name], [Title]"
 - ✅ Good: Author schema markup
 
-**Source Attribution**
-- ❌ Claims without sources
-- ❌ "Studies show" without linking to studies
-- ✅ Good: Direct links to original sources
-- ✅ Good: Citations for statistics and data
-- ✅ Good: "According to [Source Name], ..." format
+**Source Attribution & Evidence**
+- ❌ Claims without sources or supporting links
+- ✅ Good: Direct links to original sources and citations
+- ✅ Good: "According to [Source], ..." format; statistics and data attributed
 
-**Publish/Update Dates**
-- ❌ No date information
-- ❌ Only publish date, no update date
-- ✅ Good: Clear publish date
-- ✅ Good: "Last updated: [date]" for freshness signal
-- ✅ Good: datePublished and dateModified in schema
+**Freshness Indicators**
+- ❌ No date information; outdated without update signals
+- ✅ Good: Clear publish date and "Last updated: [date]" for freshness
+- ✅ Good: datePublished and dateModified in schema; references recent information
 
-**Unique Insights**
-- ❌ Only rehashed information from other sources
-- ❌ Generic advice without specifics
-- ✅ Good: Original research or data
-- ✅ Good: Specific examples and case studies
-- ✅ Good: Expert opinion or analysis
+### Natural Language Optimization (AEO Priority)
 
-### Natural Language Optimization
+**Conversational & Accessible Language**
+- ❌ Overly technical jargon, corporate speak, or fragmented sentences
+- ✅ Good: Explains concepts in plain language; answers like a human would
+- ✅ Good: Complete sentences with necessary context; can extract any paragraph and it makes sense
+- ✅ Good: Uses "you" to address the reader; includes clear definitions
 
-**Conversational Tone**
-- ❌ Overly technical jargon without explanation
-- ❌ Corporate/marketing speak
-- ✅ Good: Explains concepts in plain language
-- ✅ Good: Answers questions the way a human would
-- ✅ Good: Uses "you" to address the reader
-
-**Complete Sentences**
-- ❌ Fragmented thoughts across paragraphs
-- ❌ Missing context for standalone statements
-- ✅ Good: Each sentence is self-contained
-- ✅ Good: Statements include necessary context
-- ✅ Good: Can extract any paragraph and it makes sense
-
-**Topic Clustering**
-- ❌ Content jumps between unrelated topics
-- ❌ No clear focus or theme
-- ✅ Good: Content stays focused on one main topic
-- ✅ Good: Related subtopics logically connected
+**Topic Coherence**
+- ❌ Content jumps between unrelated topics; no clear focus
+- ✅ Good: Each section connects logically to others
 - ✅ Good: Internal links to related topics on separate pages
 
-### AI-Friendly Content Patterns
+### Content Patterns for AI (AEO Priority)
 
-**"How To" Content**
-- Check for: Numbered steps, clear process, expected outcome
-- ✅ Good: "How to [accomplish task]" in title/H1
-- ✅ Good: Step 1, Step 2, Step 3 format
-- ✅ Good: Time estimates, difficulty level, prerequisites
+Identify and optimize for AI-friendly formats:
 
-**Comparison Content**
-- Check for: Side-by-side comparisons, pros/cons lists
-- ✅ Good: "[X] vs [Y]" format in title
-- ✅ Good: Comparison table with clear criteria
-- ✅ Good: Summary recommendation at the end
+- **How-To Content**: "How to [task]" format, numbered steps, time estimates, prerequisites
+- **Comparison Content**: "[X] vs [Y]" titles, side-by-side tables, pros/cons, clear recommendation
+- **Definitive Guides**: "Complete Guide" or "Everything You Need to Know" format, table of contents, multi-section coverage
+- **Best/Top Lists**: "Best [X] for [Use Case]" format, clear ranking criteria, descriptions with reasoning
 
-**Definitive Guides**
-- Check for: Comprehensive coverage, chapter structure
-- ✅ Good: "Complete Guide to [Topic]" or "Everything You Need to Know"
-- ✅ Good: Table of contents with anchor links
-- ✅ Good: Multiple sections covering different aspects
+### Priority Summary
 
-**Best/Top Lists**
-- Check for: Clear ranking criteria, specific recommendations
-- ✅ Good: "Best [X] for [Use Case]" format
-- ✅ Good: Each item has clear description and reason
-- ✅ Good: Summary comparison at the end
+| Priority | Issue | Impact |
+|----------|-------|--------|
+| 🔴 Critical | Missing FAQ/HowTo schema on relevant content | Prevents AI extraction; major ranking loss for AEO |
+| 🔴 Critical | No author info/expertise signals | Reduces citability; AI systems deprioritize unsourced content |
+| 🔴 Critical | Content doesn't directly answer questions | Users and AI skip the page |
+| 🔴 Critical | Missing publish/update dates | AI views content as stale |
+| 🟡 Important | Only prose (no lists/tables/structure) | Harder for AI to extract; poor scannability |
+| 🟡 Important | Generic/non-descriptive headings | AI can't understand section topics |
+| 🟡 Important | Missing source citations | Reduces authority; AI won't cite |
+| 🟡 Important | Complex language without explanations | Users bounce; AI struggles to extract meaning |
+| 🟢 Enhancement | Add comparison/HowTo schema | Improves featured snippets and AI citations |
+| 🟢 Enhancement | Improve conversational tone | Increases engagement and AI relevance |
+| 🟢 Enhancement | Add specific examples and data | Supports claim substantiation for AI search |
 
-### AEO Priority Issues
+## Step 7: Authority & Citability Assessment
 
-**🔴 Critical for AEO:**
-- Missing FAQ schema on Q&A content
-- No author information or expertise signals
-- Content doesn't directly answer questions
-- No clear summary or TL;DR
-- Missing publish/update dates
+Evaluate how well pages establish expertise and enable AI systems to cite the content.
 
-**🟡 Important for AEO:**
-- Lack of list-based content (only prose)
-- Poor heading structure (not descriptive)
-- No internal topic clustering
-- Missing source citations
-- Complex language without explanations
+### Author Credibility Signals
 
-**🟢 Enhancement for AEO:**
-- Add HowTo or comparison schema
-- Improve conversational tone
-- Add more specific examples
-- Include relevant statistics/data
-- Optimize for featured snippet formats
+**Observable signals:**
+- ❌ No author information on any page
+- ❌ Author listed but no credentials, title, or bio
+- ❌ No author schema markup (Author property in schema)
+- ✅ Good: Author name + title/credentials visible; Author schema present
 
-## Step 8: Prioritize Issues
+**Impact on AEO:** AI systems check author credibility before citing. Missing author signals = low citability.
+
+### Source Attribution & Citations
+
+**Observable signals:**
+- ❌ Claims made without sources or supporting links
+- ❌ Statistics cited without attribution ("trusted data" but no link to source)
+- ❌ No distinction between original data and curated information
+- ✅ Good: Direct links to sources; "According to [Source]" format; statistics attributed
+- ✅ Good: Original research/data clearly marked; methodology explained
+
+**Impact on AEO:** AI systems prioritize citing well-sourced content. Direct links increase citability.
+
+### Freshness Indicators
+
+**Observable signals:**
+- ❌ No publication or update date visible
+- ❌ Outdated information without update signals
+- ❌ No datePublished or dateModified in schema
+- ✅ Good: Clear "Published [date]" and "Updated [date]" visible
+- ✅ Good: datePublished and dateModified in schema; content references recent data
+
+**Impact on AEO:** AI systems deprioritize stale content. Dates signal ongoing relevance.
+
+### Expertise Depth
+
+**Observable signals:**
+- ❌ Shallow coverage; content could be written by anyone
+- ❌ No evidence of specialized knowledge or experience
+- ⚠️ Good domain knowledge but not explicitly stated
+- ✅ Good: Domain expertise evident (specific examples, methodology, credentials)
+- ✅ Good: Depth of coverage exceeds surface-level information
+
+---
+
+## Step 8: Prioritize Content & AEO Gaps
 
 Group all identified issues into three priority tiers:
 
-### 🔴 High Priority (Quick Wins + High Impact)
-Issues that are easy to fix and have significant SEO/AEO impact:
-- Missing title tags or meta descriptions
-- Missing or multiple H1 tags
-- Missing image alt text on key pages
-- Broken heading hierarchy
-- **AEO:** No FAQ schema on Q&A content
-- **AEO:** Missing author information/expertise signals
-- **AEO:** No publish or update dates
-- **AEO:** Content doesn't directly answer questions
+### 🔴 High Priority (Critical for AEO)
 
-### 🟡 Medium Priority (Important but More Effort)
-Issues that require moderate work but improve SEO/AEO:
-- Thin content that needs expansion
-- Missing canonical tags
-- Poor internal linking structure
-- Missing structured data
-- Non-optimized content (keyword opportunities)
-- **AEO:** No list-based content (only prose)
-- **AEO:** Generic/non-descriptive headings
-- **AEO:** Missing source citations
-- **AEO:** Poor topic clustering
-- **AEO:** Complex language without explanations
+Issues that significantly impact AI citability and content quality:
+- **Missing schema for content type** (e.g., no FAQPage on FAQ content, no Article on blog posts)
+- **No author/expertise signals** (missing author name, credentials, or author schema)
+- **Content doesn't directly answer main question** (answer buried in prose)
+- **Missing publication date** (no datePublished in schema or visible date)
+- **Incomplete schema** (FAQPage present but missing required fields like author, question, answer)
+
+### 🟡 Medium Priority (Improves AEO)
+
+Issues that enhance content quality and extractability:
+- **Thin content** (<300 words for informational pages; missing depth vs competitors)
+- **No source citations** (claims made without supporting links or attribution)
+- **Only prose formatting** (no lists, tables, or scannable structure for how-to/comparison content)
+- **Missing dateModified** (no update signal for content refresh)
+- **Poor topic structure** (content jumps between topics; sections not logically connected)
+- **Complex language** (jargon-heavy without explanations; not conversational)
 
 ### 🟢 Low Priority (Enhancements)
+
 Nice-to-have improvements:
-- Missing social meta tags
-- URL structure improvements
-- Content readability enhancements
-- Minor mobile optimization tweaks
-- **AEO:** Add HowTo or comparison schema
-- **AEO:** Improve conversational tone
-- **AEO:** Add more specific examples and data
+- **Add comparison/HowTo schema** (improves featured snippets and AI citations)
+- **Improve conversational tone** (makes content more readable and extractable)
+- **Add specific examples and data** (supports claim substantiation for AI search)
+- **Internal linking to related topics** (improves content coherence and crawlability)
 
 For each issue, include:
-- **What's wrong**: Clear description of the problem
-- **Why it matters**: SEO/AEO impact explanation
-- **How to fix**: Specific, actionable steps
-- **Affected pages**: List of URLs with this issue
-- **Estimated effort**: Quick (<30 min), Moderate (1-3 hours), Major (>3 hours)
+- **What's wrong**: Clear description (e.g., "FAQ schema incomplete—missing 'answer' field in Q&A pairs")
+- **Why it matters**: Specific AEO impact (e.g., "AI systems can't extract answers without complete schema")
+- **How to fix**: Specific steps (e.g., "Add 'answer' property to each Q&A item in FAQPage schema")
+- **Affected pages**: URLs with this issue
+- **Estimated effort**: Quick (<30 min), Moderate (1-3 hours), Major (4+ hours)
 
-## Step 9: Generate Report
+## Step 9: Generate Content & AEO Report
 
 Create a well-structured document (markdown or docx) with:
 
 ### Executive Summary
-- **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed tone guidelines)
-- Total pages analyzed (target + crawled)
-- Overall SEO health score (based on issues found) - state as metric, not value judgment
-- Top 3-5 critical issues to fix first - order by measurable impact and effort
-- Estimated improvement potential - use conservative projections with data sources
+- **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](../TONE-GUIDE.md))
+- Total pages analyzed
+- Summary of Ahrefs findings (if available): "Ahrefs identified X technical issues across Y pages"
+- Overall AEO readiness score (based on schema, content, authority signals)
+- Top 3-5 critical gaps (prioritized by AEO impact and effort)
+- Estimated improvement: "With these changes, content will be 40-50% more extractable by AI systems"
 
 ### Detailed Findings
 
-**Writing style guidelines for all findings sections:** See [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed style guidelines. Key principles:
-- State issues factually without editorial language
-- Explain mechanism of impact, not opinion
-- Use metrics to convey severity, not emotional language
-- Quantify specificity: "7 of 10 pages" not "most pages"
+**Writing style guidelines:** See [TONE-GUIDE.md](../TONE-GUIDE.md). Key principles:
+- State issues factually without editorializing
+- Explain specific mechanism of impact
+- Use metrics: "3 of 11 pages" not "some pages"
+- Distinguish between content quality and schema completeness
 
-#### Technical SEO Issues
-For each category (Meta Tags, Headings, Links, Images, etc.):
-- List of issues found
-- Affected pages (with counts: X of Y total)
-- Priority level (based on measured impact)
-- Recommended fix with realistic effort estimate
+#### Schema Markup Gaps
+For each page/content type:
+- Missing or incomplete schema (e.g., "FAQPage present but 3 of 10 Q&As missing 'answer' field")
+- Affected pages (X of Y total)
+- Impact on AEO (e.g., "AI systems can't cite answers without complete schema")
+- Specific fix (e.g., "Add 'answer' property to all Question items")
 
 #### Content Quality Issues
-- Pages with thin/weak content
-- Keyword optimization opportunities
-- Content structure improvements
-- User experience enhancements
+- Thin content vs competitors (word count, depth analysis)
+- Direct answer format gaps (where content buries answers in prose)
+- Scannable formatting (lack of lists, tables, sections for how-to/comparison content)
+- Authority signal gaps (missing author info, credentials, source citations)
+- Freshness signals (missing publication/update dates)
 
-#### AEO (Answer Engine Optimization) Issues
-- Direct answer format opportunities
-- Missing FAQ/HowTo schema
-- Authority and citability improvements
-- AI-friendly content structure gaps
-- Natural language optimization needs
+#### AI-Friendly Content Structure Gaps
+- Missing FAQ sections on Q&A content
+- How-to content without numbered steps or schema
+- Comparison content without tables or pros/cons
+- General content lacking topic coherence and internal linking
+
+#### Natural Language Optimization
+- Complex jargon without explanations
+- Conversational tone assessment (readable for AI extraction)
+- Paragraph-level extractability (can AI extract any paragraph and understand it alone?)
 
 ### Prioritized Recommendations
 
@@ -592,124 +550,152 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 
 ## Important Notes
 
-### Crawling Etiquette
-- Respect web_fetch rate limits
-- If a page fails to load, note it and continue
-- Don't crawl the same URL twice
+### Integration with Ahrefs
 
-### Schema Inspection Limitations & Requirements
-**This is critical to audit accuracy. Do not skip.**
+**If user provides Ahrefs Project ID:**
+- Call `site_audit_issues(project_id=...)` to fetch technical audit findings
+- Reference findings in report: "Ahrefs identified X pages with missing meta descriptions"
+- Build upon them: "This analysis focuses on why content may not rank despite correct metadata"
+- Combine results: Ahrefs technical issues + content/AEO gaps in single report
 
-- **Claude Code** (Recommended): Full schema inspection via `curl`
-  - MUST use bash to extract JSON-LD on every page before analyzing
-  - Example: `curl -s "url" 2>&1 | grep -o '<script type="application/ld+json">.*</script>'`
-  - Extract and parse all JSON-LD blocks
-  - Verify schema type matches content (FAQ schema for FAQs, Article schema for articles, etc.)
-  - Report specific schema findings, not "no schema"
+**If user provides no Ahrefs data:**
+- Proceed with content-only analysis
+- Flag in report that technical SEO was not assessed
+- Focus entirely on content quality, schema, authority, and AEO readiness
 
-- **Claude Web**: Schema markup is NOT visible via `WebFetch` due to HTML stripping
-  - This is a significant limitation — JSON-LD extraction is impossible in web environment
-  - When running in Claude Web:
-    - ⚠️ Note prominently: "Schema analysis unavailable in this environment"
-    - Ask the user to run [Google's Rich Results Test](https://search.google.com/test/rich-results) and paste the output
-    - OR ask user to run: `curl -s "https://yoursite.com" | grep "application/ld+json" -A 20`
-    - Do NOT report "no schema found" — report "schema verification pending"
-    - Recommend the user re-run the audit in Claude Code for accurate schema analysis
-    - Flag any AEO recommendations as conditional on schema verification
+### JSON-LD Extraction (CRITICAL)
 
-### Analysis Accuracy
-- Base recommendations on what's visible in the HTML/content
-- Flag uncertainties (e.g., "This page may have JavaScript-rendered content not visible in the HTML")
-- Don't make assumptions about backend or server-side issues
+**This is the core of this audit. Do not skip schema extraction.**
+
+- **Claude Code** (Required for accurate schema analysis):
+  - MUST use bash to extract JSON-LD on every page
+  - Use robust Python extraction to parse and validate schema
+  - Extract all `<script type="application/ld+json">` blocks
+  - Validate: Schema type matches content type (FAQPage for FAQs, Article for blog posts, etc.)
+  - Report specific findings: "FAQPage present but 'author' field missing" (not just "has FAQ schema")
+
+- **Claude Web**: Schema markup is stripped during conversion
+  - Not suitable for accurate schema analysis
+  - Ask user to run [Google's Rich Results Test](https://search.google.com/test/rich-results) and share output
+  - OR ask user for bash output: `curl -s "https://yoursite.com" | grep "application/ld+json" -A 30`
+  - Flag report: "⚠️ Schema analysis conducted via user-provided JSON-LD output"
+
+### Analysis Boundaries
+
+**This skill focuses on:**
+- Content quality & depth
+- Schema completeness & validity
+- Authority & citability signals
+- AEO-friendly content structure
+
+**This skill assumes Ahrefs has checked:**
+- Title tags, meta descriptions
+- H1 tags, heading hierarchy
+- Broken links, 404s
+- Mobile optimization
+- Crawlability issues
+
+### Content Assessment Notes
+- Compare content depth vs top-ranking competitors (note: requires separate research or user context)
+- Flag "thin content" only if visibly <300 words for informational pages
+- Assess readability for AI extraction (not readability score, but extractability)
+- Don't assume technical implementation limits (e.g., "content is JS-rendered" — flag for verification)
 
 ### User Communication
-**Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
-
-Key principles:
-- Use neutral, analytical language
-- Focus on data and metrics rather than subjective praise
-- Avoid promotional or enthusiastic framing
-- Explain SEO and AEO terms in plain language
-- Provide context for why each issue matters with data
+**Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for tone guidelines.**
 
 ### Scope Management
-- If user wants to analyze >20 target pages, suggest breaking into batches
-- If crawling discovers major issues, offer to stop and report early
-- Remind user this is on-page SEO and AEO analysis only (not backlinks, domain authority, off-page factors)
-- AEO analysis focuses on content optimization for AI systems; actual AI search ranking factors may vary
+- Focus on 5-20 target pages; break larger sites into batches
+- This analysis is content & AEO focused (not technical SEO, backlinks, or domain metrics)
+- Actual AI search ranking factors may differ from this optimization framework
 
 ## Example Interaction
 
-**User:** "Can you audit my website's SEO? Here's my homepage: example.com"
-
-**Assistant:** 
-1. Asks for clarification: "I'll analyze your homepage and crawl some internal links. A few questions:
-   - Are there specific pages you want me to focus on (like key landing pages or product pages)?
-   - What does your business do? Any specific keywords you're targeting?
-   - Should I look at technical SEO, content quality, AEO, or all of them?
-   - Is optimizing for AI search engines (ChatGPT, Perplexity, etc.) a priority?"
-
-2. Gets user input, then:
-   - Crawls the homepage
-   - Extracts SEO elements
-   - Selects 5-10 internal links to crawl
-   - Analyzes all pages (technical SEO, content, AEO)
-   - Generates prioritized recommendations
-   - Creates a report document
-   - Shares the report with specific next steps
-   - Generates prioritized recommendations
-   - Creates a report document
-   - Shares the report with specific next steps
-
-**User:** "Just analyze my homepage for now, focus on technical issues."
+**User:** "I have Ahrefs Site Audit set up. Can you analyze my content and schema?"
 
 **Assistant:**
-1. Crawls homepage only (no internal links)
-2. Performs technical SEO analysis
-3. Generates focused technical report with quick fixes
-4. Presents findings and asks if user wants full site analysis next
+1. Asks: "Perfect! A few quick questions:
+   - What's your Ahrefs project ID? (I can pull your audit findings automatically)
+   - What are the main pages you want me to focus on (homepage, key landing pages)?
+   - What does your site do? (This helps me assess if schema choices match content types)
+   - Are you primarily targeting AI search engines (ChatGPT, Perplexity, etc.)?
 
-**User:** "I want to optimize my blog for ChatGPT and AI search. Can you audit it?"
+2. Upon receiving project ID and URLs:
+   - Calls Ahrefs API to fetch technical issues (titles, H1s, broken links, etc.)
+   - Crawls pages to extract JSON-LD schema and content
+   - Analyzes content depth, structure, authority signals
+   - Assesses AEO readiness (direct answers, schema completeness, citability)
+   - Generates report combining Ahrefs technical findings + content/AEO gaps
+   - Provides specific schema fixes and content recommendations
+
+**User:** "My blog posts don't rank well and AI doesn't cite my content. Can you analyze it?"
 
 **Assistant:**
-1. Clarifies: "I'll focus on AEO (Answer Engine Optimization) for your blog. I'll check:
-   - How well your content answers questions directly
-   - FAQ schema and other structured data for AI
-   - Author credibility signals
-   - Content structure for AI extraction
-   Should I also check traditional SEO, or just focus on AEO?"
-2. Crawls blog homepage and several posts
-3. Analyzes AEO factors: direct answers, schema, citability, natural language
-4. Generates report with AEO-specific recommendations
-5. Provides examples of how to restructure content for AI search
+1. Asks: "Let me check your content structure and schema.
+   - What's a specific page/post URL?
+   - Do you have Ahrefs? If so, what's your project ID?
+   - What does your blog cover?
+
+2. Crawls the page and:
+   - Checks for author info, credentials, publication date
+   - Validates schema (Article? BlogPosting? Anything?)
+   - Assesses if content directly answers questions or buries answers in prose
+   - Checks source citations and freshness
+
+3. If Ahrefs provided: Compares Ahrefs technical findings + content analysis
+
+4. Generates report with gaps like:
+   - "No author schema → AI can't attribute content"
+   - "No schema.org metadata → AI can't extract structured data"
+   - "Content lacks direct answers in opening → AI/users skip it"
+   - "Statistics cited without links → Not citable"
+
+**User:** "I have FAQ pages but they don't show in AI responses. Can you check?"
+
+**Assistant:**
+1. Crawls FAQ pages and extracts JSON-LD
+2. Finds issues like:
+   - "FAQPage schema present but missing 'answer' field on 5 of 8 Q&As"
+   - "Schema doesn't match visible content (claims 8 FAQs but page shows 3)"
+3. Provides specific fixes:
+   - "Add complete 'answer' property to each Question item in FAQPage schema"
+   - "Ensure every visible FAQ is represented in schema"
+4. Explains impact: "Complete FAQPage schema enables AI systems to extract and cite your Q&As in search results"
 
 ## Success Metrics
 
 A successful audit includes:
-- ✅ All specified URLs successfully crawled
-- ✅ Clear identification of high-priority issues
-- ✅ Specific, actionable recommendations (not generic advice)
-- ✅ Realistic effort estimates for each fix
-- ✅ Well-organized report the user can act on immediately
+- ✅ Ahrefs data fetched automatically (if project ID provided)
+- ✅ JSON-LD extracted and validated on every page (not "no schema found" without verification)
+- ✅ Clear schema gaps identified (e.g., "FAQPage schema incomplete: missing 'answer' field on X Q&As")
+- ✅ Content quality issues specific to ranking/citability (e.g., "Content doesn't answer main question in first paragraph")
+- ✅ Authority signal assessment (author, dates, citations present/missing)
+- ✅ Specific schema/content fixes with effort estimates ("Add datePublished to Article schema: 30 minutes")
+- ✅ Report integrates Ahrefs technical findings with content/AEO gaps (not duplicate analysis)
+- ✅ User can act on recommendations immediately
 
 ## Edge Cases
 
-**Scenario: JavaScript-heavy site**
-- Note that analysis is limited to server-rendered HTML
-- Recommend using browser tools to check client-rendered content
-- Flag this limitation in the report
+**Scenario: User provides Ahrefs report with no content issues noted**
+- Don't assume content is good; Ahrefs doesn't assess content depth or schema completeness
+- Still crawl and analyze content quality independently
+- Focus on schema gaps and AI-friendliness, not technical SEO
 
-**Scenario: Large e-commerce site**
-- Focus on representative pages (homepage, category, product pages)
-- Note that patterns may repeat across similar pages
-- Suggest systematic fixes rather than page-by-page
+**Scenario: Pages have schema but it's incomplete**
+- Don't report "schema present" as passing; specify gaps
+- Example: "Article schema present but missing author, datePublished, and description fields"
+- Provide exact fixes to complete schema
 
-**Scenario: All pages look good**
-- Still provide the report with confirmations
-- Suggest next-level optimizations (schema enhancements, content expansion)
-- Recommend competitive analysis as next step
+**Scenario: Content is JavaScript-rendered**
+- Note that analysis is limited to SSR content visible in initial HTML
+- Recommend user verify CSR-rendered content in browser or via Puppeteer
+- Flag which content gaps may be due to CSR rendering
 
-**Scenario: User asks for competitor comparison**
-- Note this is out of scope for this skill
-- Offer to analyze competitor sites separately
-- Suggest the user create a separate competitive analysis skill or use web search
+**Scenario: Site has no schema at all**
+- This is HIGH priority for AEO; provide specific schema recommendations for each content type
+- Example: "Homepage needs Organization schema; blog posts need Article schema; FAQ section needs FAQPage schema"
+
+**Scenario: User asks "is my schema valid?"**
+- Don't just say "valid" or "invalid"
+- Provide specific assessment: "Schema structure is valid but missing 3 required properties: author, datePublished, image"
+- Recommend user run [Google's Rich Results Test](https://search.google.com/test/rich-results) for official validation
