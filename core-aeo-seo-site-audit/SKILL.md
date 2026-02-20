@@ -512,7 +512,7 @@ For each issue, include:
 Create a well-structured document (markdown or docx) with:
 
 ### Executive Summary
-- **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed tone guidelines)
+- **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed tone guidelines)
 - Total pages analyzed (target + crawled)
 - Overall SEO health score (based on issues found) - state as metric, not value judgment
 - Top 3-5 critical issues to fix first - order by measurable impact and effort
@@ -520,7 +520,7 @@ Create a well-structured document (markdown or docx) with:
 
 ### Detailed Findings
 
-**Writing style guidelines for all findings sections:** See [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed style guidelines. Key principles:
+**Writing style guidelines for all findings sections:** See [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed style guidelines. Key principles:
 - State issues factually without editorial language
 - Explain mechanism of impact, not opinion
 - Use metrics to convey severity, not emotional language
@@ -548,7 +548,7 @@ For each category (Meta Tags, Headings, Links, Images, etc.):
 
 ### Prioritized Recommendations
 
-**Writing style for recommendations:** See [TONE-GUIDE.md](./TONE-GUIDE.md) for detailed style guidelines. Key principles:
+**Writing style for recommendations:** See [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed style guidelines. Key principles:
 - Use neutral language without dramatic framing
 - Quantify impact with specific data
 - Avoid vague benefits (no "better SEO" without specifics)
@@ -623,7 +623,7 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 - Don't make assumptions about backend or server-side issues
 
 ### User Communication
-**Refer to [TONE-GUIDE.md](./TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
+**Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
 
 Key principles:
 - Use neutral, analytical language

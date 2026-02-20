@@ -5,11 +5,11 @@ description: Guidelines for writing analytical, data-driven audit reports and co
 
 # Tone & Communication Guidelines
 
-This guide establishes the communication style for SEO/AEO audit reports and all user-facing output. The goal is **analytical and data-driven** communication that avoids promotional or hyperbolic language.
+This guide establishes the communication style for all skill outputs and user-facing communication. The goal is **analytical and data-driven** communication that avoids promotional or hyperbolic language.
 
 ## Core Principle
 
-**Analytical over Promotional:** All audit output should read as objective analysis backed by specific metrics, not as marketing or persuasion. The reader should be able to verify claims against the data presented.
+**Analytical over Promotional:** All skill output should read as objective analysis backed by specific metrics, not as marketing or persuasion. The reader should be able to verify claims against the data presented.
 
 ---
 
@@ -152,8 +152,8 @@ Expected Outcome
 - Data sources and citations
 
 **Term explanations:**
-- Always explain SEO and AEO terms in plain language
-- Don't assume user knows technical jargon
+- Always explain technical terms in plain language
+- Don't assume user knows specialized jargon
 - Provide examples of good vs bad implementations
 - Present issues objectively without editorial emphasis
 
@@ -229,6 +229,6 @@ Check your output for:
 ## Reference Documents
 
 For tone improvements applied to SEO audits, see:
-- [TONE-COMPARISON.md](../outputs/altpath-2026-02-20/TONE-COMPARISON.md) - Before/after examples with explanations
-- [1-site-audit-REVISED.md](../outputs/altpath-2026-02-20/1-site-audit-REVISED.md) - Example of revised analytical tone
-- [2-aeo-topic-research-REVISED.md](../outputs/altpath-2026-02-20/2-aeo-topic-research-REVISED.md) - Data-driven AEO analysis
+- [TONE-COMPARISON.md](outputs/altpath-2026-02-20/TONE-COMPARISON.md) - Before/after examples with explanations
+- [1-site-audit-REVISED.md](outputs/altpath-2026-02-20/1-site-audit-REVISED.md) - Example of revised analytical tone
+- [2-aeo-topic-research-REVISED.md](outputs/altpath-2026-02-20/2-aeo-topic-research-REVISED.md) - Data-driven AEO analysis

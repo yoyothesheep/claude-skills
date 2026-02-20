@@ -1,84 +1,185 @@
 # claude-skills
 
-- This directory contains Claude skills that I've tested, iterated on, and used. I'll aim to keep them updated as I refine performance.
-- Skills generally require Claude to have internet access via `web_fetch` and `web_search`
-- Output is saved as Markdown by default; Word (`.docx`) or spreadsheet formats available on request
+SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
+
+## Setup
+
+### 1. Load a skill
+
+**Claude Code**
+
+Add this repo to your project, then reference skills by name or file path in conversation:
+
+```
+Read core-aeo-seo-site-audit/SKILL.md and run the audit for example.com
+```
+
+**Claude Web**
+
+Either: 
+- Upload the `SKILL.md` to your chat, and it'll be available only for that chat.
+- Go to Settings -> Capabilities -> Skills and upload the `SKILL.md` files so they're always available to all conversations.
 
 ---
 
-Note: Skills 1. `seo-site-audit` and 2. `seo-competitor-keywords` are meant to be used together to create a complete beginner-level, baseline SEO/AEO audit and strategy. They can also be used separately as needed. They're separate skills to manage performance.
+### 2. Enable internet access
 
+Skills use `web_fetch` and `web_search` to fetch and analyze web pages.
 
-## 1. `seo-site-audit` — Site Audit & AEO Analysis
+- **Claude Code:** Internet access is available by default
+- **Claude Web:** Go to **Settings → Capabilities** and enable **"Allow network egress"**. Add the domain you're trying to audit to the Domain allowlist.
 
-### Recommended Workflow
+---
+
+### 3. Connect Ahrefs MCP (optional)
+
+- A paid Ahrefs account gives you access to real keyword data in `core-seo-competitor-keywords`. 
+- A paid or free account gives you access to AI engine visibility in `aeo-seo-strategy`. 
+- Without either, those skills use web-scraped estimates instead of actual search volumes, difficulty scores, and competitor traffic.
+
+Connect and authenticate via the Ahrefs MCP server in your Claude Code or Web settings.
+
+---
+
+### Claude Web Limitations
+
+Claude Web can run these skills, but with reduced capability when running `core-aeo-seo-site-audit`, as compared to Claude Code:
+
+| Feature | Claude Code | Claude Web |
+|---|---|---|
+| Fetch page content | ✅ Full | ✅ Full (requires network egress enabled) |
+| Extract JSON-LD schema | ✅ Full (via `curl`) | ❌ Not available — `WebFetch` strips script tags |
+
+**Schema markup** is the most significant gap. `WebFetch` converts HTML to markdown, which strips `<script type="application/ld+json">` blocks entirely. When running the site audit on Claude Web:
+- The skill will note which pages could not have schema inspected
+- You'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
+- For full schema coverage, run the audit in Claude Code
+
+---
+
+## Quick Start
+
+### Want Everything in One Report?
+Use **`aeo-seo-strategy`** for a unified audit that runs all three core skills, synthesizes recommendations into one list, and includes site/product improvements alongside content strategy.
 
 ```
-1. seo-competitor-keywords  →  Find what to target
-2. Create content
-3. seo-site-audit           →  Confirm it's optimized
-4. Publish → measure → repeat
+aeo-seo-strategy  →  Complete strategy with research, competitive analysis, 
+                      site audit, and product recommendations in one report
 ```
 
-**File:** `seo-site-audit/SKILL.md`
+Or, run each core skill separately. Then publish → measure → iterate .
+```
+* core-aeo-topic-research           →  Discover what topics to target for AEO
+* core-seo-competitor-keywords      →  Find competitive keywords and content gaps
+* core-aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
+```
+
+---
+
+## 0. `aeo-seo-strategy` — Complete SEO/AEO Strategy & Roadmap (Orchestrator)
+
+**File:** `aeo-seo-strategy/SKILL.md`
 
 ### Goal
-Crawls a target website and produces a prioritized audit covering technical SEO, content quality, and Answer Engine Optimization (AEO) — the emerging practice of optimizing for AI-generated search results (ChatGPT, Perplexity, Google AI Overviews).
+An all-in-one strategy. This orchestrates all three core skills (`core-aeo-topic-research`, `core-seo-competitor-keywords`, `core-aeo-seo-site-audit`), analyzes your site's functionality, then synthesizes structural/UX improvements alongside content recommendations.
 
 ### Input
-- A list of your site's URLs, or provide base URL(s) and ask the agent to crawl a small sample of the linked pages. 
-*Be mindful of your account level's context window, and don't crawl your entire site!*
+- Your domain (i.e. your homepage URL)
+- [Optional] 2–5 competitor URLs
+- [Optional] Target website URLs to audit (5–10 core pages)
+- [Optional] Ahrefs account for real keyword data
+- [Optional] Market/niche and business goals
+- [Optional] Current site pain points or goals
 
-### What it analyzes
-- **Technical SEO** — title tags, meta descriptions, heading structure, internal linking, schema markup, image alt text
-- **Content quality** — depth, freshness, E-E-A-T signals, readability
-- **AEO** — FAQ/HowTo schema, author credentials, direct-answer formatting, citability signals
+### What it synthesizes
+- **Topic research** — what AI engines are answering, what's being cited
+- **Competitive analysis** — keyword gaps, ranking opportunities, quick wins
+- **Site audit** — technical SEO, content quality, current AEO level
+- **Functionality analysis** — site architecture, feature gaps, UX friction points
+- **Unified strategy** — integrated list of prioritized recommendations
 
 ### Output
-A structured report with a scored summary (0–100), findings grouped by severity (🔴 High / 🟡 Medium / 🟢 Low), and a phased action plan with implementation examples.
-
-### When to use it
-- Before launching or relaunching a site
-- To diagnose a traffic drop
-- To audit a competitor's on-page optimization
-- After publishing new content to validate SEO hygiene
+A strategic report with:
+- Strategic overview and key insights
+- Detailed findings grouped by category (research, keywords, on-page, functionality)
+- Feature and product recommendations with business case
+- Success metrics and KPIs
 
 ---
 
-## 2. `seo-competitor-keywords` — Competitor Analysis & Keyword Research
+## 1. `core-aeo-topic-research` — AEO Topic Research & Opportunities
 
-**File:** `seo-competitor-keywords/SKILL.md`
+**File:** `core-aeo-topic-research/SKILL.md`
 
 ### Goal
-Analyzes 2–5 competitor websites to reverse-engineer their content strategy, identifies keyword and content gaps, and produces a prioritized list of target keywords with traffic potential estimates.
+Discovers what questions AI engines are answering in your niche, which domains and pages they're citing, and what content formats are winning citations — so you know exactly what topics to create for AEO visibility.
 
 ### Input
-- Competitor websites URLs 
-- \[Optional\] Connect your Ahrefs account through their MCP server, and be on at least a Lite plan. 
+- Your domain (i.e. your homepage URL)
+- [Optional] 2–5 competitor domains  
+- [Optional] Target market or niche
+- [Optional] Which AI engines to prioritize (ChatGPT, Perplexity, Google AI Overviews, Gemini)
+
+### What it discovers
+- **AI-answered questions** — what are people asking that AI search engines are answering?
+- **Cited domains & pages** — who is AI citing most often, and which specific pages win citations?
+- **Content patterns** — what topics, formats, and structures get cited by AI engines?
+- **Content gaps** — opportunities where you can create content that AI engines will cite
+
+### Output
+A prioritized content opportunity brief with topics ranked by citation potential, competitor analysis showing what they're getting cited for, recommended content formats and structures, and a recommended content roadmap.
+
+---
+
+## 2. `core-seo-competitor-keywords` — Competitor Analysis & Keyword Research
+
+**File:** `core-seo-competitor-keywords/SKILL.md`
+
+### Goal
+Analyzes competitor websites to reverse-engineer their SEO strategies, identifies content gaps and keyword opportunities, and produces a prioritized list of target keywords with ranking and traffic potential.
+
+### Input
+- Your domain (i.e. your homepage URL)
+- [Optional] 2–5 competitor domains  
+- [Optional] Connect your Ahrefs account for real data
 
 ### What it analyzes
-- **Competitor content strategy** — topic coverage, content types, depth, structure
-- **Content gaps** — topics competitors rank for that you don't (and vice versa)
-- **Keyword opportunities** — grouped into three tiers by effort and payoff
+- **Competitor content strategy** — what topics do they cover, and how?
+- **Content gaps** — keywords they rank for that you don't (and vice versa)
+- **Keyword opportunities** — ranked by ranking potential, search volume, and competitive difficulty
+- **Traffic analysis** — estimated traffic potential and ROI for target keywords
 
 ### Ahrefs integration
-When the **Ahrefs MCP server** is connected, the skill uses real data instead of estimates:
-
-| Metric | Without Ahrefs | With Ahrefs |
-|---|---|---|
-| Search volume | High / Medium / Low | Exact monthly figure |
-| Keyword difficulty | SERP-based proxy | Ahrefs KD score (0–100) |
-| Traffic potential | CTR × estimated volume | Clicks data + SERP feature adjustments |
-| Competitor traffic | Observable signals | Exact monthly visits |
+When the **Ahrefs MCP server** is connected, you get real data:
+- Exact search volumes and traffic figures
+- Ahrefs keyword difficulty scores (0–100)  
+- Actual competitor organic traffic
+- SERP feature data and adjustments
 
 ### Output
-A strategy document containing a competitor summary, keyword tiers (Quick Wins / Strategic / Long-term), a traffic opportunity summary with ROI projection, a content gap analysis, and a 90-day content calendar.
+A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, and a content gap analysis.
 
-### When to use it
-- Entering a new market or niche
-- Planning a content strategy from scratch
-- Identifying quick-win keyword opportunities
-- Understanding how much traffic competitors are capturing
+---
+
+## 3. `core-aeo-seo-site-audit` — Site Audit & AEO Optimization
+
+**File:** `core-aeo-seo-site-audit/SKILL.md`
+
+### Goal
+Crawls your website pages and produces a prioritized audit covering technical SEO, content quality, and AEO (Answer Engine Optimization) — with actionable recommendations for improving both search ranking and AI citation potential for your **existing pages**.
+
+### Input
+- 1 or more target URLs from your website
+- [Optional] Specify how many internal linked pages to analyze
+- [Optional] Your target keywords or topics
+
+### What it analyzes
+- **Technical SEO** — title tags, meta descriptions, heading structure, internal linking, schema markup, image alt text, page speed signals
+- **Content quality** — depth, freshness, E-E-A-T signals, readability, topical relevance
+- **AEO optimization** — FAQ/HowTo schema, direct-answer formatting, author credentials, citability signals, content structure for AI extraction
+
+### Output
+A scored audit report (0–100) with findings grouped by severity (🔴 High / 🟡 Medium / 🟢 Low), implementation examples, and a phased action plan.
 
 ---
 

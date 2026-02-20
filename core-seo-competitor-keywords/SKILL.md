@@ -591,7 +591,6 @@ Use the `difficulty` score from Keywords Explorer:
 **Medium (31-50):**
 - Need strong content + some links
 - Established sites ranking but not giants
-- 90-day targets
 - **Action:** Build comprehensive content
 
 **Hard (51-70):**
@@ -728,7 +727,7 @@ keywords.sort(key=lambda x: x['opportunity']['score'], reverse=True)
 
 **Scoring Interpretation:**
 - Score >100 = Excellent opportunity (pursue immediately)
-- Score 50-100 = Strong opportunity (90-day plan)
+- Score 50-100 = Strong opportunity (strategic priority)
 - Score 20-50 = Good opportunity (long-term)
 - Score <20 = Marginal opportunity (skip or deprioritize)
 
@@ -947,7 +946,7 @@ Group keywords into tiers:
 - "how to [specific task] in [your industry]"
 - "[problem] solution for [specific audience]"
 
-### 🎯 Tier 2: Strategic Targets (Next 90 Days)
+### 🎯 Tier 2: Strategic Targets
 
 **Criteria:**
 - Medium difficulty
@@ -1072,20 +1071,6 @@ For each keyword:
 1. [Topic] - Why: [Unique expertise, weak competitor content, etc.]
 2. [Topic] - Why: [Reasoning]
 
-### Content Calendar (Next 90 Days)
-
-**Month 1:**
-- Week 1: [Keyword/Topic] - [Content type]
-- Week 2: [Keyword/Topic] - [Content type]
-- Week 3: [Keyword/Topic] - [Content type]
-- Week 4: [Keyword/Topic] - [Content type]
-
-**Month 2:**
-(Continue pattern)
-
-**Month 3:**
-(Continue pattern)
-
 ### Competitive Positioning Recommendations
 
 **Your Unique Angle:**
@@ -1182,6 +1167,8 @@ Always save to `/mnt/user-data/outputs/` and use `present_files` to share.
 
 ### User Communication
 
+**Refer to [TONE-GUIDE.md](../TONE-GUIDE.md) for comprehensive tone and communication guidelines.**
+
 **Explain Your Analysis:**
 - Why you rated keywords as you did
 - What signals you used for difficulty assessment
@@ -1268,7 +1255,6 @@ Always save to `/mnt/user-data/outputs/` and use `present_files` to share.
 6. **Delivers report:**
    - Traffic gap analysis with actual numbers
    - Prioritized keyword list with opportunity scores
-   - 90-day content calendar
    - ROI projections based on real traffic values
 
 **Assistant (Without Ahrefs):**
@@ -1290,7 +1276,7 @@ Always save to `/mnt/user-data/outputs/` and use `present_files` to share.
 
 4. Generates strategy:
    - 50+ keyword opportunities across 3 tiers
-   - Content calendar for next 90 days
+   - Prioritized recommendations list
    - Specific recommendations for differentiation
    - Quick wins to target first
 
@@ -1335,7 +1321,7 @@ A successful analysis includes:
 - ✅ 40-60 keyword opportunities identified
 - ✅ Clear prioritization with reasoning
 - ✅ Specific content recommendations
-- ✅ Actionable 90-day plan
+- ✅ Actionable prioritized recommendations list
 - ✅ Realistic difficulty and opportunity assessments
 
 ## Integration with SEO Site Audit Skill
