@@ -1,6 +1,6 @@
 ---
-name: core-aeo-topic-research
-description: Research AEO (Answer Engine Optimization) opportunities by discovering what questions AI engines are actually answering in your niche, which domains and pages they're citing, and what content formats are winning citations. 
+name: aeo-topic-research
+description: Research AEO (Answer Engine Optimization) opportunities by discovering what questions AI engines are actually answering in your niche, which domains and pages they're citing, and what content formats are winning citations.
 ---
 
 # AEO Topic Research Skill
@@ -456,9 +456,9 @@ If Brand Radar tools are unavailable, fall back to:
 
 This skill is the **research phase** in a three-part workflow:
 
-1. **`core-aeo-topic-research`** (this skill) → Discover what topics to create
-2. **`core-aeo-seo-site-audit`** → Audit existing content for AEO compliance
-3. **`core-seo-keyword-research`** → Validate topics against traditional SEO demand
+1. **`aeo-topic-research`** (this skill) → Discover what topics to create
+2. **`aeo-seo-site-audit`** → Audit existing content for AEO compliance
+3. **`seo-keyword-research`** → Validate topics against traditional SEO demand
 
 ### Communicating Results
 

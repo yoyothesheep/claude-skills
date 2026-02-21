@@ -1,11 +1,11 @@
 ---
-name: aeo-seo-strategy
-description: Run a complete SEO/AEO strategy audit by orchestrating all three core skills, and synthesizing findings into one unified set of recommendations. 
+name: aeo-seo-strategy-orchestrator
+description: Run a complete SEO/AEO strategy audit by orchestrating all three core skills, and synthesizing findings into one unified set of recommendations.
 ---
 
 # Full SEO/AEO Strategy Skill
 
-This skill is the all-in-one SEO/AEO and product strategy audit. It orchestrates the three core skills (`core-aeo-topic-research`, `core-seo-keyword-research`, and `core-aeo-seo-site-audit`), each of which includes domain-specific recommendations, then synthesizes all findings into a unified list.
+This skill is the all-in-one SEO/AEO and product strategy audit. It orchestrates the three core skills (`aeo-topic-research`, `seo-keyword-research`, and `aeo-seo-site-audit`), each of which includes domain-specific recommendations, then synthesizes all findings into a unified list.
 
 ## When to Use This Skill
 
@@ -21,9 +21,9 @@ Trigger this skill when the user:
 
 ## Core Workflow
 
-1. Run `core-aeo-topic-research` → identify AI-driven content opportunities (includes Content Presentation Recommendations)
-2. Run `core-seo-keyword-research` → surface keyword gaps and quick wins (includes Information Architecture Recommendations)
-3. Run `core-aeo-seo-site-audit` → assess technical SEO, content, and AEO optimization (includes Technical UX Recommendations)
+1. Run `aeo-topic-research` → identify AI-driven content opportunities (includes Content Presentation Recommendations)
+2. Run `seo-keyword-research` → surface keyword gaps and quick wins (includes Information Architecture Recommendations)
+3. Run `aeo-seo-site-audit` → assess technical SEO, content, and AEO optimization (includes Technical UX Recommendations)
 4. Synthesize all findings into one unified, ranked strategy report
 
 ## Inputs

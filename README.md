@@ -1,39 +1,21 @@
 # claude-skills
 
-SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
+SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. Designed to complement Ahrefs/Semrush.
 
 ## Table of Contents
 
 - [Setup](#setup)
 - [Quick Start](#quick-start)
-- [0. aeo-seo-strategy](#0-aeo-seo-strategy--complete-seaaeo-strategy--roadmap-orchestrator)
-- [1. core-aeo-topic-research](#1-core-aeo-topic-research--aeo-topic-research--opportunities)
-- [2. core-seo-competitor-keywords](#2-core-seo-competitor-keywords--competitor-analysis--keyword-research)
-- [3. core-aeo-seo-site-audit](#3-core-aeo-seo-site-audit--site-audit--aeo-optimization)
+- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator)
+- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities)
+- [2. seo-keyword-research](#2-seo-keyword-research--competitor-analysis--keyword-research)
+- [3. aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
 
 ---
 
 ## Setup
 
-### 1. Load a skill
-
-**Claude Code**
-
-Add this repo to your project, then reference skills by name or file path in conversation:
-
-```
-Read core-aeo-seo-site-audit/SKILL.md and run the audit for example.com
-```
-
-**Claude Web**
-
-Either:
-- Upload the `SKILL.md` to your chat, and it'll be available only for that chat.
-- Go to Settings -> Capabilities -> Skills and upload the `SKILL.md` files so they're always available to all conversations.
-
----
-
-### 2. Enable internet access
+### 1. Enable internet access
 
 Skills use `web_fetch` and `web_search` to fetch and analyze web pages.
 
@@ -42,19 +24,17 @@ Skills use `web_fetch` and `web_search` to fetch and analyze web pages.
 
 ---
 
-### 3. Connect Ahrefs MCP (optional)
+### 2. Connect Ahrefs MCP (optional)
 
-- A paid Ahrefs account gives you access to real keyword data in `core-seo-competitor-keywords`.
-- A paid or free account gives you access to AI engine visibility in `aeo-seo-strategy`.
+- A paid Ahrefs account gives you access to real keyword data.
+- A paid or free account gives you access to AI engine visibility.
 - Without either, those skills use web-scraped estimates instead of actual search volumes, difficulty scores, and competitor traffic.
-
-Connect and authenticate via the Ahrefs MCP server in your Claude Code or Web settings.
 
 ---
 
 ### Claude Web Limitations
 
-Claude Web can run these skills, but with reduced capability when running `core-aeo-seo-site-audit`, as compared to Claude Code:
+Claude Web can run these skills, but with reduced capability when running `aeo-seo-site-audit`, as compared to Claude Code:
 
 | Feature | Claude Code | Claude Web |
 |---|---|---|
@@ -71,23 +51,23 @@ Claude Web can run these skills, but with reduced capability when running `core-
 ## Quick Start
 
 ### Want Everything in One Report?
-Use **`aeo-seo-strategy`** for a unified audit that runs all three core skills, synthesizes recommendations into one list, and includes site/product improvements alongside content strategy.
+Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills, synthesizes recommendations into one list, and includes site/product improvements alongside content strategy.
 
-Or, run each core skill separately. Then publish → measure → iterate .
+Or, run each core skill separately. 
 ```
-* core-aeo-topic-research           →  Discover what topics to target for AEO
-* core-seo-competitor-keywords      →  Find competitive keywords and content gaps
-* core-aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
+* aeo-topic-research           →  Discover what topics to target for AEO
+* seo-keyword-research      →  Find competitive keywords and content gaps
+* aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
 ```
 
 ---
 
-## 0. `aeo-seo-strategy` — Complete SEO/AEO Strategy & Roadmap (Orchestrator)
+## 0. `aeo-seo-strategy-orchestrator` — Complete SEO/AEO Strategy & Roadmap (Orchestrator)
 
-**File:** `aeo-seo-strategy/SKILL.md`
+**File:** `aeo-seo-strategy-orchestrator/SKILL.md`
 
 ### Goal
-An all-in-one strategy. This orchestrates all three core skills (`core-aeo-topic-research`, `core-seo-competitor-keywords`, `core-aeo-seo-site-audit`), then synthesizes all recommendations.
+An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-research`, `seo-keyword-research`, `aeo-seo-site-audit`), then synthesizes all recommendations.
 
 ### Input
 - Your domain (i.e. your homepage URL)
@@ -113,9 +93,9 @@ A strategic report with:
 
 ---
 
-## 1. `core-aeo-topic-research` — AEO Topic Research & Opportunities
+## 1. `aeo-topic-research` — AEO Topic Research & Opportunities
 
-**File:** `core-aeo-topic-research/SKILL.md`
+**File:** `aeo-topic-research/SKILL.md`
 
 ### Goal
 Discovers what questions AI engines are answering in your niche, which domains and pages they're citing, and what content formats are winning citations — so you know exactly what topics to create for AEO visibility.
@@ -137,9 +117,9 @@ A prioritized content opportunity brief with topics ranked by citation potential
 
 ---
 
-## 2. `core-seo-competitor-keywords` — Competitor Analysis & Keyword Research
+## 2. `seo-keyword-research` — Competitor Analysis & Keyword Research
 
-**File:** `core-seo-competitor-keywords/SKILL.md`
+**File:** `seo-keyword-research/SKILL.md`
 
 ### Goal
 Analyzes competitor websites to reverse-engineer their SEO strategies, identifies content gaps and keyword opportunities, and produces a prioritized list of target keywords with ranking and traffic potential.
@@ -167,12 +147,12 @@ A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long
 
 ---
 
-## 3. `core-aeo-seo-site-audit` — Site Audit & AEO Optimization
+## 3. `aeo-seo-site-audit` — Site Audit & AEO Optimization
 
-**File:** `core-aeo-seo-site-audit/SKILL.md`
+**File:** `aeo-seo-site-audit/SKILL.md`
 
 ### Goal
-Crawls your website pages and produces a prioritized audit covering technical SEO, content quality, and AEO (Answer Engine Optimization) — with actionable recommendations for improving both search ranking and AI citation potential for your **existing pages**.
+Crawls your website pages and produces a prioritized audit covering technical SEO, content quality, and AEO (Answer Engine Optimization) — with actionable recommendations for improving both search ranking and AI citation potential for your existing pages. **Complements an Ahrefs audit**, not meant to replace it.
 
 ### Input
 - 1 or more target URLs from your website

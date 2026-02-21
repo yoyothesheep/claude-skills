@@ -1,5 +1,5 @@
 ---
-name: core-seo-keyword-research
+name: seo-keyword-research
 description: Analyze competitor websites to identify their SEO strategies, content gaps, and generate prioritized target keywords with ranking potential. Use when users want to understand competitor SEO tactics, find keyword opportunities, identify content gaps, or build a keyword strategy based on competitive intelligence.
 ---
 
@@ -1388,9 +1388,9 @@ A successful analysis includes:
 These skills work together:
 
 **Workflow:**
-1. Use **core-seo-keyword-research** to identify opportunities
+1. Use **seo-keyword-research** to identify opportunities
 2. Create content targeting those keywords
-3. Use **core-aeo-seo-site-audit** to ensure content is optimized
+3. Use **aeo-seo-site-audit** to ensure content is optimized
 4. Repeat and iterate
 
 **Cross-references:**

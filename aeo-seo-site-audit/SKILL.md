@@ -1,5 +1,5 @@
 ---
-name: core-aeo-seo-site-audit
+name: aeo-seo-site-audit
 description: Analyze webpages for content quality, schema markup completeness, and AEO (Answer Engine Optimization). Designed to complement Ahrefs Site Audit findings.
 ---
 
