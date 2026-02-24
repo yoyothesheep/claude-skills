@@ -13,8 +13,8 @@ Designed to complement Ahrefs/Semrush with:
 
 - [Setup](#setup)
 - [Quick Start](#quick-start)
-- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator)
-- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities)
+- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator) 
+- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities) 
 - [2. seo-keyword-research](#2-seo-keyword-research--competitor-analysis--keyword-research)
 - [3. aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
 
@@ -24,7 +24,7 @@ Designed to complement Ahrefs/Semrush with:
 
 ### 1. Recommend using Claude Code
 
-The `aeo-seo-site-audit skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
+The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll miss an important part of the audit.
 
 ### 2. Connect Ahrefs MCP (optional)
 
@@ -38,7 +38,7 @@ The `aeo-seo-site-audit skill uses `curl` to analyze schema markup, but Claude W
 ### Want Everything in One Report?
 Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills, and synthesizes recommendations into one list.
 
-Or, run each core skill separately. 
+Or, run each skill separately. 
 ```
 * aeo-topic-research           →  Recommends topics, content format, and UX changes for AEO
 * seo-keyword-research      →  Find competitive keywords, content gaps, and IA recommendations for SEO
