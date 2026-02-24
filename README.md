@@ -1,6 +1,6 @@
 # claude-skills
 
-SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. Designed to complement Ahrefs/Semrush.
+SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. Designed to complement Ahrefs/Semrush by automatically understanding your site's content and intent, then automatically generating content and UX strategy.
 
 ## Table of Contents
 
@@ -15,48 +15,26 @@ SEO and AEO skills for Claude — a tested workflow for auditing and optimizing 
 
 ## Setup
 
-### 1. Enable internet access
+### 1. Recommend using Claude Code
 
-Skills use `web_fetch` and `web_search` to fetch and analyze web pages.
-
-- **Claude Code:** Internet access is available by default
-- **Claude Web:** Go to **Settings → Capabilities** and enable **"Allow network egress"**. Add the domain you're trying to audit to the Domain allowlist.
-
----
+The `aeo-seo-site-audit skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
 
 ### 2. Connect Ahrefs MCP (optional)
 
-- A paid Ahrefs account gives you access to real keyword data.
-- A paid or free account gives you access to AI engine visibility.
-- Without either, those skills use web-scraped estimates instead of actual search volumes, difficulty scores, and competitor traffic.
-
----
-
-### Claude Web Limitations
-
-Claude Web can run these skills, but with reduced capability when running `aeo-seo-site-audit`, as compared to Claude Code:
-
-| Feature | Claude Code | Claude Web |
-|---|---|---|
-| Fetch page content | ✅ Full | ✅ Full (requires network egress enabled) |
-| Extract JSON-LD schema | ✅ Full (via `curl`) | ❌ Not available — `WebFetch` strips script tags |
-
-**Schema markup** is the most significant gap. `WebFetch` converts HTML to markdown, which strips `<script type="application/ld+json">` blocks entirely. When running the site audit on Claude Web:
-- The skill will note which pages could not have schema inspected
-- You'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
-- For full schema coverage, run the audit in Claude Code
+- A paid Ahrefs account gives you access to real keyword data such as search volumes, difficulty scores, and competitor traffic, and AI engine visibility.
+- Otherwise, skills use web-scraped estimates instead of actual data.
 
 ---
 
 ## Quick Start
 
 ### Want Everything in One Report?
-Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills, synthesizes recommendations into one list, and includes site/product improvements alongside content strategy.
+Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills, and synthesizes recommendations into one list.
 
 Or, run each core skill separately. 
 ```
-* aeo-topic-research           →  Discover what topics to target for AEO
-* seo-keyword-research      →  Find competitive keywords and content gaps
+* aeo-topic-research           →  Recommends topics, content format, and UX changes for AEO
+* seo-keyword-research      →  Find competitive keywords and content gaps for SEO
 * aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
 ```
 
