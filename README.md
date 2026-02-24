@@ -1,6 +1,13 @@
 # claude-skills
 
-SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. Designed to complement Ahrefs/Semrush by automatically understanding your site's content and intent, then automatically generating content and UX strategy.
+SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. 
+
+Designed to complement Ahrefs/Semrush with:
+- Content & intent understanding
+- UX and IA recommendations
+- Reddit language glossary (how real people phrase questions in your niche)
+- Schema validation with content type
+
 
 ## Table of Contents
 
@@ -34,7 +41,7 @@ Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three 
 Or, run each core skill separately. 
 ```
 * aeo-topic-research           →  Recommends topics, content format, and UX changes for AEO
-* seo-keyword-research      →  Find competitive keywords and content gaps for SEO
+* seo-keyword-research      →  Find competitive keywords, content gaps, and IA recommendations for SEO
 * aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
 ```
 
@@ -66,7 +73,7 @@ An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-rese
 A strategic report with:
 - Strategic overview and key insights
 - Detailed findings grouped by category (research, keywords, on-page, functionality)
-- Feature and product recommendations with business case
+- Feature, UX, and IA recommendations (navigation structure, hub pages, internal linking, content silos, page load, mobile, CTAs, accessibility)
 - Success metrics and KPIs
 
 ---
@@ -79,19 +86,22 @@ A strategic report with:
 Discovers what questions AI engines are answering in your niche, which domains and pages they're citing, and what content formats are winning citations — so you know exactly what topics to create for AEO visibility.
 
 ### Input
-- Your domain (i.e. your homepage URL)
-- [Optional] 2–5 competitor domains
-- [Optional] Target market or niche
+- Your brand name and website URL
+- Your market/niche (e.g. "email marketing software")
+- [Optional] 2–5 competitor brand names to compare against
 - [Optional] Which AI engines to prioritize (ChatGPT, Perplexity, Google AI Overviews, Gemini)
+- [Optional] Ahrefs account for real Brand Radar citation data
 
 ### What it discovers
 - **AI-answered questions** — what are people asking that AI search engines are answering?
+- **Reddit language** — how real people phrase questions and describe problems in your niche, surfacing vocabulary and unmet needs that formal research misses
 - **Cited domains & pages** — who is AI citing most often, and which specific pages win citations?
 - **Content patterns** — what topics, formats, and structures get cited by AI engines?
 - **Content gaps** — opportunities where you can create content that AI engines will cite
+- **Content presentation & UX** — navigation aids (TOC, jump links, sticky nav), multimedia gaps, and formatting patterns from citation-winning pages
 
 ### Output
-A prioritized content opportunity brief with topics ranked by citation potential, competitor analysis showing what they're getting cited for, recommended content formats and structures, and a recommended content roadmap.
+A prioritized content opportunity brief including: topic clusters ranked by citation potential, a Reddit language glossary with natural phrasing and community vocabulary per topic, competitor citation analysis, winning content formats and structures, content presentation recommendations (navigation, format, multimedia), and a prioritized content roadmap.
 
 ---
 
@@ -112,6 +122,7 @@ Analyzes competitor websites to reverse-engineer their SEO strategies, identifie
 - **Content gaps** — keywords they rank for that you don't (and vice versa)
 - **Keyword opportunities** — ranked by ranking potential, search volume, and competitive difficulty
 - **Traffic analysis** — estimated traffic potential and ROI for target keywords
+- **Information architecture** — navigation structure, topic cluster hub pages, internal linking, and content silos based on keyword clustering
 
 ### Ahrefs integration
 When the **Ahrefs MCP server** is connected, you get real data:
@@ -121,7 +132,7 @@ When the **Ahrefs MCP server** is connected, you get real data:
 - SERP feature data and adjustments
 
 ### Output
-A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, and a content gap analysis.
+A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, content gap analysis, and information architecture recommendations (navigation changes, hub pages, internal linking strategy, content silos).
 
 ---
 
@@ -130,19 +141,19 @@ A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long
 **File:** `aeo-seo-site-audit/SKILL.md`
 
 ### Goal
-Crawls your website pages and produces a prioritized audit covering technical SEO, content quality, and AEO (Answer Engine Optimization) — with actionable recommendations for improving both search ranking and AI citation potential for your existing pages. **Complements an Ahrefs audit**, not meant to replace it.
+Analyzes your website pages for content quality, schema markup completeness, and AEO (Answer Engine Optimization) — with actionable recommendations for improving AI citation potential and search ranking for your existing pages. **Complements an Ahrefs Site Audit** by covering content depth and AI-readiness that Ahrefs cannot assess; relies on Ahrefs for technical SEO (title tags, meta descriptions, broken links, crawlability, etc.).
 
 ### Input
 - 1 or more target URLs from your website
-- [Optional] Specify how many internal linked pages to analyze
-- [Optional] Your target keywords or topics
+- [Optional] Ahrefs Site Audit project ID — automatically pulls technical audit findings to combine with content analysis
+- [Optional] Business context and content goals (e.g. targeting AI search engines)
 
 ### What it analyzes
-- **Technical SEO** — title tags, meta descriptions, heading structure, internal linking, schema markup, image alt text, page speed signals
-- **Content quality** — depth, freshness, E-E-A-T signals, readability, topical relevance
-- **AEO optimization** — FAQ/HowTo schema, direct-answer formatting, author credentials, citability signals, content structure for AI extraction
+- **Schema markup** — validates JSON-LD completeness and accuracy (FAQPage, HowTo, Article, Organization, etc.), flags missing or mismatched schema
+- **Content quality** — depth, directness, E-E-A-T signals, readability, topical coherence
+- **AEO optimization** — direct-answer formatting, author credentials, source citations, freshness signals, content structure for AI extraction
 
 ### Output
-A scored audit report (0–100) with findings grouped by severity (🔴 High / 🟡 Medium / 🟢 Low), implementation examples, and a phased action plan.
+A prioritized audit report with findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement), specific schema fixes with effort estimates, content recommendations, and a page-by-page breakdown. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
 
 ---
