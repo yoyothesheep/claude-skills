@@ -29,16 +29,27 @@ Trigger this skill when the user:
 
 ## Core Workflow
 
-1. **Gather Input** - Get target URLs, Ahrefs project ID (optional), and business context
-2. **Fetch Ahrefs Audit Issues** (if project ID provided) - Pull technical audit findings via Ahrefs API
-3. **Crawl Target Pages & Extract JSON-LD** - Fetch URLs (Bash curl or WebFetch), extract schema in ONE pass
-4. **Parse Content & Validate Schema** - Extract content elements, validate schema completeness and accuracy
-5. **Content Quality Analysis** - Assess content depth, structure, direct answer formats
-6. **Authority & Citability Assessment** - Evaluate expertise signals, source attribution, date freshness
-7. **AI-Friendly Patterns** - Identify missing FAQ, HowTo, comparison schemas and content structures
-8. **Natural Language Optimization** - Check conversational tone, clarity, extractability
-9. **Prioritize Content Gaps** - Rank recommendations by AEO impact and effort
-10. **Generate Augmented Report** - Create report integrating Ahrefs findings + content analysis
+Steps 1-2. **[Coordinator]** Gather Input — get URLs, Ahrefs project ID (optional), business context
+Steps 3-5. **[Haiku Agent, parallel per URL]** Fetch Ahrefs data (if provided) + crawl pages + extract all raw signals
+Steps 6-11. **[Sonnet Agent]** Validate schema, analyze content quality, assess authority, prioritize gaps, generate report
+
+## Agent Architecture
+
+### Coordinator (main Claude)
+Handles Steps 1–2: gathers user input and orchestrates the two agents. Passes URLs + Ahrefs project ID to the Haiku agent(s), then passes all Haiku output payloads to the Sonnet agent.
+
+### Haiku Research Agents
+- One agent per URL, launched in parallel
+- One additional agent for the Ahrefs API call (if project ID provided)
+- Job: mechanical data extraction only — no analysis or judgment
+- Output: structured JSON payload per URL (see Haiku Output Contract section below)
+
+### Sonnet Synthesis Agent
+- Single agent, runs after all Haiku agents complete
+- Receives all Haiku JSON payloads + Ahrefs data
+- Job: schema validation, content analysis, gap prioritization, report writing
+- Output: final report
+---
 
 ## Environment Detection
 
@@ -50,6 +61,10 @@ Before starting the audit, check which tools are available and adjust accordingl
 | **Claude Web** | `WebFetch` only | ⚠️ Partial (stripped) | Use `strings` from curl or ask user for Rich Results Test output |
 
 **Note:** JSON-LD extraction is NOT optional. Audits claiming "no schema found" without explicit JSON-LD extraction attempts are incomplete and inaccurate. Always verify schema presence before reporting it as missing.
+
+---
+
+## COORDINATOR
 
 ## Step 1: Gather Input
 
@@ -70,7 +85,33 @@ Ask the user for:
 
 **Note:** This skill complements Ahrefs Site Audit (which checks titles, meta descriptions, H1 tags, broken links, etc.). Focus here is content depth, schema, and AEO.
 
-## Step 2: Fetch Ahrefs Audit Issues (Optional)
+## Step 2: Orchestrate Agents
+
+After gathering input, launch Haiku agents in parallel using the Task tool — one per URL, plus one for the Ahrefs API call if a project ID was provided. Do not wait for one to finish before launching the next.
+
+```
+For each URL in target_urls:
+  Task(
+    subagent_type: "general-purpose",
+    model: "haiku",
+    prompt: <full HAIKU AGENT instructions below> + "\n\nURL to process: {url}"
+  )
+
+If ahrefs_project_id provided:
+  Task(
+    subagent_type: "general-purpose",
+    model: "haiku",
+    prompt: <Step 3 instructions> + "\n\nProject ID: {ahrefs_project_id}"
+  )
+```
+
+Collect all Task results. Once every Haiku agent has returned its JSON payload, proceed to the SONNET AGENT section.
+
+---
+
+## HAIKU AGENT
+
+## Step 3: Fetch Ahrefs Audit Issues (Optional)
 
 If user provided an Ahrefs project ID, pull technical audit findings:
 
@@ -93,21 +134,20 @@ ahrefs_issues = site_audit_issues(
 **If user doesn't have Ahrefs project ID:**
 - Skip this step
 - Continue with content-only analysis
-- Report will focus on content gaps and schema without technical SEO context
 
 ---
 
-## Step 3: Crawl Target Pages & Extract JSON-LD
+## Step 4: Crawl Target Pages, Extract JSON-LD & Content Signals
 
 **⚠️ CRITICAL: JSON-LD extraction is mandatory on every page. Do ONE fetch per URL (not two) to ensure efficiency.**
 
-For each target URL:
+For each target URL, extract all raw signals in a single pass. This step combines fetching, JSON-LD extraction, and content signal extraction.
 
 ### Environment Detection & Fetch Strategy
 
 Before fetching, detect which tools are available:
 
-- **Claude Code (Bash available):** Use `curl` to fetch raw HTML, extract JSON-LD immediately
+- **Claude Code (Bash available):** Use `curl` to fetch raw HTML, extract JSON-LD and content signals immediately
 - **Claude Web (WebFetch only):** Use `web_fetch`, JSON-LD will be stripped during conversion
 
 ### Fetch & Extract Implementation
@@ -134,11 +174,6 @@ else:
 EOF
 ```
 
-**Store for Step 4:**
-- Full HTML from curl response
-- Extracted JSON-LD blocks (parsed into dictionary/list)
-- Page response status and headers
-
 **If only `WebFetch` is available (Claude Web):**
 ```python
 result = web_fetch(url, text_content_token_limit=50000)
@@ -146,26 +181,8 @@ result = web_fetch(url, text_content_token_limit=50000)
 # Extracted schema will be empty; will note limitation in report.
 ```
 
-**Store for Step 4:**
-- Visible text content from web_fetch
-- Empty JSON-LD blocks (or ask user to provide schema via Google Rich Results Test)
-- Page metadata
+### Content Elements to Extract (from stored HTML)
 
-### Extract Internal Links from Stored HTML
-
-```python
-# From stored HTML, extract <a href="..."> where:
-- href starts with "/" or contains the same domain
-- Not pointing to: #anchors, mailto:, tel:, javascript:, files (.pdf, .jpg, etc.)
-- Not duplicate URLs
-# Store for optional content sampling (Step 5)
-```
-
-## Step 4: Parse Content & Validate Schema
-
-For each crawled page (using stored HTML from Step 3):
-
-### Content Elements (for AEO analysis)
 ```python
 # Parse from stored HTML:
 - Total word count of main content
@@ -177,7 +194,8 @@ For each crawled page (using stored HTML from Step 3):
 - Images: presence of descriptive captions
 ```
 
-### Authority & Freshness Signals
+### Authority & Freshness Signals to Extract (from stored HTML)
+
 ```python
 # Look for in stored HTML:
 - Author information (name, title, credentials)
@@ -187,38 +205,118 @@ For each crawled page (using stored HTML from Step 3):
 - External citations and source links
 ```
 
-### Schema.org Structured Data Validation
+### Extract Internal Links from Stored HTML
 
-**Using JSON-LD extracted in Step 3:**
-- Validate schema structure and completeness
+```python
+# From stored HTML, extract <a href="..."> where:
+- href starts with "/" or contains the same domain
+- Not pointing to: #anchors, mailto:, tel:, javascript:, files (.pdf, .jpg, etc.)
+- Not duplicate URLs
+# Store for optional content sampling (Step 5)
+```
+
+---
+
+## Step 5: Required Representative Sampling
+
+To ensure consistent, reproducible findings, crawl at least **2 representative pages per page type** present on the site. This sampling is **required** — not optional. Skipping dynamic or category pages is the most common cause of missed critical findings (CSR rendering gaps, listing schema gaps).
+
+**Page types to identify and sample:**
+
+| Type | Description | Examples |
+|------|-------------|---------|
+| Static content page | Server-rendered marketing or informational page | Homepage, About, Data Sources, FAQ |
+| Dynamic/app route | Page that may require JavaScript to render content | Career detail, product page, quiz/tool |
+| Category/listing page | Index of items or content | Blog index, career listings, provider directory |
+| Utility/supporting page | Non-primary page with supporting content | Pricing, Contact, Sitemap |
+
+**Sampling rules:**
+- Review the user-specified URLs and identify which types are already covered
+- For each type **not yet covered**, find and add 1–2 pages of that type (crawl the homepage, check nav links, or follow `href` patterns like `/discover/`, `/blog/`, `/products/`)
+- For dynamic pages: fetch with `curl` regardless; if content is missing from raw HTML, that is a finding (CSR gap), not a reason to skip
+- Maximum 10 additional pages beyond user-specified URLs
+- If fetch fails, include the URL with `"error": "..."` — do not omit it
+
+**For each sampled page:** Use Step 4 methodology (environment-aware fetch + JSON-LD extraction + content signal extraction, store HTML for parsing).
+
+---
+
+## Haiku Output Contract
+
+Each Haiku agent outputs one JSON payload per URL. This is the only data the Sonnet agent receives — it never accesses raw HTML.
+
+```json
+{
+  "url": "https://example.com/page",
+  "status_code": 200,
+  "fetch_method": "curl",
+  "json_ld_blocks": [
+    { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [...] }
+  ],
+  "json_ld_extraction_attempted": true,
+  "word_count": 847,
+  "headings": [
+    { "level": "h1", "text": "..." },
+    { "level": "h2", "text": "..." }
+  ],
+  "has_lists": true,
+  "has_tables": false,
+  "has_code_blocks": false,
+  "faq_sections_detected": 2,
+  "author_markup_found": true,
+  "author_text": "Jane Smith, Senior Editor",
+  "date_fields_found": ["datePublished"],
+  "date_modified_found": false,
+  "external_citation_links": 3,
+  "internal_links": ["https://example.com/related-page"],
+  "image_count": 4,
+  "images_with_captions": 2,
+  "ahrefs_issues": [],
+  "token_usage": {
+    "model": "claude-haiku-4-5-20251001",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+
+**Notes:**
+- `json_ld_extraction_attempted` must always be `true` — never report "no schema found" without attempting extraction
+- If fetch failed, include `"status_code": null` and `"error": "..."` — do not omit the URL from results
+- `ahrefs_issues` is populated only on the Ahrefs agent payload, not per-URL
+- `token_usage` must be populated by every Haiku agent. Use the actual token counts from the API response metadata if available; otherwise estimate based on prompt + output length.
+
+---
+
+## SONNET AGENT
+
+The Sonnet agent receives all Haiku JSON payloads and the Ahrefs issues data. It never fetches URLs. All analysis, judgment, and report writing happens here.
+
+**Token tracking:** At the end of your output, include your own token usage:
+```json
+{
+  "sonnet_token_usage": {
+    "model": "claude-sonnet-4-6",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+Use actual API response metadata if available; otherwise estimate from input/output length.
+
+## Step 6: Schema Validation
+
+**Using JSON-LD blocks from Haiku payloads:**
+
 - Check if schema type matches content type (FAQPage for FAQs, Article for blog posts, etc.)
 - Identify missing required fields (author, datePublished, answer properties, etc.)
-- Flag schema that doesn't match visible content
+- Flag schema that doesn't match visible content signals (e.g., FAQPage present but `faq_sections_detected: 0` in payload)
 
-**Do not validate "no schema found" without Step 3 extraction attempt.**
+**Do not validate "no schema found" without confirming `json_ld_extraction_attempted: true` in the Haiku payload.**
 
-## Step 5: Optional Content Sampling
+---
 
-If user wants broader content analysis, optionally crawl 3-5 related pages to assess content patterns:
-
-**When to sample related pages:**
-- User wants to understand content quality across site
-- Site has multiple content types (blog posts, product pages, guide pages)
-- Ahrefs report shows consistent issues across pages
-
-**Sample selection:**
-- Different content types (if applicable): blog post, product page, guide, FAQ
-- Representative pages that user mentions as important
-- Pages that should have schema but might be missing it
-
-**Crawl Limits:**
-- Maximum 5 additional pages (beyond specified target URLs)
-- If fetch fails, note and continue
-- Skip if user only wants analysis of specific URLs
-
-**For each sampled page:** Use Step 3 methodology (environment-aware fetch + JSON-LD extraction, store HTML for parsing in Step 4).
-
-## Step 5: Schema Markup & Structure Validation
+## Step 7: Schema Markup & Structure Validation
 
 Analyze all crawled pages for JSON-LD completeness and AEO readiness:
 
@@ -261,7 +359,9 @@ Analyze all crawled pages for JSON-LD completeness and AEO readiness:
 - ❌ Sections don't connect logically
 - ✅ Good: Clear section topics; content flows logically; related pages linked
 
-## Step 6: Content Quality and Structure (SEO and AEO)
+---
+
+## Step 8: Content Quality and Structure (SEO and AEO)
 
 Evaluate all content for SEO quality and AEO (Answer Engine Optimization)—how well it serves both traditional search engines and AI systems like ChatGPT, Perplexity, and Google AI Overviews.
 
@@ -374,7 +474,9 @@ Identify and optimize for AI-friendly formats:
 | 🟢 Enhancement | Improve conversational tone | Increases engagement and AI relevance |
 | 🟢 Enhancement | Add specific examples and data | Supports claim substantiation for AI search |
 
-## Step 7: Authority & Citability Assessment
+---
+
+## Step 9: Authority & Citability Assessment
 
 Evaluate how well pages establish expertise and enable AI systems to cite the content.
 
@@ -421,7 +523,7 @@ Evaluate how well pages establish expertise and enable AI systems to cite the co
 
 ---
 
-## Step 8: Prioritize Content & AEO Gaps
+## Step 10: Prioritize Content & AEO Gaps
 
 Group all identified issues into three priority tiers:
 
@@ -459,7 +561,9 @@ For each issue, include:
 - **Affected pages**: URLs with this issue
 - **Estimated effort**: Quick (<30 min), Moderate (1-3 hours), Major (4+ hours)
 
-## Step 9: Generate Content & AEO Report
+---
+
+## Step 11: Generate Content & AEO Report
 
 Create a well-structured document (markdown or docx) with:
 
@@ -470,6 +574,24 @@ Create a well-structured document (markdown or docx) with:
 - Overall AEO readiness score (based on schema, content, authority signals)
 - Top 3-5 critical gaps (prioritized by AEO impact and effort)
 - Estimated improvement: "With these changes, content will be 40-50% more extractable by AI systems"
+
+### Token Usage Summary
+
+Include a table summarizing tokens consumed and estimated cost across all agents.
+
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+
+| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
+|-------|-------|-------------|--------------|-------------|-----------|
+| claude-haiku-4-5 | URL agent: https://example.com | — | — | — | $— |
+| claude-haiku-4-5 | URL agent: https://example.com/page | — | — | — | $— |
+| claude-haiku-4-5 | Ahrefs agent (if used) | — | — | — | $— |
+| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
+| **Total** | | | | | **$—** |
+
+Populate this table from the `token_usage` fields in each Haiku payload, plus the Sonnet agent's self-reported usage. Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
 
 ### Detailed Findings
 
@@ -539,6 +661,8 @@ For each analyzed page:
 - **Citability**: How easily AI systems can extract and attribute information from your content
 - **Direct Answer Format**: Content structure that provides immediate, clear answers to questions
 
+---
+
 ## Output Format
 
 Provide the report in the user's preferred format:
@@ -547,6 +671,8 @@ Provide the report in the user's preferred format:
 - **Spreadsheet**: For tracking fixes (URLs in rows, issues in columns)
 
 Always save the final report to `/mnt/user-data/outputs/` and use the `present_files` tool to share it with the user.
+
+---
 
 ## Important Notes
 
@@ -609,6 +735,8 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 - This analysis is content & AEO focused (not technical SEO, backlinks, or domain metrics)
 - Actual AI search ranking factors may differ from this optimization framework
 
+---
+
 ## Example Interaction
 
 **User:** "I have Ahrefs Site Audit set up. Can you analyze my content and schema?"
@@ -662,6 +790,8 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
    - "Ensure every visible FAQ is represented in schema"
 4. Explains impact: "Complete FAQPage schema enables AI systems to extract and cite your Q&As in search results"
 
+---
+
 ## Success Metrics
 
 A successful audit includes:
@@ -673,6 +803,8 @@ A successful audit includes:
 - ✅ Specific schema/content fixes with effort estimates ("Add datePublished to Article schema: 30 minutes")
 - ✅ Report integrates Ahrefs technical findings with content/AEO gaps (not duplicate analysis)
 - ✅ User can act on recommendations immediately
+
+---
 
 ## Edge Cases
 

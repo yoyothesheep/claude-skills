@@ -5,9 +5,9 @@ description: Research AEO (Answer Engine Optimization) opportunities by discover
 
 # AEO Topic Research Skill
 
-This skill identifies what to create for AEO, and how to present it. 
+This skill identifies what to create for AEO, and how to present it.
 
-It uses the **Ahrefs Brand Radar** tools to pull real data: what AI engines are being asked, who they're citing, and what pages are winning citations. Then it synthesizes that into a prioritized content opportunity list.
+This skill pulls from three data sources: **Ahrefs Brand Radar** (when available) for AI question volumes and citation frequency data, **Reddit** for authentic user language and unmet needs, and **direct page crawls** of top-cited competitor pages for content format and structure signals. When Ahrefs is unavailable, AI engine queries and web search replace Brand Radar — Reddit and page crawls run regardless.
 
 ## When to Use This Skill
 
@@ -18,17 +18,46 @@ It uses the **Ahrefs Brand Radar** tools to pull real data: what AI engines are 
 
 ## Core Workflow
 
-1. **Gather Input** — Brand, competitors, market/niche, target AI engines
-2. **Discover AI Questions** — What questions are being asked in this space?
-3. **Mine Reddit Language** — How do real people talk about this topic?
-4. **Identify Cited Domains** — Who is AI citing, and how often?
-5. **Identify Cited Pages** — Which specific pages are winning citations?
-6. **Crawl Winning Pages** — Analyze what makes cited content work
-7. **Synthesize Patterns** — What topics, formats, and structures win?
-8. **Score Opportunities** — Prioritize gaps where you can realistically compete
-9. **Generate Report** — Actionable content brief with priorities
+Step 1. **[Coordinator]** Gather Input — brand, competitors, market/niche, AI engines
+Step 2. **[Coordinator]** Orchestrate agents — launch Haiku agents in two waves
+Steps 3-5. **[Haiku Brand Radar Agents, parallel per AI engine]** Discover AI questions (Step 3), identify cited domains (Step 4), identify cited pages (Step 5)
+Step 6. **[Haiku Reddit Agent]** Mine Reddit language — search and fetch threads per topic cluster (launched after Wave 1 with topic clusters from Brand Radar results)
+Step 7. **[Haiku Page Crawl Agents, parallel per URL]** Crawl top cited pages — extract content format and structure signals
+Steps 8-11. **[Sonnet Agent]** Synthesize patterns, score opportunities, surface content presentation recommendations, generate report
 
 ---
+
+## Agent Architecture
+
+### Coordinator (main Claude)
+Handles Steps 1–2: gathers user input and orchestrates agents in two waves. Passes AI engine + market context to Brand Radar agents, passes topic clusters (from Brand Radar results) to the Reddit agent, and passes cited URLs to page crawl agents. Then passes all payloads to the Sonnet agent.
+
+### Haiku Brand Radar Agents
+- One agent per AI engine (chatgpt, perplexity, google_ai_overviews, gemini)
+- Launched in parallel — Wave 1
+- Job: Run Brand Radar API calls for that engine — questions (Step 3), cited domains (Step 4), cited pages (Step 5) — mechanical data extraction only
+- Output: structured JSON payload (see Brand Radar Agent Output Contract)
+
+### Haiku Reddit Agent
+- Single agent — launched in Wave 2 after Brand Radar results are available
+- Job: Run web searches and fetch Reddit threads for the topic clusters identified in Brand Radar results
+- Output: structured JSON payload (see Reddit Agent Output Contract)
+
+### Haiku Page Crawl Agents
+- One agent per top cited URL — see sampling rule below for URL selection
+- Launched in parallel — Wave 2, alongside the Reddit agent
+- Job: Fetch page and extract content format and structure signals — no analysis
+- Output: structured JSON payload (see Page Crawl Agent Output Contract)
+
+### Sonnet Synthesis Agent
+- Single agent, runs after all Haiku agents complete
+- Receives all Haiku JSON payloads
+- Job: synthesize patterns, score content opportunities, write content presentation recommendations, generate final report
+- Output: final report
+
+---
+
+## COORDINATOR
 
 ## Step 1: Gather Input
 
@@ -48,14 +77,69 @@ Ask the user for:
 
 ---
 
-## Step 2: Discover AI Questions
+## Step 2: Orchestrate Agents
 
-Use `brand-radar-ai-responses` to find what questions AI engines are actually answering in the user's market. This is the AEO equivalent of keyword research — these are the topics AI engines consider worth answering.
+After gathering input, launch agents in two waves. Do not wait for individual agents to finish before launching others within the same wave.
+
+**Wave 1 — launch in parallel:**
+```
+For each target AI engine (chatgpt, perplexity, google_ai_overviews, gemini):
+  Task(
+    subagent_type: "general-purpose",
+    model: "haiku",
+    prompt: <HAIKU BRAND RADAR AGENT instructions below> + "\n\nAI engine: {engine}\nMarket: {market}\nBrand: {brand}\nCompetitors: {competitors}\nCountry: {country}"
+  )
+```
+
+Collect all Wave 1 results. Extract topic clusters from the question data in the Brand Radar payloads. Select the top 15–20 cited page URLs across all engines.
+
+**Wave 2 — launch in parallel:**
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "haiku",
+  prompt: <HAIKU REDDIT AGENT instructions below> + "\n\nMarket: {market}\nTopic clusters: {clusters_from_wave1}"
+)
+
+For each URL in top_cited_urls (selected per sampling rule below):
+  Task(
+    subagent_type: "general-purpose",
+    model: "haiku",
+    prompt: <HAIKU PAGE CRAWL AGENT instructions below> + "\n\nURL to crawl: {url}"
+  )
+```
+
+**Page crawl sampling rule:** Start with the top cited URLs ranked by `responses` count. Before launching crawl agents, ensure the selected set includes **at least 2 URLs per content format type**:
+
+| Format type | Signals to identify |
+|-------------|-------------------|
+| Comprehensive guide | 2000+ word article, multiple H2s, table of contents in title/URL |
+| Listicle | "Top N", "Best X for Y", numbered items in title/URL |
+| Comparison | "X vs Y", "Alternatives to Z", "[X] compared" in title/URL |
+| Definition/FAQ | "What is X", "How does X work", FAQ in title/URL |
+| HowTo | "How to X", step-by-step in title/URL |
+| Stat roundup | "Statistics", "Data", "Report", "Research" in title/URL |
+
+If the top 15–20 cited URLs are skewed toward one format (e.g., all guides), expand the crawl set by including additional cited URLs until 2 per type are covered, up to a maximum of 25 total URLs.
+
+**Why:** Step 8 pattern analysis requires format diversity to reliably identify which content types AI engines prefer to cite. A crawl set dominated by one format produces misleading conclusions.
+
+Collect all Wave 2 results. Once every Haiku agent has returned its payload, proceed to the SONNET AGENT section.
+
+---
+
+## HAIKU BRAND RADAR AGENT
+
+One agent is launched per AI engine. Each agent handles the Brand Radar API calls for that engine only.
+
+Run all three Brand Radar calls for the assigned AI engine. This is mechanical data extraction — no analysis or judgment.
+
+## Step 3: Discover AI Questions
 
 ```python
 # Get questions + responses in the user's market
 responses = AHREFs.brand_radar_ai_responses(
-    data_source="chatgpt",          # Run for each target engine
+    data_source="chatgpt",          # Use the assigned AI engine
     market="email marketing software",
     select="question,volume,links",
     order_by="volume",
@@ -68,87 +152,19 @@ responses = AHREFs.brand_radar_ai_responses(
 # - links: Pages cited in the response
 ```
 
-**Run this for each target AI engine** (chatgpt, perplexity, google_ai_overviews, gemini). This surfaces:
-- High-volume questions your niche gets asked
-- Which questions mention your brand vs. competitors vs. neither
-- Citation patterns per question
-
 **What to extract:**
-- The question text (= potential content topic)
-- Volume (= audience demand signal)
-- Whether your domain appears in `links` (= current citation status)
+- The question text
+- Volume (audience demand signal)
+- Whether the brand's domain appears in `links`
 - Whether competitor domains appear in `links`
 
-**Topic clustering:** Group questions into themes. E.g., "best X for Y", "how to do Z", "X vs Y comparisons", "what is X" definitions. Each cluster = a content category.
-
----
-
-## Step 3: Mine Reddit Language
-
-Reddit threads reveal how real people phrase their questions, frustrations, and comparisons — often in the exact natural language that AI engines are trained to recognize and answer. This step enriches your topic clusters with authentic vocabulary and surfaces pain points that formal keyword research misses.
-
-### Search Strategy
-
-For each topic cluster from Step 2, run 2-3 Reddit searches using `web_search`:
-
-```
-site:reddit.com [topic]
-site:reddit.com [topic] recommendations
-site:reddit.com [topic] vs [competitor topic]
-site:reddit.com best [product/service category]
-site:reddit.com [topic] help
-```
-
-For example, for "email marketing software":
-- `site:reddit.com email marketing software recommendations`
-- `site:reddit.com klaviyo vs mailchimp`
-- `site:reddit.com email marketing for small business`
-
-Fetch the top 3-5 threads per cluster using `web_fetch`. Focus on threads with high comment counts — that signals genuine engagement and vocabulary richness.
-
-### What to Extract From Each Thread
-
-**Question phrasing:**
-- The exact wording of the original post title (this is often a raw, unfiltered version of what AI engines get asked)
-- Recurring question patterns in comments ("does anyone know how to...", "what's the best way to...")
-- Follow-up questions that reveal what people still don't understand after reading standard content
-
-**Vocabulary and terminology:**
-- Jargon the community uses that differs from how brands describe things
-- Abbreviations, nicknames, or shorthand (e.g., "ESP" for email service provider)
-- Pain points described in plain language ("my open rates tanked", "the automations are confusing")
-
-**Sentiment and comparison patterns:**
-- How people compare options ("X is better for beginners but Y scales better")
-- Common complaints about existing content ("every guide just says the same thing")
-- What people wish existed ("I just want a simple comparison that...")
-
-**Cited sources:**
-- Links people share as trusted resources in comments — these are organic community endorsements and likely overlap with AI-cited pages
-- Subreddits that come up repeatedly (= dedicated communities worth monitoring)
-
-### Reddit Citation Check
-
-Also check whether reddit.com appears in your Brand Radar cited-domains results (Step 4). If it does, note which subreddits are being cited — AI engines sometimes cite Reddit threads directly, meaning those threads are themselves AEO content worth studying in Step 6.
-
-### Output: Reddit Language Glossary
-
-For each topic cluster, produce a short glossary of:
-- **Natural language questions** — verbatim phrasings to use in H1s, FAQs, and content
-- **Community vocabulary** — terms to use throughout content for semantic match
-- **Unmet needs** — gaps people complain about that your content could uniquely fill
-
-This glossary feeds directly into Step 7 (Synthesize Patterns) and the content briefs in Step 9.
-
----
+**Topic clustering:** Group questions into themes (e.g., "best X for Y", "how to do Z", "X vs Y", "what is X"). Each cluster = a content category.
 
 ## Step 4: Identify Cited Domains
 
-Use `brand-radar-cited-domains` to understand which domains AI engines trust most in this space. High citation counts = high AI authority signals.
-
 ```python
 cited_domains = AHREFs.brand_radar_cited_domains(
-    data_source="chatgpt",
+    data_source="chatgpt",       # Use the assigned AI engine
     market="email marketing software",
     select="domain,responses,pages,volume",
     competitors="competitor1.com,competitor2.com"
@@ -161,23 +177,11 @@ cited_domains = AHREFs.brand_radar_cited_domains(
 # - volume: Total search volume of queries where this domain was cited
 ```
 
-**Run for each AI engine.** This tells you:
-- Which domains have earned AI trust (citation authority)
-- Whether your domain is in the list, and how you rank vs. competitors
-- Which domains you're competing against for citations
-- Which domains to study as citation role models
-
-**Gap analysis:** If competitor domains have 10x your citation count, that's your benchmark target. If unknown domains are outperforming everyone — dig into what they're doing right.
-
----
-
 ## Step 5: Identify Cited Pages
-
-Use `brand-radar-cited-pages` to find the specific pages winning citations. This is the most actionable data — you can reverse-engineer exactly what's working.
 
 ```python
 cited_pages = AHREFs.brand_radar_cited_pages(
-    data_source="chatgpt",
+    data_source="chatgpt",       # Use the assigned AI engine
     market="email marketing software",
     select="url,responses,volume",
     competitors="competitor1.com,competitor2.com"
@@ -194,25 +198,144 @@ cited_pages = AHREFs.brand_radar_cited_pages(
 2. High `volume` (cited on high-demand queries = more impact)
 3. Pages from domains with low domain rating (= easier to compete with)
 
-Collect the top 15-20 cited URLs for crawling in Step 6.
+---
+
+## Brand Radar Agent Output Contract
+
+```json
+{
+  "ai_engine": "chatgpt",
+  "questions": [
+    {
+      "question": "What is the best email marketing software for small businesses?",
+      "volume": 4800,
+      "brand_cited": false,
+      "competitor_cited": true,
+      "topic_cluster": "best-for-use-case"
+    }
+  ],
+  "topic_clusters": [
+    { "name": "best-for-use-case", "questions": 12, "total_volume": 28000 },
+    { "name": "how-to-guides", "questions": 8, "total_volume": 15000 }
+  ],
+  "cited_domains": [
+    { "domain": "competitor.com", "responses": 340, "pages": 24, "volume": 85000 }
+  ],
+  "cited_pages": [
+    { "url": "https://competitor.com/email-marketing-guide", "responses": 45, "volume": 12000 }
+  ],
+  "brand_citation_count": 12,
+  "token_usage": {
+    "model": "claude-haiku-4-5-20251001",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+
+**Notes:**
+- `brand_cited` should reflect whether the user's domain appeared in `links` for that question
+- `topic_clusters` is derived by grouping questions into themes — use judgment to name clusters meaningfully
+- `token_usage` must be populated by every Haiku agent. Use actual API response metadata if available; otherwise estimate from prompt + output length.
 
 ---
 
-## Step 6: Crawl Winning Pages
+## HAIKU REDDIT AGENT
 
-Fetch the top-cited pages and analyze their structure. This reveals the *content formula* AI engines are rewarding.
+One agent is launched after Wave 1 completes, with topic clusters passed from Brand Radar results.
 
-```python
-for url in top_cited_pages:
-    content = web_fetch(url, text_content_token_limit=30000)
-    # Extract and analyze
+## Step 6: Mine Reddit Language
+
+Reddit threads reveal how real people phrase their questions, frustrations, and comparisons — vocabulary that AI engines recognize and answer. This step enriches topic clusters with authentic language.
+
+### Search Strategy
+
+For each topic cluster, run 2-3 Reddit searches using `web_search`:
+
+```
+site:reddit.com [topic]
+site:reddit.com [topic] recommendations
+site:reddit.com [topic] vs [competitor topic]
+site:reddit.com best [product/service category]
+site:reddit.com [topic] help
 ```
 
-**For each page, extract:**
+Fetch the top 3-5 threads per cluster using `web_fetch`. Focus on threads with high comment counts.
+
+### What to Extract From Each Thread
+
+**Question phrasing:**
+- Exact wording of the original post title
+- Recurring question patterns in comments
+- Follow-up questions that reveal gaps in standard content
+
+**Vocabulary and terminology:**
+- Jargon the community uses that differs from how brands describe things
+- Abbreviations, nicknames, or shorthand (e.g., "ESP" for email service provider)
+- Pain points in plain language ("my open rates tanked", "the automations are confusing")
+
+**Sentiment and comparison patterns:**
+- How people compare options ("X is better for beginners but Y scales better")
+- Common complaints about existing content ("every guide just says the same thing")
+- What people wish existed ("I just want a simple comparison that...")
+
+**Cited sources:**
+- Links shared as trusted resources in comments — organic endorsements likely overlapping with AI-cited pages
+
+---
+
+## Reddit Agent Output Contract
+
+```json
+{
+  "topic_clusters": [
+    {
+      "cluster": "best-for-use-case",
+      "reddit_questions": [
+        "What email marketing tool actually works for a one-person shop?",
+        "Anyone switched from Mailchimp recently and happy with it?"
+      ],
+      "community_vocabulary": ["ESP", "open rate", "drip sequence", "cold email"],
+      "unmet_needs": [
+        "Simple comparison that doesn't assume technical background",
+        "Honest review that includes pricing gotchas"
+      ],
+      "cited_sources_in_threads": ["https://trusted-review-site.com/email-tools"],
+      "threads_fetched": 4
+    }
+  ],
+  "reddit_cited_by_ai": false,
+  "token_usage": {
+    "model": "claude-haiku-4-5-20251001",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+
+**Notes:**
+- `reddit_cited_by_ai` should be `true` if reddit.com appeared in cited domains from any Brand Radar agent payload
+- Include the subreddit name in `threads_fetched` count if notable communities (e.g., r/emailmarketing, r/entrepreneur) appear repeatedly
+
+---
+
+## HAIKU PAGE CRAWL AGENT
+
+One agent is launched per top cited URL (top 15–20 from Brand Radar results, prioritized by `responses` count).
+
+## Step 7: Crawl Winning Pages
+
+Fetch the assigned page and extract content format and structure signals. This is mechanical extraction — no analysis of whether the signals are good or bad.
+
+```python
+content = web_fetch(url, text_content_token_limit=30000)
+```
+
+**For the page, extract:**
 
 **Content Format:**
 - Is it a guide, list, comparison, definition, FAQ, HowTo, or stat roundup?
-- Word count range
+- Approximate word count
 - Does it use numbered lists, bullet points, tables, or primarily prose?
 - Does it have a clear direct answer near the top (before elaboration)?
 
@@ -221,7 +344,8 @@ for url in top_cited_pages:
 - H2/H3: Are subheadings phrased as questions?
 - Does it have an FAQ section?
 - Are there "Key Takeaways" or summary boxes?
-- Is there schema markup (FAQ, HowTo, Article)?
+- Does it have a table of contents?
+- Is there schema markup visible (FAQ, HowTo, Article)?
 
 **Authority Signals:**
 - Author bio present?
@@ -236,9 +360,63 @@ for url in top_cited_pages:
 
 ---
 
-## Step 7: Synthesize Patterns
+## Page Crawl Agent Output Contract
 
-After crawling, identify the repeating patterns across cited pages. The goal is to extract a replicable formula.
+```json
+{
+  "url": "https://competitor.com/email-marketing-guide",
+  "fetch_status": 200,
+  "content_format": "comprehensive-guide",
+  "word_count_estimate": 3200,
+  "has_direct_answer_at_top": true,
+  "uses_numbered_lists": true,
+  "uses_bullet_points": true,
+  "uses_tables": true,
+  "uses_primarily_prose": false,
+  "h1_style": "declarative",
+  "h2s_as_questions": true,
+  "has_faq_section": true,
+  "has_key_takeaways": true,
+  "has_table_of_contents": true,
+  "schema_types_detected": ["FAQPage", "Article"],
+  "author_bio_present": true,
+  "date_visible": true,
+  "external_citations": 8,
+  "defines_terms": true,
+  "answers_follow_up_questions": true,
+  "token_usage": {
+    "model": "claude-haiku-4-5-20251001",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+
+**Notes:**
+- If fetch fails, include `"fetch_status": null` and `"error": "..."` — do not omit the URL
+- `content_format` should be one of: `guide`, `list`, `comparison`, `definition`, `faq`, `howto`, `stat-roundup`, `comprehensive-guide`, `other`
+
+---
+
+## SONNET AGENT
+
+The Sonnet agent receives all Haiku JSON payloads. It never fetches URLs or calls APIs directly. All analysis, judgment, pattern recognition, and report writing happens here.
+
+**Token tracking:** At the end of your output, include your own token usage:
+```json
+{
+  "sonnet_token_usage": {
+    "model": "claude-sonnet-4-6",
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
+```
+Use actual API response metadata if available; otherwise estimate from input/output length.
+
+## Step 8: Synthesize Patterns
+
+After receiving all Haiku payloads, identify repeating patterns across cited pages. The goal is to extract a replicable formula.
 
 ### Content Format Patterns
 
@@ -256,7 +434,7 @@ Tally which formats appear most in cited pages:
 
 ### Topic Gap Matrix
 
-For each question cluster from Step 2, assess:
+For each question cluster from the Brand Radar payloads, assess:
 
 | Topic | Demand (volume) | Your Coverage | Competitor Coverage | AI Cites You? | Opportunity |
 |-------|----------------|---------------|---------------------|---------------|-------------|
@@ -271,7 +449,7 @@ For each question cluster from Step 2, assess:
 
 ### Citation Authority Gap
 
-Compare your domain's citation count vs. top competitors across each AI engine:
+Compare the brand's domain citation count vs. top competitors across each AI engine (from Brand Radar payloads):
 
 | AI Engine | Your Citations | Competitor A | Competitor B | Gap |
 |-----------|---------------|--------------|--------------|-----|
@@ -279,17 +457,15 @@ Compare your domain's citation count vs. top competitors across each AI engine:
 | Perplexity | X | Y | Z | Y-X |
 | Google AI Overviews | X | Y | Z | Y-X |
 
-This shows which AI engines you're underrepresented in, and where a focused push would have the most impact.
-
 ---
 
-## Step 8: Score and Prioritize Opportunities
+## Step 9: Score and Prioritize Opportunities
 
 Rank content opportunities using a simple scoring model:
 
 **Score = Demand × Competitiveness × Format Fit**
 
-- **Demand** (1-3): Based on question volume from Step 2
+- **Demand** (1-3): Based on question volume from Brand Radar payloads
   - 3 = High volume (top 25% of questions in your market)
   - 2 = Medium volume
   - 1 = Low volume
@@ -309,13 +485,11 @@ Rank content opportunities using a simple scoring model:
 - 🟡 **Plan Soon** (Score 4-6): Good opportunities that need more effort or planning
 - 🟢 **Monitor** (Score 1-3): Lower priority — watch to see if competition weakens
 
-For each high-priority opportunity, write a brief content brief (see Step 10).
-
 ---
 
-## Step 9: Content Presentation Recommendations
+## Step 10: Content Presentation Recommendations
 
-Based on the winning content formula and patterns identified in Step 6, surface content presentation and structure recommendations for the user's site. These are UX-focused improvements to how content should be delivered.
+Based on the winning content formula and patterns identified in the page crawl payloads, surface content presentation and structure recommendations. These are UX-focused improvements to how content should be delivered.
 
 ### Content Navigation
 - Do top-cited pages include a table of contents for longer content?
@@ -358,7 +532,7 @@ Example:
 
 ---
 
-## Step 10: Generate Report
+## Step 11: Generate Report
 
 Create a structured report with:
 
@@ -368,6 +542,27 @@ Create a structured report with:
 - Your current citation status (# citations, # engines citing you)
 - Competitor citation comparison
 - Top 3 highest-priority content opportunities
+
+### Token Usage Summary
+
+Include a table summarizing tokens consumed and estimated cost across all agents.
+
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+
+| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
+|-------|-------|-------------|--------------|-------------|-----------|
+| claude-haiku-4-5 | Brand Radar: chatgpt | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: perplexity | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: google_ai_overviews | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: gemini | — | — | — | $— |
+| claude-haiku-4-5 | Reddit agent | — | — | — | $— |
+| claude-haiku-4-5 | Page crawl: {url} | — | — | — | $— |
+| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
+| **Total** | | | | | **$—** |
+
+Populate this table from the `token_usage` fields in each Haiku payload, plus the Sonnet agent's self-reported usage. Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
 
 ### AI Question Landscape
 - Full list of discovered questions, grouped by topic cluster
@@ -392,7 +587,7 @@ Create a structured report with:
 
 ### Content Presentation Recommendations
 
-A short list (3-5 items) of structural and format recommendations based on Step 9 analysis. Example items:
+A short list (3-5 items) of structural and format recommendations based on Step 10 analysis. Example items:
 - "Add table of contents with jump links to long-form guides"
 - "Use collapsible FAQ sections instead of inline Q&A paragraphs"
 - "Include comparison tables in competitive analysis content"
@@ -401,13 +596,13 @@ A short list (3-5 items) of structural and format recommendations based on Step 
 
 ### Prioritized Recommendations
 
-A single ranked list of content opportunities, ordered by score from Step 8. For each opportunity:
+A single ranked list of content opportunities, ordered by score from Step 9. For each opportunity:
 
 **Topic:** [Topic name]
-**Target question(s):** [Specific questions from Step 2]
+**Target question(s):** [Specific questions from Brand Radar]
 **Monthly demand:** [Volume estimate]
 **Current citation landscape:** [Who's cited, if anyone]
-**Recommended format:** [Based on Step 6 patterns]
+**Recommended format:** [Based on page crawl patterns]
 **Content brief:**
 - Primary question to answer (use Reddit phrasing where available)
 - Key subtopics/H2s to cover
@@ -446,11 +641,25 @@ Optional additions if user requests:
 
 ### Without Ahrefs Brand Radar
 
-If Brand Radar tools are unavailable, fall back to:
-- Web search for "[niche] questions ChatGPT answers" to find common AI topics
-- Manually querying AI engines for top questions in the user's niche
-- Crawling competitor content to reverse-engineer what's being cited
-- This fallback produces directional insights but lacks volume/citation data
+If Brand Radar tools are unavailable, substitute each API call with manual equivalents, then proceed with the same Reddit and page crawl steps.
+
+**Replacing Brand Radar AI Responses (Step 3):**
+- Directly query each AI engine (ChatGPT, Perplexity, etc.) with prompts like: "What are the most common questions people ask about [niche]?" and "What's the best [product/service] for [use case]?" Record what it says and what it cites.
+- Web search: `site:reddit.com OR site:quora.com "[niche]" questions` to surface real phrasing
+- Pull Google's "People Also Ask" results for the top 3–5 niche terms
+- Search `"[niche]" perplexity answers` or `chatgpt "[niche]"` to find published AI response research
+
+**Replacing Brand Radar Cited Domains (Step 4):**
+- Run 10–15 representative questions through each AI engine manually; record every domain cited in the responses
+- Tally domains by frequency — this is your cited domain ranking without volume data
+
+**Replacing Brand Radar Cited Pages (Step 5):**
+- From the cited domains above, note specific page URLs that appear repeatedly across AI responses
+- Web search `site:[competitor.com] [topic]` to surface their most-indexed content in this niche
+
+**Reddit and page crawls (Steps 6–7) run the same as with Ahrefs.** Topic clusters for the Reddit agent come from manually grouped question themes instead of Brand Radar payloads.
+
+This fallback produces directional insights but lacks volume estimates and citation frequency data — treat findings as qualitative signals rather than ranked metrics.
 
 ### Integration with Other Skills
 

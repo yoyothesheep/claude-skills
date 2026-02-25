@@ -1,6 +1,6 @@
 # claude-skills
 
-SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines. 
+SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
 
 Designed to complement Ahrefs/Semrush with:
 - Content & intent understanding
@@ -8,6 +8,17 @@ Designed to complement Ahrefs/Semrush with:
 - Reddit language glossary (how real people phrase questions in your niche)
 - Schema validation with content type
 
+## Multi-agent architecture
+
+Each skill uses a **Coordinator → Haiku → Sonnet** pipeline to balance speed, cost, and quality:
+
+- **Coordinator** (main Claude): gathers input, orchestrates agents
+- **Haiku agents**: parallel mechanical extraction — API calls, page crawls, data collection
+- **Sonnet agent**: analysis, synthesis, and report writing
+
+Every report includes a **Token Usage Summary** with per-agent input/output tokens and estimated cost. The orchestrator aggregates token costs across all three skills into a single grand total.
+
+---
 
 ## Table of Contents
 
@@ -24,7 +35,7 @@ Designed to complement Ahrefs/Semrush with:
 
 ### 1. Recommend using Claude Code
 
-The `aeo-seo-site-audit skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
+The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
 
 ### 2. Connect Ahrefs MCP (optional)
 
@@ -36,13 +47,13 @@ The `aeo-seo-site-audit skill uses `curl` to analyze schema markup, but Claude W
 ## Quick Start
 
 ### Want Everything in One Report?
-Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills, and synthesizes recommendations into one list.
+Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills in parallel and synthesizes recommendations into one list.
 
-Or, run each core skill separately. 
+Or, run each core skill separately.
 ```
-* aeo-topic-research           →  Recommends topics, content format, and UX changes for AEO
-* seo-keyword-research      →  Find competitive keywords, content gaps, and IA recommendations for SEO
-* aeo-seo-site-audit           →  Audit & optimize your pages for SEO and AEO
+* aeo-topic-research      →  Recommends topics, content format, and UX changes for AEO
+* seo-keyword-research    →  Find competitive keywords, content gaps, and IA recommendations for SEO
+* aeo-seo-site-audit      →  Audit & optimize your pages for SEO and AEO
 ```
 
 ---
@@ -52,7 +63,12 @@ Or, run each core skill separately.
 **File:** `aeo-seo-strategy-orchestrator/SKILL.md`
 
 ### Goal
-An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-research`, `seo-keyword-research`, `aeo-seo-site-audit`), then synthesizes all recommendations.
+An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-research`, `seo-keyword-research`, `aeo-seo-site-audit`) in parallel, then a Sonnet synthesis agent unifies all findings into a single ranked strategy.
+
+### Agent Architecture
+- **Coordinator**: gathers input, launches three sub-skill agents simultaneously
+- **Sub-skill agents** (parallel): each runs its own full Haiku + Sonnet pipeline
+- **Sonnet Synthesis Agent**: merges all three reports, deduplicates, ranks recommendations, aggregates token costs
 
 ### Input
 - Your domain (i.e. your homepage URL)
@@ -72,8 +88,9 @@ An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-rese
 ### Output
 A strategic report with:
 - Strategic overview and key insights
-- Detailed findings grouped by category (research, keywords, on-page, functionality)
-- Feature, UX, and IA recommendations (navigation structure, hub pages, internal linking, content silos, page load, mobile, CTAs, accessibility)
+- Aggregated Token Usage Summary with grand total cost across all agents
+- Unified prioritized recommendations (merged from all three skills): **all** 🔴 Critical and 🟡 Important issues are always included; top 2 🟢 Enhancements per skill are shown, with a note if more were omitted
+- Detailed findings grouped by category (AEO research, keywords, on-page, functionality)
 - Success metrics and KPIs
 
 ---
@@ -84,6 +101,13 @@ A strategic report with:
 
 ### Goal
 Discovers what questions AI engines are answering in your niche, which domains and pages they're citing, and what content formats are winning citations — so you know exactly what topics to create for AEO visibility.
+
+### Agent Architecture
+- **Coordinator**: gathers input, orchestrates two waves of Haiku agents
+- **Haiku Brand Radar Agents** (parallel, one per AI engine): Steps 3–5 — Brand Radar API calls for AI questions, cited domains, cited pages
+- **Haiku Reddit Agent**: Step 6 — web searches + thread fetches per topic cluster
+- **Haiku Page Crawl Agents** (parallel, one per URL): Step 7 — extract content format and structure signals; sampling ensures **at least 2 pages per content format type** (guide, listicle, comparison, FAQ/definition, HowTo, stat roundup) for reliable pattern detection
+- **Sonnet Agent**: Steps 8–11 — synthesize patterns, score opportunities, generate report
 
 ### Input
 - Your brand name and website URL
@@ -101,7 +125,7 @@ Discovers what questions AI engines are answering in your niche, which domains a
 - **Content presentation & UX** — navigation aids (TOC, jump links, sticky nav), multimedia gaps, and formatting patterns from citation-winning pages
 
 ### Output
-A prioritized content opportunity brief including: topic clusters ranked by citation potential, a Reddit language glossary with natural phrasing and community vocabulary per topic, competitor citation analysis, winning content formats and structures, content presentation recommendations (navigation, format, multimedia), and a prioritized content roadmap.
+A prioritized content opportunity brief including: topic clusters ranked by citation potential, a Reddit language glossary with natural phrasing and community vocabulary per topic, competitor citation analysis, winning content formats and structures, content presentation recommendations (navigation, format, multimedia), a prioritized content roadmap, and a Token Usage Summary.
 
 ---
 
@@ -111,6 +135,12 @@ A prioritized content opportunity brief including: topic clusters ranked by cita
 
 ### Goal
 Analyzes competitor websites to reverse-engineer their SEO strategies, identifies content gaps and keyword opportunities, and produces a prioritized list of target keywords with ranking and traffic potential.
+
+### Agent Architecture
+- **Coordinator**: gathers input, orchestrates two waves of Haiku agents
+- **Haiku Competitor Agents** (parallel, one per competitor): Steps 3–4 — Ahrefs metrics + top keywords (Step 3), crawl key pages (Step 4); each competitor gets **exactly 2 pages per type** (homepage, blog/resource, category/topic hub, product/service detail) for consistent cross-run comparisons
+- **Haiku Keyword Research Agent**: Step 5 — Ahrefs keyword explorer calls using seeds from competitor data
+- **Sonnet Agent**: Steps 6–11 — content analysis, gap analysis, ranking evaluation, prioritization, IA recommendations, report
 
 ### Input
 - Your domain (i.e. your homepage URL)
@@ -132,7 +162,7 @@ When the **Ahrefs MCP server** is connected, you get real data:
 - SERP feature data and adjustments
 
 ### Output
-A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, content gap analysis, and information architecture recommendations (navigation changes, hub pages, internal linking strategy, content silos).
+A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, content gap analysis, information architecture recommendations (navigation changes, hub pages, internal linking strategy, content silos), and a Token Usage Summary.
 
 ---
 
@@ -142,6 +172,12 @@ A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long
 
 ### Goal
 Analyzes your website pages for content quality, schema markup completeness, and AEO (Answer Engine Optimization) — with actionable recommendations for improving AI citation potential and search ranking for your existing pages. **Complements an Ahrefs Site Audit** by covering content depth and AI-readiness that Ahrefs cannot assess; relies on Ahrefs for technical SEO (title tags, meta descriptions, broken links, crawlability, etc.).
+
+### Agent Architecture
+- **Coordinator**: gathers input, launches one Haiku agent per URL (+ one Ahrefs agent if project ID provided) in parallel
+- **Haiku URL Agents** (parallel, one per URL): fetch raw HTML, extract JSON-LD schema, extract content and authority signals; after user-specified URLs, **required representative sampling** adds 1–2 pages per type not yet covered (static content, dynamic/app route, category/listing, utility) to prevent missing CSR rendering gaps
+- **Haiku Ahrefs Agent** (if project ID provided): pulls technical audit findings from Ahrefs API
+- **Sonnet Agent**: schema validation, content analysis, gap prioritization, report writing
 
 ### Input
 - 1 or more target URLs from your website
@@ -154,6 +190,6 @@ Analyzes your website pages for content quality, schema markup completeness, and
 - **AEO optimization** — direct-answer formatting, author credentials, source citations, freshness signals, content structure for AI extraction
 
 ### Output
-A prioritized audit report with findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement), specific schema fixes with effort estimates, content recommendations, and a page-by-page breakdown. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
+A prioritized audit report with findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement), specific schema fixes with effort estimates, content recommendations, a page-by-page breakdown, and a Token Usage Summary. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
 
 ---
