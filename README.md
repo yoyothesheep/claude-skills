@@ -24,8 +24,8 @@ Every report includes a **Token Usage Summary** with per-agent input/output toke
 
 - [Setup](#setup)
 - [Quick Start](#quick-start)
-- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator)
-- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities)
+- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator) 
+- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities) 
 - [2. seo-keyword-research](#2-seo-keyword-research--competitor-analysis--keyword-research)
 - [3. aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
 
@@ -49,7 +49,7 @@ The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude 
 ### Want Everything in One Report?
 Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills in parallel and synthesizes recommendations into one list.
 
-Or, run each core skill separately.
+Or, run each skill separately. 
 ```
 * aeo-topic-research      →  Recommends topics, content format, and UX changes for AEO
 * seo-keyword-research    →  Find competitive keywords, content gaps, and IA recommendations for SEO
