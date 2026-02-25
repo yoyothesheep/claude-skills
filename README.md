@@ -2,11 +2,11 @@
 
 SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
 
-Designed to complement Ahrefs/Semrush with:
-- Content & intent understanding
-- UX and IA recommendations
-- Reddit language glossary (how real people phrase questions in your niche)
-- Schema validation with content type
+Designed to complement Ahrefs/Semrush by:
+- Understanding your site's content, intent, and target audience
+- Recommending UX and IA changes
+- Reporting on how real people phrase questions in your niche (Reddit language glossary)
+- Validating schema against your pages' content type
 
 ## Multi-agent architecture
 
