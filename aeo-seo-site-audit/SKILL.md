@@ -574,24 +574,47 @@ Create a well-structured document (markdown or docx) with:
 - Overall AEO readiness score (based on schema, content, authority signals)
 - Top 3-5 critical gaps (prioritized by AEO impact and effort)
 - Estimated improvement: "With these changes, content will be 40-50% more extractable by AI systems"
+- **Total research cost: $—** (one line; full breakdown in Token Usage appendix at end of report)
 
-### Token Usage Summary
+### Prioritized Recommendations
 
-Include a table summarizing tokens consumed and estimated cost across all agents.
+**Writing style for recommendations:** See [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed style guidelines. Key principles:
+- Use neutral language without dramatic framing
+- Quantify impact with specific data
+- Avoid vague benefits (no "better SEO" without specifics)
+- Explain mechanisms and provide realistic effort estimates
 
-**Pricing reference:**
-- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
-- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+**What to include:**
+- **All** 🔴 Critical issues and 🟡 Important issues — no cap, no omissions
+- **Top 3** 🟢 Enhancement items, selected by highest impact
+- If more than 3 enhancements were identified, append: `> _N additional enhancements not listed — see Priority Summary for full list._`
 
-| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
-|-------|-------|-------------|--------------|-------------|-----------|
-| claude-haiku-4-5 | URL agent: https://example.com | — | — | — | $— |
-| claude-haiku-4-5 | URL agent: https://example.com/page | — | — | — | $— |
-| claude-haiku-4-5 | Ahrefs agent (if used) | — | — | — | $— |
-| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
-| **Total** | | | | | **$—** |
+**Priority tiers:**
 
-Populate this table from the `token_usage` fields in each Haiku payload, plus the Sonnet agent's self-reported usage. Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
+| Tier | Label | Include |
+|---|---|---|
+| 🔴 Critical | Blocks ranking or AI citability; fix immediately | All |
+| 🟡 Important | Meaningfully reduces performance; fix soon | All |
+| 🟢 Enhancement | Incremental improvement; schedule when bandwidth allows | Top 3 |
+
+Order within each tier by impact × effort. Begin with a summary table — one row per recommendation — then list full details for each item below the table.
+
+**Summary table (one row per recommendation):**
+
+| # | Priority | Recommendation | Category | Effort | Pages Affected |
+|---|----------|---------------|----------|--------|----------------|
+| 1 | 🔴 Critical | … | … | Quick / Moderate / Major | X of Y |
+| 2 | 🟡 Important | … | … | … | … |
+| … | … | … | … | … | … |
+
+**Detailed recommendations (one section per item, matching table order):**
+
+For each item:
+
+- **What to do**: Specific, actionable instruction with affected page count or URLs
+- **Why it matters**: Data-backed impact (e.g., "Affects 8 of 11 pages" / "Missing schema blocks AI extraction")
+- **Category**: Technical SEO / Content / AEO / Information Architecture / Content Presentation
+- **Effort**: Quick (<30 min) / Moderate (1–3 hrs) / Major (4+ hrs)
 
 ### Detailed Findings
 
@@ -626,27 +649,28 @@ For each page/content type:
 - Conversational tone assessment (readable for AI extraction)
 - Paragraph-level extractability (can AI extract any paragraph and understand it alone?)
 
-### Prioritized Recommendations
-
-**Writing style for recommendations:** See [TONE-GUIDE.md](../TONE-GUIDE.md) for detailed style guidelines. Key principles:
-- Use neutral language without dramatic framing
-- Quantify impact with specific data
-- Avoid vague benefits (no "better SEO" without specifics)
-- Explain mechanisms and provide realistic effort estimates
-
-A single ranked list of all issues and improvements, ordered by impact and effort. Each item includes:
-- Issue description and affected pages (with counts)
-- Why it matters with specific mechanism (SEO/AEO impact with data)
-- Specific fix steps
-- Estimated effort (Quick / Moderate / Major) with hour range
-- Expected outcome (with confidence level if uncertain)
-
 ### Page-by-Page Breakdown
 For each analyzed page:
 - URL
 - Current issues (prioritized)
 - Recommended changes
 - Current vs recommended title/description examples
+
+### Token Usage
+
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+
+| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
+|-------|-------|-------------|--------------|-------------|-----------|
+| claude-haiku-4-5 | URL agent: https://example.com | — | — | — | $— |
+| claude-haiku-4-5 | URL agent: https://example.com/page | — | — | — | $— |
+| claude-haiku-4-5 | Ahrefs agent (if used) | — | — | — | $— |
+| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
+| **Total** | | | | | **$—** |
+
+Populate from the `token_usage` fields in each Haiku payload plus the Sonnet agent's self-reported usage. Est. Cost = `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
 
 ### Appendix
 - Full list of crawled URLs

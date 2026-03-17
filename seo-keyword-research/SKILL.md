@@ -595,21 +595,21 @@ def calculate_opportunity_score(keyword_data, your_domain_rating):
 
 ### Keyword Priority Tiers
 
-#### 🎯 Tier 1: Quick Wins (Next 30 Days)
+#### 🔴 Tier 1: Quick Wins (Next 30 Days)
 - Low difficulty
 - Reasonable search volume
 - Clear intent match to your content
 - Competitor content is weak or outdated
 - **Target: 10-20 keywords**
 
-#### 🎯 Tier 2: Strategic Targets
+#### 🟡 Tier 2: Strategic Targets
 - Medium difficulty
 - Moderate-to-high volume
 - Supports business goals
 - Part of topic cluster
 - **Target: 20-30 keywords**
 
-#### 🎯 Tier 3: Long-term Investments (6-12 Months)
+#### 🟢 Tier 3: Long-term Investments (6-12 Months)
 - High difficulty but high value
 - Industry-defining terms
 - Large topic clusters
@@ -662,24 +662,34 @@ Create comprehensive keyword strategy report:
 - Quick win opportunities: Y
 - Content gaps found: Z
 - Recommended first 5 pieces of content
+- **Total research cost: $—** (one line; full breakdown in Token Usage appendix at end of report)
 
-### Token Usage Summary
+### Prioritized Recommendations
 
-Include a table summarizing tokens consumed and estimated cost across all agents.
+A single consolidated table combining all keyword and IA recommendations, sorted by priority. Place this immediately after the Executive Summary so the reader sees the full action plan before diving into details.
 
-**Pricing reference:**
-- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
-- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+| Priority | Type | ID | Recommendation | Difficulty | Traffic Opp | Details |
+|---|---|---|---|---|---|---|
+| 🚨 P0 — Immediate | IA | IA-01 | [Fix blocking technical issue] | — | Blocker | [§IA-01] |
+| 🔴 1 — Quick Win | Keyword | KW-01 | [Title] | Low | [score] | [§KW-01] |
+| 🟡 5 — Strategic | IA | IA-02 | [IA recommendation] | — | High | [§IA-02] |
+| 🟢 15 — Long-Term | Keyword | KW-11 | [Title] | High | [score] | [§KW-11] |
+| ... | | | | | | |
 
-| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
-|-------|-------|-------------|--------------|-------------|-----------|
-| claude-haiku-4-5 | Competitor: {url} | — | — | — | $— |
-| claude-haiku-4-5 | Competitor: {url} | — | — | — | $— |
-| claude-haiku-4-5 | Keyword research | — | — | — | $— |
-| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
-| **Total** | | | | | **$—** |
+**Columns:**
+- **Type**: `Keyword` or `IA`
+- **ID**: matches the ID used in its detail section (KW-XX or IA-XX)
+- **Difficulty**: Low / Medium / High / — (for IA items)
+- **Traffic Opp**: numeric score from the keyword tier analysis, or — for IA items
+- **Details**: link anchor to the relevant detail section
 
-Populate this table from the `token_usage` fields in each Haiku payload, plus the Sonnet agent's self-reported usage. Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
+**Priority badges:**
+- 🚨 P0 — Immediate blocker (must fix before anything else)
+- 🔴 Quick Win — Tier 1, low difficulty, rankable in 30–90 days
+- 🟡 Strategic — Tier 2 keywords + High/Medium-priority IA items
+- 🟢 Long-Term — Tier 3, high difficulty, 6–12 month investment
+
+Sort order: P0 blockers first, then Tier 1 keywords and High-priority IA items, then Tier 2 + Medium-priority IA, then Tier 3. Within each group, sort by Traffic Opp score descending.
 
 ### Competitor Analysis Summary
 
@@ -699,36 +709,36 @@ Populate this table from the `token_usage` fields in each Haiku payload, plus th
 
 ### Keyword Opportunities by Tier
 
-**Tier 1: Quick Wins**
-For each keyword:
-- Keyword phrase
-- Estimated difficulty: Low/Medium/High (with score if Ahrefs)
-- Estimated search volume
-- **Traffic potential if ranking #3:** [Specific monthly visit estimate]
-- **Traffic potential if ranking #1:** [Specific monthly visit estimate]
-- Search intent: Info/Commercial/Transactional
-- SERP features: Featured snippet / AI Overview / Video / None
-- Why it's a quick win: [Specific reasoning]
-- **Traffic opportunity score:** [Number]
-- Recommended content type: Guide/List/Comparison/Tool
-- Recommended title: [Specific title suggestion]
-- Key points to cover: [Bullet list]
-- Estimated word count: [Based on top-ranking content]
-- **Expected timeline to rank:** [30 / 60 / 90 days]
+**What to include:**
+- **All** 🔴 Tier 1 and 🟡 Tier 2 keywords — no cap, no omissions
+- **Top 3** 🟢 Tier 3 keywords, selected by highest traffic opportunity score
+- If more than 3 Tier 3 keywords were identified, append: `> _N additional Tier 3 keywords not listed — see Prioritized Recommendations table for full list._`
 
-**Tier 2: Strategic Targets**
-(Same format as Tier 1)
+**Priority tiers:**
 
-**Tier 3: Long-term Investments**
-(Same format, with timeline notes)
+| Tier | Label | Include |
+|---|---|---|
+| 🔴 Tier 1: Quick Wins | Low difficulty; rankable within 30–90 days | All |
+| 🟡 Tier 2: Strategic | Medium difficulty; supports topic clusters and business goals | All |
+| 🟢 Tier 3: Long-term | High difficulty; 6–12 month investment | Top 3 |
 
-### Traffic Potential Summary
+Order within each tier by traffic opportunity score (descending). For each keyword:
 
-**Opportunity Analysis:**
-- **Quick Wins (Tier 1):** +[X] monthly visits potential
-- **Strategic (Tier 2):** +[Y] monthly visits potential
-- **Long-term (Tier 3):** +[Z] monthly visits potential
-- **Total Opportunity:** +[X+Y+Z] monthly visits (+[%] increase)
+- **What to do**: Specific content action (e.g., "Create comparison guide targeting '[keyword]'")
+- **Why it matters**: Data-backed impact (e.g., "2,400 searches/month, difficulty 22, weak competitor content")
+- **Category**: Technical SEO / Content / Information Architecture
+- **Effort**: Quick (<30 min) / Moderate (1–3 hrs) / Major (4+ hrs)
+
+**Content details** (for each keyword):
+- Keyword phrase + difficulty score (Low/Medium/High, with Ahrefs score if available)
+- Estimated search volume + traffic potential at #1 and #3
+- Search intent: Info / Commercial / Transactional
+- SERP features present: Featured snippet / AI Overview / Video / None
+- Recommended content type: Guide / List / Comparison / Tool
+- Recommended title
+- Key points to cover
+- Estimated word count
+- Expected timeline to rank
 
 ### Information Architecture Recommendations
 
@@ -791,6 +801,22 @@ For each keyword:
 - [ ] Update based on performance
 - [ ] Build internal links from new content
 - [ ] Promote through available channels
+
+### Token Usage
+
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+
+| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
+|-------|-------|-------------|--------------|-------------|-----------|
+| claude-haiku-4-5 | Competitor: {url} | — | — | — | $— |
+| claude-haiku-4-5 | Competitor: {url} | — | — | — | $— |
+| claude-haiku-4-5 | Keyword research | — | — | — | $— |
+| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
+| **Total** | | | | | **$—** |
+
+Populate from the `token_usage` fields in each Haiku payload plus the Sonnet agent's self-reported usage. Est. Cost = `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
 
 ---
 

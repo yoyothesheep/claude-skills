@@ -103,7 +103,7 @@ Task(
 )
 ```
 
-Collect all three results. Each result is a complete report with a Token Usage Summary table at the top. Once all three have returned, proceed to the SONNET SYNTHESIS AGENT section.
+Collect all three results. Each result is a complete report with a one-line total cost in the Executive Summary and a full Token Usage table in the appendix. Once all three have returned, proceed to the SONNET SYNTHESIS AGENT section.
 
 ---
 
@@ -131,7 +131,7 @@ From each skill report, extract:
 - Winning content formats and structural patterns
 - Citation authority gaps per AI engine
 - Content Presentation Recommendations
-- Token Usage Summary (total tokens + cost from that skill's run)
+- Token Usage (total cost line from Executive Summary + full breakdown from appendix)
 
 **From `seo-keyword-research`:**
 - Keyword tiers (Quick Wins, Strategic, Long-term) with traffic/difficulty data
@@ -158,38 +158,9 @@ From each skill report, extract:
 
 ### Executive Summary
 - Current state: Where the site stands across AEO, SEO, and content quality
-- Top 3 opportunities (one from each dimension if possible)
+- Top 3 opportunities (one from each dimension if possible), each with a colored priority badge: 🔴 for critical/immediate, 🟡 for important/near-term, 🟢 for enhancement
 - Estimated total impact: traffic potential + AI citation uplift
-
-### Token Usage Summary
-
-Aggregate token usage across all agents in all three skills plus this synthesis agent.
-
-**Pricing reference:**
-- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
-- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
-
-Extract the per-agent rows from each skill's Token Usage Summary, then add the synthesis agent row:
-
-| Skill | Model | Agent | Input Tokens | Output Tokens | Est. Cost |
-|-------|-------|-------|-------------|--------------|-----------|
-| aeo-topic-research | claude-haiku-4-5 | Brand Radar: chatgpt | — | — | $— |
-| aeo-topic-research | claude-haiku-4-5 | Brand Radar: perplexity | — | — | $— |
-| aeo-topic-research | claude-haiku-4-5 | Brand Radar: google_ai_overviews | — | — | $— |
-| aeo-topic-research | claude-haiku-4-5 | Brand Radar: gemini | — | — | $— |
-| aeo-topic-research | claude-haiku-4-5 | Reddit agent | — | — | $— |
-| aeo-topic-research | claude-haiku-4-5 | Page crawl × N | — | — | $— |
-| aeo-topic-research | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
-| seo-keyword-research | claude-haiku-4-5 | Competitor: {url} × N | — | — | $— |
-| seo-keyword-research | claude-haiku-4-5 | Keyword research | — | — | $— |
-| seo-keyword-research | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
-| aeo-seo-site-audit | claude-haiku-4-5 | URL agent × N | — | — | $— |
-| aeo-seo-site-audit | claude-haiku-4-5 | Ahrefs agent (if used) | — | — | $— |
-| aeo-seo-site-audit | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
-| **orchestrator** | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
-| **Grand Total** | | | | | **$—** |
-
-Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places. Sum all rows for Grand Total.
+- **Total research cost: $—** (one line; full breakdown in Token Usage appendix at end of report)
 
 ### Prioritized Recommendations
 
@@ -208,7 +179,19 @@ A single unified ranked list drawing from all three skills, following these incl
 | 🟡 Important | 🟡 Plan Soon | Tier 2: Strategic | All |
 | 🟢 Enhancement | 🟢 Monitor | Tier 3: Long-term | Top 2 per skill |
 
-Order within each tier by impact × effort. For each item:
+Order within each tier by impact × effort. Begin with a summary table — one row per recommendation — then list full details for each item below the table.
+
+**Summary table (one row per recommendation):**
+
+| # | Priority | Recommendation | Source | Category | Effort |
+|---|----------|---------------|--------|----------|--------|
+| 1 | 🔴 Critical | … | Site Audit / AEO Research / Keyword Research / Multiple | … | Quick / Moderate / Major |
+| 2 | 🟡 Important | … | … | … | … |
+| … | … | … | … | … | … |
+
+**Detailed recommendations (one section per item, matching table order):**
+
+For each item:
 
 - **What to do**: Specific, actionable instruction
 - **Why it matters**: Data-backed impact (e.g., "Affects 8 of 11 pages" / "2,400 searches/month, difficulty 22" / "Cited by ChatGPT in 45 responses")
@@ -255,6 +238,34 @@ Synthesized from all three skills:
 - Page load and mobile optimization
 - Navigation UX improvements
 - CTA placement and accessibility
+
+### Token Usage
+
+Aggregate token usage across all agents in all three skills plus this synthesis agent. Extract per-agent rows from each skill's Token Usage appendix, then add the orchestrator row:
+
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+
+| Skill | Model | Agent | Input Tokens | Output Tokens | Est. Cost |
+|-------|-------|-------|-------------|--------------|-----------|
+| aeo-topic-research | claude-haiku-4-5 | Brand Radar: chatgpt | — | — | $— |
+| aeo-topic-research | claude-haiku-4-5 | Brand Radar: perplexity | — | — | $— |
+| aeo-topic-research | claude-haiku-4-5 | Brand Radar: google_ai_overviews | — | — | $— |
+| aeo-topic-research | claude-haiku-4-5 | Brand Radar: gemini | — | — | $— |
+| aeo-topic-research | claude-haiku-4-5 | Reddit agent | — | — | $— |
+| aeo-topic-research | claude-haiku-4-5 | Page crawl × N | — | — | $— |
+| aeo-topic-research | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
+| seo-keyword-research | claude-haiku-4-5 | Competitor: {url} × N | — | — | $— |
+| seo-keyword-research | claude-haiku-4-5 | Keyword research | — | — | $— |
+| seo-keyword-research | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
+| aeo-seo-site-audit | claude-haiku-4-5 | URL agent × N | — | — | $— |
+| aeo-seo-site-audit | claude-haiku-4-5 | Ahrefs agent (if used) | — | — | $— |
+| aeo-seo-site-audit | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
+| **orchestrator** | claude-sonnet-4-6 | Synthesis agent | — | — | $— |
+| **Grand Total** | | | | | **$—** |
+
+Est. Cost = `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places. Sum all rows for Grand Total.
 
 ---
 

@@ -542,27 +542,52 @@ Create a structured report with:
 - Your current citation status (# citations, # engines citing you)
 - Competitor citation comparison
 - Top 3 highest-priority content opportunities
+- **Total research cost: $—** (one line; full breakdown in Token Usage appendix at end of report)
 
-### Token Usage Summary
+### Prioritized Recommendations
 
-Include a table summarizing tokens consumed and estimated cost across all agents.
+**What to include:**
+- **All** 🔴 Create Now and 🟡 Plan Soon opportunities — no cap, no omissions
+- **Top 2** 🟢 Monitor items, selected by highest score
+- If more than 2 Monitor items were identified, append: `> _N additional Monitor items not listed — see AI Question Landscape for full list._`
 
-**Pricing reference:**
-- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
-- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
+**Priority tiers:**
 
-| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
-|-------|-------|-------------|--------------|-------------|-----------|
-| claude-haiku-4-5 | Brand Radar: chatgpt | — | — | — | $— |
-| claude-haiku-4-5 | Brand Radar: perplexity | — | — | — | $— |
-| claude-haiku-4-5 | Brand Radar: google_ai_overviews | — | — | — | $— |
-| claude-haiku-4-5 | Brand Radar: gemini | — | — | — | $— |
-| claude-haiku-4-5 | Reddit agent | — | — | — | $— |
-| claude-haiku-4-5 | Page crawl: {url} | — | — | — | $— |
-| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
-| **Total** | | | | | **$—** |
+| Tier | Score | Label | Include |
+|---|---|---|---|
+| 🔴 Create Now | 7–9 | High-impact, low-competition; clear format playbook | All |
+| 🟡 Plan Soon | 4–6 | Good opportunity; needs more effort or planning | All |
+| 🟢 Monitor | 1–3 | Lower priority; watch for competition weakening | Top 2 |
 
-Populate this table from the `token_usage` fields in each Haiku payload, plus the Sonnet agent's self-reported usage. Calculate Est. Cost as: `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
+**Table preview** — one row per recommendation, ordered by tier then score descending:
+
+| # | Priority | Score | Content Piece | Category | Effort |
+|---|---|---|---|---|---|
+| 1 | 🔴 Create Now | 9 | [Title of content piece] | AEO / Content | Moderate |
+| 2 | 🔴 Create Now | 8 | [Title of content piece] | Content | Major |
+| 3 | 🟡 Plan Soon | 6 | [Title of content piece] | AEO / Content | Moderate |
+| 4 | 🟡 Plan Soon | 5 | [Title of content piece] | Content | Moderate |
+| 5 | 🟢 Monitor | 3 | [Title of content piece] | Content | Quick |
+| 6 | 🟢 Monitor | 2 | [Title of content piece] | Content | Moderate |
+
+Then the full list with details for each item, in the same order as the table:
+
+Order within each tier by score (descending). For each item:
+
+- **What to do**: Specific content action (e.g., "Create FAQ page targeting 'how to X'")
+- **Why it matters**: Data-backed impact (e.g., "Cited by ChatGPT in 45 responses" / "2,400 searches/month, no strong incumbent")
+- **Category**: AEO / Content / Information Architecture / Content Presentation
+- **Effort**: Quick (<30 min) / Moderate (1–3 hrs) / Major (4+ hrs)
+
+**Content brief** (for each 🔴 Create Now item):
+- Primary question to answer (use Reddit phrasing where available)
+- Key subtopics/H2s to cover
+- Natural language variants and community vocabulary to weave in
+- Data/stats to include
+- Schema type to implement (FAQ, HowTo, Article)
+- Target length
+- Authority signals to add (author bio, citations, dates)
+
 
 ### AI Question Landscape
 - Full list of discovered questions, grouped by topic cluster
@@ -594,23 +619,24 @@ A short list (3-5 items) of structural and format recommendations based on Step 
 - "Implement short-paragraph formatting with bolded key terms"
 - "Add 1-2 diagrams or infographics per technical guide"
 
-### Prioritized Recommendations
+### Token Usage
 
-A single ranked list of content opportunities, ordered by score from Step 9. For each opportunity:
+**Pricing reference:**
+- Haiku 4.5: $0.80 / 1M input tokens, $4.00 / 1M output tokens
+- Sonnet 4.6: $3.00 / 1M input tokens, $15.00 / 1M output tokens
 
-**Topic:** [Topic name]
-**Target question(s):** [Specific questions from Brand Radar]
-**Monthly demand:** [Volume estimate]
-**Current citation landscape:** [Who's cited, if anyone]
-**Recommended format:** [Based on page crawl patterns]
-**Content brief:**
-- Primary question to answer (use Reddit phrasing where available)
-- Key subtopics/H2s to cover
-- Natural language variants and community vocabulary to weave in
-- Data/stats to include
-- Schema type to implement (FAQ, HowTo, Article)
-- Target length
-- Authority signals to add (author bio, citations, dates)
+| Model | Agent | Input Tokens | Output Tokens | Total Tokens | Est. Cost |
+|-------|-------|-------------|--------------|-------------|-----------|
+| claude-haiku-4-5 | Brand Radar: chatgpt | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: perplexity | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: google_ai_overviews | — | — | — | $— |
+| claude-haiku-4-5 | Brand Radar: gemini | — | — | — | $— |
+| claude-haiku-4-5 | Reddit agent | — | — | — | $— |
+| claude-haiku-4-5 | Page crawl: {url} | — | — | — | $— |
+| claude-sonnet-4-6 | Synthesis agent | — | — | — | $— |
+| **Total** | | | | | **$—** |
+
+Populate from the `token_usage` fields in each Haiku payload plus the Sonnet agent's self-reported usage. Est. Cost = `(input_tokens / 1,000,000 × input_rate) + (output_tokens / 1,000,000 × output_rate)`, rounded to 4 decimal places.
 
 ---
 
