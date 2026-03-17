@@ -87,11 +87,10 @@ An all-in-one strategy. This orchestrates all three core skills (`aeo-topic-rese
 
 ### Output
 A strategic report with:
-- Strategic overview and key insights
-- Aggregated Token Usage Summary with grand total cost across all agents
-- Unified prioritized recommendations (merged from all three skills): **all** 🔴 Critical and 🟡 Important issues are always included; top 2 🟢 Enhancements per skill are shown, with a note if more were omitted
+- Executive summary with Top 3 Opportunities (colored priority badges)
+- Unified prioritized recommendations: summary table (one row per item, colored badge) followed by detailed items; **all** 🔴 Critical and 🟡 Important issues always included; top 2 🟢 Enhancements per skill shown, with a note if more were omitted
 - Detailed findings grouped by category (AEO research, keywords, on-page, functionality)
-- Success metrics and KPIs
+- Aggregated Token Usage Summary with grand total cost across all agents
 
 ---
 
@@ -125,7 +124,7 @@ Discovers what questions AI engines are answering in your niche, which domains a
 - **Content presentation & UX** — navigation aids (TOC, jump links, sticky nav), multimedia gaps, and formatting patterns from citation-winning pages
 
 ### Output
-A prioritized content opportunity brief including: topic clusters ranked by citation potential, a Reddit language glossary with natural phrasing and community vocabulary per topic, competitor citation analysis, winning content formats and structures, content presentation recommendations (navigation, format, multimedia), a prioritized content roadmap, and a Token Usage Summary.
+A prioritized content opportunity brief including: a summary table of all recommendations (one row per item, colored priority badge) followed by detailed items with content briefs; topic clusters ranked by citation potential; a Reddit language glossary; competitor citation analysis; winning content formats; content presentation recommendations; and a Token Usage Summary.
 
 ---
 
@@ -162,7 +161,7 @@ When the **Ahrefs MCP server** is connected, you get real data:
 - SERP feature data and adjustments
 
 ### Output
-A competitive keyword strategy with keyword tiers (Quick Wins / Strategic / Long-term), traffic opportunity summary with ROI projections, content gap analysis, information architecture recommendations (navigation changes, hub pages, internal linking strategy, content silos), and a Token Usage Summary.
+A competitive keyword strategy with: a summary table of all recommendations (one row per item, colored priority badge) followed by detailed items; keyword tiers (Quick Wins / Strategic / Long-term) with traffic estimates; content gap analysis; information architecture recommendations (navigation changes, hub pages, internal linking, content silos); and a Token Usage Summary.
 
 ---
 
@@ -190,6 +189,6 @@ Analyzes your website pages for content quality, schema markup completeness, and
 - **AEO optimization** — direct-answer formatting, author credentials, source citations, freshness signals, content structure for AI extraction
 
 ### Output
-A prioritized audit report with findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement), specific schema fixes with effort estimates, content recommendations, a page-by-page breakdown, and a Token Usage Summary. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
+A prioritized audit report with: a summary table of all recommendations (one row per item, colored priority badge) followed by detailed items; findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement); specific schema fixes with effort estimates; a page-by-page breakdown; and a Token Usage Summary. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
 
 ---
