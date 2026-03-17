@@ -62,17 +62,38 @@ Before starting the audit, check which tools are available and adjust accordingl
 
 **Note:** JSON-LD extraction is NOT optional. Audits claiming "no schema found" without explicit JSON-LD extraction attempts are incomplete and inaccurate. Always verify schema presence before reporting it as missing.
 
+## Critical: Distinguish "Crawlable" from "Indexable"
+
+⚠️ **Modern Googlebot executes JavaScript.** A site with empty static HTML (SPA, client-side rendering) may still be indexed by Google. The presence of a `<div id="root"></div>` does NOT mean the site is "not indexed."
+
+**Crawlable** = Static HTML contains content (good for all crawlers, fastest for Googlebot)
+**Indexable** = Google can find and index the content (true even if JS-rendered; Googlebot waits for JS execution)
+**Optimal for AI crawlers** = Static HTML with schema markup (most AI answer engines have limited JS execution)
+
+**Do not conclude a site is "not indexed" based solely on static HTML analysis.** Always verify actual indexing status first (see Step 1 below).
+
 ---
 
 ## COORDINATOR
 
-## Step 1: Gather Input
+## Step 1: Gather Input & Verify Indexing Status
 
 Ask the user for:
 
 **Required:**
 - **Target URLs**: The pages to analyze (homepage, key landing pages, important content)
   - If user says "my website" without URLs, ask them to provide 2-5 specific pages to start with
+
+**⚠️ Before proceeding, verify actual Google indexing status:**
+
+If user reports the site is "not indexed":
+1. Ask: "Have you checked Google Search Console coverage report?" or "Have you tried `site:yourdomain.com` in Google search?"
+2. If uncertain, recommend they verify using:
+   - Google Search Console (Coverage > Indexed pages)
+   - `site:yourdomain.com` search operator
+   - Google's URL Inspection tool (one specific URL)
+3. **Do not assume** a site is unindexed based on static HTML analysis alone. Modern Googlebot executes JavaScript and can index SPAs.
+4. If the site is actually indexed, note this in the report's findings — the audit focus shifts to crawlability, AI-friendliness, and schema optimization (not indexing recovery).
 
 **Optional:**
 - **Ahrefs Project ID** (recommended): If you have Ahrefs Site Audit set up, provide the project ID
@@ -140,6 +161,10 @@ ahrefs_issues = site_audit_issues(
 ## Step 4: Crawl Target Pages, Extract JSON-LD & Content Signals
 
 **⚠️ CRITICAL: JSON-LD extraction is mandatory on every page. Do ONE fetch per URL (not two) to ensure efficiency.**
+
+**⚠️ CRITICAL: When analyzing static HTML, distinguish between:**
+- **"Empty static HTML" (JS-rendered SPA)**: Does NOT mean "not indexable by Google." Modern Googlebot executes JavaScript. However, it DOES mean poor crawlability for other crawlers (Bingbot, AI answer engines, feed readers).
+- **"No content in static HTML"**: Valid finding for crawlability audit. Report it as a crawlability gap, not an indexing problem.
 
 For each target URL, extract all raw signals in a single pass. This step combines fetching, JSON-LD extraction, and content signal extraction.
 
@@ -570,6 +595,7 @@ Create a well-structured document (markdown or docx) with:
 ### Executive Summary
 - **Tone:** Analytical and data-driven (see [TONE-GUIDE.md](../TONE-GUIDE.md))
 - Total pages analyzed
+- **Google indexing status (if reported as problem):** Clearly state whether actual indexing was verified via GSC/site: operator or if this is based on crawler simulation analysis. Important distinction: "Static HTML shows no crawlable content (gap for non-Google crawlers)" vs. "Not indexed by Google (requires GSC verification)."
 - Summary of Ahrefs findings (if available): "Ahrefs identified X technical issues across Y pages"
 - Overall AEO readiness score (based on schema, content, authority signals)
 - Top 3-5 critical gaps (prioritized by AEO impact and effort)
@@ -802,6 +828,23 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
    - "Content lacks direct answers in opening → AI/users skip it"
    - "Statistics cited without links → Not citable"
 
+**User:** "My site uses React and I heard it's not indexed by Google. Is that true?"
+
+**Assistant:**
+1. Asks: "Good question. Let me verify. Have you checked:
+   - Google Search Console coverage report?
+   - Or tried `site:yourdomain.com` in Google search?
+
+2. If user confirms site IS indexed:
+   - "Your site is indexed by Google because Googlebot executes JavaScript. However, I see crawlability gaps for other crawlers (AI answer engines, Bingbot, social media bots)."
+   - Focuses audit on: static HTML schema gaps, AI-friendliness, content extractability
+   - Recommends SSR/SSG for broader crawler support, not for Google indexing recovery
+
+3. If user hasn't verified:
+   - Recommends they check Search Console first
+   - Still runs audit analyzing static HTML crawlability
+   - Clearly distinguishes in report: "Based on static HTML analysis, content is not visible to non-JS-executing crawlers. Google indexing status should be verified in Search Console."
+
 **User:** "I have FAQ pages but they don't show in AI responses. Can you check?"
 
 **Assistant:**
@@ -842,10 +885,12 @@ A successful audit includes:
 - Example: "Article schema present but missing author, datePublished, and description fields"
 - Provide exact fixes to complete schema
 
-**Scenario: Content is JavaScript-rendered**
+**Scenario: Content is JavaScript-rendered (SPA with empty static HTML)**
 - Note that analysis is limited to SSR content visible in initial HTML
-- Recommend user verify CSR-rendered content in browser or via Puppeteer
-- Flag which content gaps may be due to CSR rendering
+- **Clarify:** Modern Googlebot executes JavaScript, so the site is likely indexed by Google even with empty static HTML. However, this creates gaps for other crawlers (Bingbot, AI answer engines, social media crawlers).
+- Recommend user verify actual indexing status in Google Search Console (not based on crawler simulation alone)
+- Flag crawlability gaps (schema, titles, descriptions missing from static HTML) separately from indexability
+- Recommend SSR/SSG as the optimization (not for Google indexing, but for AI engine crawlability and crawl efficiency)
 
 **Scenario: Site has no schema at all**
 - This is HIGH priority for AEO; provide specific schema recommendations for each content type
