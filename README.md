@@ -33,7 +33,7 @@ Every report includes a **Token Usage Summary** with per-agent input/output toke
 
 ## Setup
 
-### 1. Recommend using Claude Code locally
+### 1. Recommend using locally
 
 The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results).
 
