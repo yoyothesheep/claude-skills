@@ -27,15 +27,17 @@ Every report includes a **Token Usage Summary** with per-agent input/output toke
 - [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator) 
 - [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities) 
 - [2. seo-keyword-research](#2-seo-keyword-research--competitor-analysis--keyword-research)
-- [3. WIP: aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
+- [3. aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
 
 ---
 
 ## Setup
 
-### 1. Recommend using Claude Code
+### 1. Recommend using Claude Code locally
 
-The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results)
+The `aeo-seo-site-audit` skill uses `curl` to analyze schema markup, but Claude Web doesn't have permission to run `curl`, so you'll be prompted to check schema manually using [Google's Rich Results Test](https://search.google.com/test/rich-results).
+
+Additionally, running the audit skill locally allows your AI coding agent to run a continuous improvement loop (`audit -> fix -> audit -> fix`) without needing to deploy each fix.
 
 ### 2. Connect Ahrefs MCP (optional)
 
@@ -53,7 +55,7 @@ Or, run each skill separately.
 ```
 * aeo-topic-research      →  Recommends topics, content format, and UX changes for AEO
 * seo-keyword-research    →  Find competitive keywords, content gaps, and IA recommendations for SEO
-* aeo-seo-site-audit      →  [WIP] Audit & optimize your pages for SEO and AEO
+* aeo-seo-site-audit      →  Audit & optimize your pages for SEO and AEO
 ```
 
 ---
@@ -165,7 +167,7 @@ A competitive keyword strategy with: a summary table of all recommendations (one
 
 ---
 
-## 3. [WIP] `aeo-seo-site-audit` — Site Audit & AEO Optimization
+## 3. `aeo-seo-site-audit` — Site Audit & AEO Optimization
 
 **File:** `aeo-seo-site-audit/SKILL.md`
 
