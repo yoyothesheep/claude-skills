@@ -1,6 +1,10 @@
 # claude-skills
 
-SEO and AEO skills for Claude — a tested workflow for auditing and optimizing websites and web apps for both search engines and AI answer engines.
+SEO, AEO, and content distribution skills for Claude — a tested workflow for researching, writing, and distributing content that gets cited by AI answer engines and ranks in search.
+
+**Two skill groups:**
+- **Research & Audit** — understand what AI engines are citing, find keyword gaps, audit existing pages
+- **Content & Distribution** — write AEO-optimized content, distribute it via Reddit/LinkedIn/etc, track citations
 
 Designed to complement Ahrefs/Semrush by:
 - Understanding your site's content, intent, and target audience
@@ -10,24 +14,39 @@ Designed to complement Ahrefs/Semrush by:
 
 ## Multi-agent architecture
 
-Each skill uses a **Coordinator → Haiku → Sonnet** pipeline to balance speed, cost, and quality:
+![Architecture diagram](architecture.svg)
+
+Research & Audit skills use a **Coordinator → Haiku → Sonnet** pipeline to balance speed, cost, and quality:
 
 - **Coordinator** (main Claude): gathers input, orchestrates agents
 - **Haiku agents**: parallel mechanical extraction — API calls, page crawls, data collection
 - **Sonnet agent**: analysis, synthesis, and report writing
 
-Every report includes a **Token Usage Summary** with per-agent input/output tokens and estimated cost. The orchestrator aggregates token costs across all three skills into a single grand total.
+The output reports include a **Token Usage Summary** with per-agent input/output tokens and estimated cost. The orchestrator aggregates token costs across all three skills into a single grand total.
+
+## Configuration
+
+Each skill has a `CONFIG.example.md`. Change it to `CONFIG.md` in the same folder and fill in your values (site URL, tracker paths, etc.). `CONFIG.md` is gitignored — your project-specific values stay local.
 
 ---
 
 ## Table of Contents
 
+**Research & Audit**
 - [Setup](#setup)
 - [Quick Start](#quick-start)
-- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator) 
-- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities) 
+- [0. aeo-seo-strategy-orchestrator](#0-aeo-seo-strategy-orchestrator--complete-seaaeo-strategy--roadmap-orchestrator)
+- [1. aeo-topic-research](#1-aeo-topic-research--aeo-topic-research--opportunities)
 - [2. seo-keyword-research](#2-seo-keyword-research--competitor-analysis--keyword-research)
 - [3. aeo-seo-site-audit](#3-aeo-seo-site-audit--site-audit--aeo-optimization)
+
+**Content & Distribution**
+- [4. growth-pm](#4-growth-pm--growth-coordinator)
+- [5. aeo-content-writer](#5-aeo-content-writer--blog-post-writer)
+- [6. aeo-distribution](#6-aeo-distribution--post-publication-distribution)
+- [7. publish-checklist](#7-publish-checklist--pre-publish-validation)
+- [8. reddit-content](#8-reddit-content--reddit-draft-generator)
+- [9. linkedin-launch](#9-linkedin-launch--linkedin-post-writer)
 
 ---
 
@@ -48,7 +67,7 @@ Additionally, running the audit skill locally allows your AI coding agent to run
 
 ## Quick Start
 
-### Want Everything in One Report?
+### Want the research and audit results in 1 report?
 Use **`aeo-seo-strategy-orchestrator`** for a unified audit that runs all three core skills in parallel and synthesizes recommendations into one list.
 
 Or, run each skill separately. 
@@ -192,5 +211,134 @@ Analyzes your website pages for content quality, schema markup completeness, and
 
 ### Output
 A prioritized audit report with: a summary table of all recommendations (one row per item, colored priority badge) followed by detailed items; findings grouped by severity (🔴 Critical / 🟡 Important / 🟢 Enhancement); specific schema fixes with effort estimates; a page-by-page breakdown; and a Token Usage Summary. If an Ahrefs project ID is provided, the report integrates Ahrefs technical findings alongside the content/AEO analysis.
+
+---
+
+## 4. `growth-pm` — Growth Coordinator
+
+**File:** `growth-pm/SKILL.md`
+
+### Goal
+Central coordinator for the content pipeline. Reads a master tracker (Google Sheet or equivalent), analyzes a feedback log, and routes work to the right downstream skill with an optimized prompt.
+
+### When to use
+- "What should we work on next?"
+- "Run the daily growth routine"
+- "Check the tracker and prioritize"
+
+### Input
+- Access to your tracker (URL in `CONFIG.md`)
+- [Optional] Recent feedback or experiment results
+
+### Output
+A structured handoff: current priority, feedback applied, and an exact prompt for the target skill.
+
+---
+
+## 5. `aeo-content-writer` — Blog Post Writer
+
+**File:** `aeo-content-writer/SKILL.md`
+
+### Goal
+Writes AEO-optimized blog posts using BLS, O*NET, or equivalent authoritative data. Output includes the post component, route file, blog index entry, thumbnail, and sitemap update — ready to ship.
+
+### Content structure
+Lead with finding → show evidence → explain meaning → caveats → actionable takeaway. Every post includes 4 FAQ pairs that drive `FAQPage` JSON-LD schema for AI citation signals.
+
+### Input
+- Post topic and target persona
+- Data sources (BLS/O*NET or custom)
+- Tone guide path (set in `CONFIG.md`)
+
+### Output
+All files needed to publish: post component, route page, blog index entry, sitemap block.
+
+---
+
+## 6. `aeo-distribution` — Post-Publication Distribution
+
+**File:** `aeo-distribution/SKILL.md`
+**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+
+### Goal
+Maximizes the chance AI engines discover and cite a newly published post. Runs after publish-checklist passes.
+
+### Workflow (sequential → parallel)
+1. **Google Search Console** — submit URL for indexing
+2. **Reddit** — invokes `reddit-content` skill, saves drafts to `{REDDIT_OUTPUT_PATH}`
+3. **LinkedIn** — invokes `linkedin-launch` skill
+4. **Backlink outreach** — finds Substack writers, journalists, bloggers; generates personalized pitches
+5. **Citation tracking** — sets up Day 0 / Day 7 / Day 14 monitoring across ChatGPT, Perplexity, Google AI Overviews, Gemini
+
+### Input
+- Post slug, title, URL, key claim, target persona
+
+### Output
+Ready-to-use drafts + a tracker checklist with scheduled follow-up dates.
+
+---
+
+## 7. `publish-checklist` — Pre-Publish Validation
+
+**File:** `publish-checklist/SKILL.md`
+**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+
+### Goal
+Validates any page before it goes live — SEO metadata, schema markup, accessibility, internal links, and a build check. Runs an automated validation script then does page-type-specific checks.
+
+### When to use
+- Before publishing or updating any blog post, career page, industry page, or /now article
+- Invoked automatically by `aeo-distribution` after publish
+
+### What it checks
+- **Phase 0** — runs your automated validation script, fixes all FAILs
+- **Phase 1 (shared)** — anchor links, image paths, title/description length, OG tags, JSON-LD schema type, AEO formatting, accessibility (aria-expanded, aria-hidden), mobile layout
+- **Phase 2 (page-type-specific)** — rules defined in your `site-checklist.md` for each page type (blog, career, industry, /now)
+
+### Output
+PASS / FAIL / FIXED report per check.
+
+---
+
+## 8. `reddit-content` — Reddit Draft Generator
+
+**File:** `reddit-content/SKILL.md`
+**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+
+### Goal
+Finds live Reddit threads where a new post is directly relevant, then writes ready-to-paste comment drafts. No Reddit API — output is a `.md` file the user pastes manually.
+
+### How it works
+Web-searches target subreddits for threads ≤48h old. Matches thread type (career-risk, career-change, no-degree, comparative, etc.) to a comment angle. Drafts ≤250-word comments that open with a direct answer, include one specific data point, and place the link at the end. Falls back to a standalone post draft if no live threads found.
+
+### Input
+- Post URL, title, key claim
+- [Optional] Custom subreddit list (defaults in `CONFIG.example.md`)
+
+### Output
+`{REDDIT_OUTPUT_PATH}reddit_drafts_[slug]_[date].md`
+
+---
+
+## 9. `linkedin-launch` — LinkedIn Post Writer
+
+**File:** `linkedin-launch/SKILL.md`
+**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+
+### Goal
+Writes LinkedIn posts that announce launches, new content, or data findings. Optimizes for genuine reach — not engagement bait.
+
+### Format rules
+- Opening earns the fold-expand with a specific fact, not a teaser
+- Link near the end, after the post earns it
+- Image required (every post)
+- ≤3 hashtags; no hashtag wall
+- No AI-writing anti-patterns: no rhetorical repetition, no em-dash pivots, no "that told us something"
+
+### Input
+- Post title, key claim, target persona, best data point, post URL
+
+### Output
+One ready-to-post LinkedIn draft (short or long form) with graphic suggestions.
 
 ---

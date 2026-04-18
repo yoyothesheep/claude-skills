@@ -32,6 +32,7 @@ Trigger this skill when the user:
 
 ## Core Workflow
 
+Step 0. **[Coordinator]** Understand the user's site — scan codebase or crawl URL to extract topics, content themes, and vocabulary
 Step 1. **[Coordinator]** Gather Input — website, competitor URLs, niche, preferences
 Step 2. **[Coordinator]** Orchestrate agents — launch Haiku agents in two waves
 Steps 3-4. **[Haiku Competitor Agents, parallel per competitor]** Get Ahrefs metrics + top organic keywords (Step 3), crawl key pages (Step 4)
@@ -64,6 +65,37 @@ Handles Steps 1–2: gathers user input and orchestrates agents in two waves. Pa
 ---
 
 ## COORDINATOR
+
+## Step 0: Understand the User's Site
+
+Before asking for any input, extract topics, content themes, and vocabulary from the user's site. This context seeds SERP queries for competitor discovery and keyword research when competitors aren't provided.
+
+**If running inside a codebase** (check for content files — `.md`, `.mdx`, `.tsx` routes, blog post directories):
+- Glob for content files: `**/*.md`, `**/*.mdx`, `app/**/page.tsx`, `src/content/**/*`
+- Read titles (H1s, frontmatter `title`), headings (H2/H3), and meta descriptions from a sample of 10–20 files
+- Extract: main topic areas, recurring vocabulary, content types (guides, tools, data posts, comparisons)
+
+**If no codebase** (running in Claude Web or no content files found):
+- WebFetch the user's homepage URL
+- Extract: page title, H1, main nav links, H2 section headings, any visible blog/content index
+- If a `/blog`, `/guides`, or `/resources` path exists, fetch it and extract post titles
+
+**Output of Step 0:** A `site_context` object used throughout the skill:
+```json
+{
+  "site_context": {
+    "main_topics": ["AI-proof careers", "automation risk by job", "future-proof skills"],
+    "content_types": ["data-driven guides", "career comparisons", "industry reports"],
+    "vocabulary": ["AI-resistant", "automation-proof", "durable skills", "career pivots"],
+    "existing_pages": ["sample titles or slugs"],
+    "inferred_niche": "careers safe from AI automation"
+  }
+}
+```
+
+Use `main_topics` and `vocabulary` as SERP seed queries to find who's ranking when competitors aren't provided. Use `inferred_niche` as the default niche in Step 1 if the user doesn't specify one.
+
+---
 
 ## Step 1: Gather Input
 

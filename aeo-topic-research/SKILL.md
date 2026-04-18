@@ -18,6 +18,7 @@ This skill pulls from three data sources: **Ahrefs Brand Radar** (when available
 
 ## Core Workflow
 
+Step 0. **[Coordinator]** Understand the user's site — scan codebase or crawl URL to extract topics, content themes, and vocabulary
 Step 1. **[Coordinator]** Gather Input — brand, competitors, market/niche, AI engines
 Step 2. **[Coordinator]** Orchestrate agents — launch Haiku agents in two waves
 Steps 3-5. **[Haiku Brand Radar Agents, parallel per AI engine]** Discover AI questions (Step 3), identify cited domains (Step 4), identify cited pages (Step 5)
@@ -59,6 +60,37 @@ Handles Steps 1–2: gathers user input and orchestrates agents in two waves. Pa
 
 ## COORDINATOR
 
+## Step 0: Understand the User's Site
+
+Before asking for any input, extract topics, content themes, and vocabulary from the user's site. This context informs the `market` parameter and seeds topic cluster discovery.
+
+**If running inside a codebase** (check for content files — `.md`, `.mdx`, `.tsx` routes, blog post directories):
+- Glob for content files: `**/*.md`, `**/*.mdx`, `app/**/page.tsx`, `src/content/**/*`
+- Read titles (H1s, frontmatter `title`), headings (H2/H3), and meta descriptions from a sample of 10–20 files
+- Extract: main topic areas, recurring vocabulary, content types (guides, tools, data posts, comparisons)
+
+**If no codebase** (running in Claude Web or no content files found):
+- WebFetch the user's homepage URL
+- Extract: page title, H1, main nav links, H2 section headings, any visible blog/content index
+- If a `/blog`, `/guides`, or `/resources` path exists, fetch it and extract post titles
+
+**Output of Step 0:** A `site_context` object used throughout the skill:
+```json
+{
+  "site_context": {
+    "main_topics": ["AI-proof careers", "automation risk by job", "future-proof skills"],
+    "content_types": ["data-driven guides", "career comparisons", "industry reports"],
+    "vocabulary": ["AI-resistant", "automation-proof", "durable skills", "career pivots"],
+    "existing_pages": ["sample titles or slugs"],
+    "inferred_market": "careers safe from AI automation"
+  }
+}
+```
+
+Use `inferred_market` as the default `market` parameter in Step 1 if the user doesn't provide one. Use `vocabulary` and `main_topics` to sharpen Brand Radar queries and Reddit search terms.
+
+---
+
 ## Step 1: Gather Input
 
 Ask the user for:
@@ -74,6 +106,7 @@ Ask the user for:
 - **AI engines to focus on**: Default is all — `chatgpt`, `perplexity`, `google_ai_overviews`, `gemini`, `copilot`, `google_ai_mode`
 - **Country**: Default `US`
 - **Goal emphasis**: Citation volume, citation quality, or topic gap coverage?
+- **Historical context**: If the user pastes text or provides a file path (e.g. a promotion tracker, past performance notes), read it and pass it to the Sonnet agent. Use it to weight opportunities toward angles that have already proven to resonate.
 
 ---
 
@@ -124,7 +157,7 @@ If the top 15–20 cited URLs are skewed toward one format (e.g., all guides), e
 
 **Why:** Step 8 pattern analysis requires format diversity to reliably identify which content types AI engines prefer to cite. A crawl set dominated by one format produces misleading conclusions.
 
-Collect all Wave 2 results. Once every Haiku agent has returned its payload, proceed to the SONNET AGENT section.
+Collect all Wave 2 results. Once every Haiku agent has returned its payload, proceed to the SONNET AGENT section. If historical context was provided, include it in the Sonnet agent prompt under a `## Historical Context` heading.
 
 ---
 
@@ -401,6 +434,8 @@ content = web_fetch(url, text_content_token_limit=30000)
 ## SONNET AGENT
 
 The Sonnet agent receives all Haiku JSON payloads. It never fetches URLs or calls APIs directly. All analysis, judgment, pattern recognition, and report writing happens here.
+
+**Historical context:** If the coordinator received historical performance data (pasted text or a file), pass it in the prompt under a `Historical Context` heading. Use it to boost opportunity scores for angles that match proven high-performers (e.g. if "no degree" listicles drove 311K Reddit views, weight similar angles higher). Explicitly call out in the report which recommendations are reinforced by historical data.
 
 **Token tracking:** At the end of your output, include your own token usage:
 ```json
