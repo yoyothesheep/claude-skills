@@ -1,6 +1,11 @@
-# LinkedIn Launch Announcements
+---
+name: linkedin-content
+description: Writes LinkedIn posts announcing new content, launches, or data findings. Optimizes for genuine reach. Called directly or via distribute-social.
+---
 
-> **Extends:** `now-page-voice/SKILL.md`. Read that first. This skill applies all the same voice rules, tightened for LinkedIn's format and reach mechanics.
+# LinkedIn Content
+
+**Voice:** Read `BRAND_VOICE_NOTES` from CONFIG.md before writing. Apply those rules throughout.
 
 ---
 

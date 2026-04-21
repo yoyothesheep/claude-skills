@@ -1,85 +1,213 @@
 ---
 name: growth-pm
-description: The central "Brain" skill that coordinates all other agents on the AI Proof Careers Platform. Use this skill to analyze the Master Execution Tracker, prioritize workstreams, process the Feedback Log, and update instructions for other agents.
+description: Central coordinator for the content pipeline. Maintains a prioritized task board across 4 workstreams, routes work to the right skill, tracks citation performance, and learns from GSC data and human feedback to improve future routing and flag skill updates.
 ---
 
-# Growth PM Skill (The Brain)
+# Growth PM — The Brain
 
-This skill acts as the central coordinator and project manager for the AI Proof Careers Platform. It reads the Master Execution Tracker, determines the highest-priority tasks across all workstreams, analyzes feedback to improve processes, and orchestrates the other specialized agents (`aeo-content-writer`, `tool-architect`, `growth-outreach`, `data-analyst`, `aeo-distribution`).
+Central coordinator for the content pipeline. Reads the tracker, analyzes performance data, maintains a prioritized task board across 4 workstreams, and routes work to the right downstream skill with an optimized prompt.
 
 ## When to Use This Skill
 
-Trigger this skill when the user:
-- Asks "what should we work on next?"
-- Wants to "run the daily growth routine"
-- Asks to "check the tracker and prioritize"
-- Wants to "process recent feedback and update agents"
-- Needs to coordinate multiple workstreams (AEO Content, Tools, Partnerships, Data)
-
-## Core Workflow
-
-Step 1. **[Read Tracker]** Read the tracker files (Dashboard, Feedback_Log, and workstream tabs) — paths in `CONFIG.md`.
-Step 2. **[Analyze Feedback]** Review `TRACKER_FEEDBACK_LOG` to identify what is working and what isn't.
-Step 3. **[Update Instructions]** Based on feedback, update the instructions or parameters for the relevant downstream agents.
-Step 4. **[Prioritize]** Review `TRACKER_DASHBOARD` to identify the highest-impact, highest-priority tasks according to the 90-day roadmap.
-Step 5. **[Orchestrate]** Formulate specific prompts and hand off execution to the appropriate specialized agents.
+- "What should we work on next?"
+- "Run the daily growth routine"
+- "Check the tracker and prioritize"
+- "What's performing well?"
+- "Check citations for [post slug]"
 
 ---
 
-## 1. Read the Master Execution Tracker
+## Core Workflow
 
-The source of truth is a set of local markdown files — paths defined in `CONFIG.md`:
+Step 1. **Read tracker** — Dashboard, Feedback Log, and workstream tabs
+Step 2. **Pull performance data** — GSC MCP + any human input
+Step 3. **Run learning loop** — surface what's working, flag skill updates
+Step 4. **Prioritize across 4 workstreams** — produce ranked task board
+Step 5. **Orchestrate** — route to downstream skill with optimized prompt
 
-- `TRACKER_DASHBOARD` — status, priority, and next milestone for all workstreams
-- `TRACKER_FEEDBACK_LOG` — insights, impact ratings, and action items from recent experiments
-- `TRACKER_AEO_CONTENT`, `TRACKER_PARTNERSHIPS`, `TRACKER_DATA_INSIGHTS`, `TRACKER_TOOLS` — workstream detail tabs
+---
 
-Always begin by reading Dashboard and Feedback_Log.
+## Step 1: Read the Tracker
 
-## 2. Analyze the Feedback Loop
+Paths defined in `CONFIG.md`:
 
-The `Feedback_Log` tab contains critical learnings (e.g., "Reddit prefers comment-first strategy over direct posts" or "AEO research shows AI engines cite high-density tables").
+- `TRACKER_DASHBOARD` — status, priority, next milestone for all workstreams
+- `TRACKER_FEEDBACK_LOG` — insights, ratings, action items from recent experiments
+- `TRACKER_CONTENT` — content pipeline (drafts, scheduled, published)
+- `CITATION_PATH` — citation tracking baseline files per post slug
 
-For each new or unprocessed entry in the Feedback Log:
-1. Identify which workstream and agent it affects.
-2. Determine the specific change in behavior required.
-3. Formulate an updated instruction set for that agent.
+Always begin by reading Dashboard and Feedback Log.
 
-## 3. Update Agent Instructions
+---
 
-Before handing off tasks to other agents, ensure their operating instructions reflect the latest feedback.
+## Step 2: Pull Performance Data
 
-- If the feedback affects a skill file (e.g., `.claude/skills/reddit-outreach/SKILL.md`), propose an edit to that file.
-- If the feedback is contextual, include it explicitly in the prompt you pass to the agent.
+### GSC Data (if Ahrefs MCP connected)
 
-*Example: If the Feedback Log says "Career guides for mid-career professionals are seeing higher GSC impressions," instruct the `aeo-content-writer` to prioritize mid-career personas in the next batch of guides.*
+For each recently published post (last 30 days), pull:
 
-## 4. Prioritize Workstreams
+```python
+# Clicks, impressions, position for each URL
+gsc_page_history(
+    url=post_url,
+    date_from="30 days ago",
+    date_to="today"
+)
 
-Review the `Dashboard` tab to determine the next action.
+# Top queries driving traffic to each page
+gsc_keywords(
+    url=post_url,
+    date_from="30 days ago"
+)
+```
 
-**Workstreams & Agents:**
-- **AEO Content Factory** (`aeo-content-writer`): Creates career guides and blog posts based on BLS data.
-- **Interactive Tool Lab** (`tool-architect`): Builds interactive features like the AI-Proof Score logic.
-- **Partnership & PR** (`growth-outreach`): Handles Reddit and LinkedIn distribution.
-- **Data & Insights** (`data-analyst`): Pulls GSC/GA4 data to measure KPIs.
-- **AEO Distribution** (`aeo-distribution`): Post-publication workflow — invoke after `publish-checklist` passes. Handles Search Console submission, Reddit comment opportunities, LinkedIn launch draft, backlink outreach list, and 2-week citation tracking.
+Extract: which posts are gaining clicks, which queries are driving them, which posts have high impressions but low CTR (title/description opportunity).
 
-**Prioritization Logic:**
-1. **Unblock Critical Path**: Are any "High" priority tasks blocking other workstreams? (e.g., Data Insights needed before AEO Content can be measured).
-2. **Highest Impact**: Which "Active" status task has the highest potential impact on the core KPIs (Organic Impressions, Referral Traffic, etc.)?
-3. **Feedback-Driven**: Did a recent feedback log entry highlight an immediate opportunity?
+### Citation Checks
 
-## 5. Orchestrate Execution
+For posts with a baseline in `CITATION_PATH`, check if Day 7 or Day 14 follow-ups are due:
+- Read `[slug]-baseline.md` to find the check dates
+- If a check is due, run the queries in ChatGPT, Perplexity, Google AI Overviews, Gemini and record results
+- Append findings to `TRACKER_DASHBOARD` under the post entry
 
-Once the priority is determined, formulate a clear, actionable prompt for the target agent.
+### Human Input
 
-Your output should be a structured handoff:
+If the user provides feedback, experiment results, or performance notes — read them and incorporate into the learning loop below.
 
-### Growth PM Handoff Report
+---
 
-**1. Current Priority:** [State the chosen task and why it was selected based on the tracker]
-**2. Feedback Applied:** [List any learnings from the Feedback Log that apply to this task]
-**3. Agent Handoff:** [Provide the exact prompt/instructions to be passed to the target agent, e.g., `aeo-content-writer`]
+## Step 3: Learning Loop
 
-*Do not execute the downstream task yourself. Your job is to analyze, prioritize, and provide the optimized instructions for the specialized agent to execute.*
+Synthesize performance data + feedback to extract durable signals:
+
+### What to surface
+- **Content format wins**: Which formats (data guide, comparison, FAQ-heavy) are getting citations or clicks?
+- **Topic resonance**: Which topic clusters are driving the most engagement or citations?
+- **Distribution effectiveness**: Which channels (Reddit, LinkedIn, outreach) drove measurable referrals?
+- **Skill gaps**: Is any skill producing output that consistently underperforms? (e.g., Reddit drafts that never get posted, LinkedIn posts that need heavy editing)
+
+### Skill update flags
+
+If a pattern suggests a skill's prompt or CONFIG.md needs updating, output a specific flag:
+
+```
+⚠️ SKILL UPDATE SUGGESTED: [skill-name]
+Reason: [specific pattern observed]
+Suggested change: [concrete edit to SKILL.md or CONFIG.md]
+```
+
+Examples:
+- "Reddit drafts are always for 48h-old threads — subreddit list in CONFIG.md may be too narrow"
+- "aeo-content-writer posts consistently lack FAQ pairs — prompt needs stronger FAQ emphasis"
+
+---
+
+## Step 4: Prioritize Across 4 Workstreams
+
+Always produce a ranked task board with recommended next action per workstream.
+
+### The 4 Workstreams
+
+**1. Research & Audit**
+Skills: `aeo-topic-research`, `seo-keyword-research`, `aeo-seo-site-audit`, `aeo-seo-strategy-orchestrator`
+Trigger when: no fresh research in 30+ days, new competitor activity, traffic drop, or strategy reset.
+
+**2. Content Creation**
+Skills: `aeo-content-writer`
+Trigger when: research has identified high-priority topics not yet covered, content pipeline is empty.
+
+**3. Content Publication**
+Skills: `publish-checklist`
+Trigger when: a draft is ready to ship.
+
+**4. Distribution**
+Skills: `distribute-social`, `distribute-outreach`
+Trigger when: a post was published and not yet distributed. Distribution should happen within 48h of publish.
+
+### Prioritization Logic
+
+1. **Unblock the critical path** — any task blocking another workstream goes first
+2. **Citation follow-ups due** — Day 7 or Day 14 checks that are overdue
+3. **Distribution lag** — published posts not yet distributed
+4. **Highest-impact content gap** — from research findings
+5. **Feedback-driven** — if learning loop flagged a skill update, surface it
+
+### Task Board Output Format
+
+```
+## Growth PM Task Board — [Date]
+
+### 🔴 Do Now
+1. [Task] — [Workstream] — [Why: one sentence]
+
+### 🟡 This Week
+2. [Task] — [Workstream]
+3. [Task] — [Workstream]
+
+### 🟢 Backlog
+4. [Task] — [Workstream]
+
+### ⚠️ Skill Update Flags
+- [skill-name]: [suggested change]
+
+### Performance Signals
+- [1–3 bullet points: what's working, what's not]
+```
+
+---
+
+## Step 5: Orchestrate
+
+Once priority is determined, produce the handoff for the target skill:
+
+```
+## Handoff — [Skill Name]
+
+**Why this task:** [one sentence from tracker/learning loop]
+**Feedback applied:** [any learnings that should shape this run]
+**Prompt:**
+[Exact prompt to pass to the target skill]
+```
+
+Do not execute the downstream task. Route and hand off only.
+
+---
+
+## Citation Tracking
+
+When a new post is published, set up citation tracking:
+
+### Day 0 — Baseline (do immediately after publish)
+
+Run these queries across ChatGPT, Perplexity, Google AI Overviews, Gemini:
+- Post's primary FAQ question
+- Post's secondary FAQ question
+- Key claim rephrased as a question
+
+Record results in `{CITATION_PATH}[slug]-baseline.md`:
+
+```markdown
+# Citation Baseline — [slug] — [date]
+
+## Queries
+| Query | ChatGPT | Perplexity | Google AIO | Gemini |
+|-------|---------|------------|------------|--------|
+| [q1]  | ❌/✅   | ❌/✅      | ❌/✅      | ❌/✅  |
+| [q2]  | ❌/✅   | ❌/✅      | ❌/✅      | ❌/✅  |
+
+## Scheduled checks
+- Day 7: [date]
+- Day 14: [date]
+```
+
+### Day 7 and Day 14 — Follow-up
+
+Re-run same queries. Log delta. If cited: note which engine, which query, and what likely drove it (FAQ schema, Reddit thread, outreach link).
+
+### Unlinked Mention Monitor
+
+```
+web_search: "[key claim exact phrase]" -site:[your-site]
+```
+
+For each unlinked mention: draft a 2-sentence attribution request. Save to outreach contacts.

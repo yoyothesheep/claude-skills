@@ -1,9 +1,23 @@
 ---
 name: aeo-distribution
-description: Post-publication distribution workflow for AI Proof Careers blog posts. Submits to Google Search Console, creates Reddit comment opportunities, drafts LinkedIn launch post, generates backlink outreach list, and sets up a 2-week citation tracking checklist.
+description: DEPRECATED — use the replacement skills listed below.
 ---
 
-# AEO Distribution Skill
+> ⚠️ **DEPRECATED** — This skill has been dissolved. Each task has migrated:
+>
+> | Task | Migrated to |
+> |------|-------------|
+> | Google Search Console submit | Removed (not needed) |
+> | Reddit drafts | `distribute-social` → `reddit-content` |
+> | LinkedIn post | `distribute-social` → `linkedin-content` |
+> | Backlink outreach | `distribute-outreach` |
+> | Citation tracking | `growth-pm` |
+>
+> Do not invoke this skill. Use the replacements above.
+
+---
+
+# AEO Distribution Skill (DEPRECATED)
 
 This skill runs after a blog post is published and publish-checklist passes. It maximizes the chance that AI answer engines (Perplexity, ChatGPT, Google AI Overviews, Gemini) discover and cite the new content.
 

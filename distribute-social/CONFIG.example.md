@@ -1,8 +1,10 @@
-# CONFIG — reddit-content
+# CONFIG — distribute-social
 # Copy this file to CONFIG.md and fill in your values. CONFIG.md is gitignored.
 
 SITE_URL=https://your-site.com
-REDDIT_OUTPUT_PATH=docs/promotion/reddit/
+BRAND_VOICE_NOTES=docs/your-tone-guide.md   # path to your tone/voice guide
+
+REDDIT_OUTPUT_PATH=docs/your-output-path/
 SUBREDDITS_TIER1=sub1,sub2,sub3
 SUBREDDITS_TIER2=sub4,sub5
 SUBREDDITS_TIER3=sub6,sub7
@@ -20,3 +22,6 @@ END
 
 # 2–3 example standalone post titles that reflect your site's voice and topic range
 STANDALONE_TITLE_EXAMPLES=Example title 1 | Example title 2
+
+# Optional: additional quote sources for LinkedIn posts
+# QUOTE_SOURCE_1=https://example.com/

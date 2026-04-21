@@ -43,10 +43,11 @@ Each skill has a `CONFIG.example.md`. Change it to `CONFIG.md` in the same folde
 **Content & Distribution**
 - [4. growth-pm](#4-growth-pm--growth-coordinator)
 - [5. aeo-content-writer](#5-aeo-content-writer--blog-post-writer)
-- [6. aeo-distribution](#6-aeo-distribution--post-publication-distribution)
-- [7. publish-checklist](#7-publish-checklist--pre-publish-validation)
-- [8. reddit-content](#8-reddit-content--reddit-draft-generator)
-- [9. linkedin-launch](#9-linkedin-launch--linkedin-post-writer)
+- [6. publish-checklist](#6-publish-checklist--pre-publish-validation)
+- [7. distribute-social](#7-distribute-social--social-distribution)
+- [8. distribute-outreach](#8-distribute-outreach--backlink--citation-outreach)
+- [9. reddit-content](#9-reddit-content--reddit-draft-generator)
+- [10. linkedin-content](#10-linkedin-content--linkedin-post-writer)
 
 ---
 
@@ -219,19 +220,22 @@ A prioritized audit report with: a summary table of all recommendations (one row
 **File:** `growth-pm/SKILL.md`
 
 ### Goal
-Central coordinator for the content pipeline. Reads a master tracker (Google Sheet or equivalent), analyzes a feedback log, and routes work to the right downstream skill with an optimized prompt.
+Central coordinator for the content pipeline. Maintains a prioritized task board across 4 workstreams (Research & Audit, Content Creation, Content Publication, Distribution), routes work to the right skill, tracks citation performance, and learns from GSC data and human feedback to improve future routing and flag skill updates.
 
 ### When to use
 - "What should we work on next?"
 - "Run the daily growth routine"
 - "Check the tracker and prioritize"
+- "What's performing well?"
+- "Check citations for [post slug]"
 
 ### Input
-- Access to your tracker (URL in `CONFIG.md`)
-- [Optional] Recent feedback or experiment results
+- Tracker file (path in `CONFIG.md`)
+- [Optional] GSC data via Ahrefs MCP
+- [Optional] Human feedback or experiment results
 
 ### Output
-A structured handoff: current priority, feedback applied, and an exact prompt for the target skill.
+Ranked task board across 4 workstreams, performance signals, skill update flags, and an exact handoff prompt for the target skill.
 
 ---
 
@@ -255,30 +259,7 @@ All files needed to publish: post component, route page, blog index entry, sitem
 
 ---
 
-## 6. `aeo-distribution` — Post-Publication Distribution
-
-**File:** `aeo-distribution/SKILL.md`
-**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
-
-### Goal
-Maximizes the chance AI engines discover and cite a newly published post. Runs after publish-checklist passes.
-
-### Workflow (sequential → parallel)
-1. **Google Search Console** — submit URL for indexing
-2. **Reddit** — invokes `reddit-content` skill, saves drafts to `{REDDIT_OUTPUT_PATH}`
-3. **LinkedIn** — invokes `linkedin-launch` skill
-4. **Backlink outreach** — finds Substack writers, journalists, bloggers; generates personalized pitches
-5. **Citation tracking** — sets up Day 0 / Day 7 / Day 14 monitoring across ChatGPT, Perplexity, Google AI Overviews, Gemini
-
-### Input
-- Post slug, title, URL, key claim, target persona
-
-### Output
-Ready-to-use drafts + a tracker checklist with scheduled follow-up dates.
-
----
-
-## 7. `publish-checklist` — Pre-Publish Validation
+## 6. `publish-checklist` — Pre-Publish Validation
 
 **File:** `publish-checklist/SKILL.md`
 **Config:** `CONFIG.example.md` → copy to `CONFIG.md`
@@ -288,7 +269,6 @@ Validates any page before it goes live — SEO metadata, schema markup, accessib
 
 ### When to use
 - Before publishing or updating any blog post, career page, industry page, or /now article
-- Invoked automatically by `aeo-distribution` after publish
 
 ### What it checks
 - **Phase 0** — runs your automated validation script, fixes all FAILs
@@ -300,33 +280,65 @@ PASS / FAIL / FIXED report per check.
 
 ---
 
-## 8. `reddit-content` — Reddit Draft Generator
+## 7. `distribute-social` — Social Distribution
 
-**File:** `reddit-content/SKILL.md`
+**File:** `distribute-social/SKILL.md`
 **Config:** `CONFIG.example.md` → copy to `CONFIG.md`
 
 ### Goal
-Finds live Reddit threads where a new post is directly relevant, then writes ready-to-paste comment drafts. No Reddit API — output is a `.md` file the user pastes manually.
+Distributes a newly published post to Reddit and LinkedIn in one run. Invokes `reddit-content` and `linkedin-content` as sub-skills (both live inside `distribute-social/`).
+
+### Input
+- Post slug, title, URL, key claim, target persona, best data point
+
+### Output
+Reddit drafts `.md` file + LinkedIn post draft with graphic suggestions.
+
+---
+
+## 8. `distribute-outreach` — Backlink & Citation Outreach
+
+**File:** `distribute-outreach/SKILL.md`
+**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+
+### Goal
+Finds Substack writers, journalists, and bloggers likely to reference a post's key claim. Generates personalized 3-sentence pitches and appends new contacts to a running outreach CRM file.
+
+### Input
+- Post slug, title, URL, key claim
+
+### Output
+10–15 new contacts added to `{OUTREACH_CONTACTS_PATH}` with personalized pitches.
+
+---
+
+## 9. `reddit-content` — Reddit Draft Generator
+
+**File:** `distribute-social/reddit-content.md`
+**Config:** `distribute-social/CONFIG.example.md`
+
+### Goal
+Finds live Reddit threads where a new post is directly relevant, then writes ready-to-paste comment drafts. No Reddit API — output is a `.md` file the user pastes manually. Invoked by `distribute-social`.
 
 ### How it works
-Web-searches target subreddits for threads ≤48h old. Matches thread type (career-risk, career-change, no-degree, comparative, etc.) to a comment angle. Drafts ≤250-word comments that open with a direct answer, include one specific data point, and place the link at the end. Falls back to a standalone post draft if no live threads found.
+Web-searches target subreddits for threads ≤48h old. Matches thread type to a comment angle. Drafts ≤250-word comments that open with a direct answer, include one specific data point, and place the link at the end. Falls back to a standalone post draft if no live threads found.
 
 ### Input
 - Post URL, title, key claim
-- [Optional] Custom subreddit list (defaults in `CONFIG.example.md`)
+- [Optional] Custom subreddit list (defaults in config)
 
 ### Output
 `{REDDIT_OUTPUT_PATH}reddit_drafts_[slug]_[date].md`
 
 ---
 
-## 9. `linkedin-launch` — LinkedIn Post Writer
+## 10. `linkedin-content` — LinkedIn Post Writer
 
-**File:** `linkedin-launch/SKILL.md`
-**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+**File:** `distribute-social/linkedin-content.md`
+**Config:** `distribute-social/CONFIG.example.md`
 
 ### Goal
-Writes LinkedIn posts that announce launches, new content, or data findings. Optimizes for genuine reach — not engagement bait.
+Writes LinkedIn posts announcing launches, new content, or data findings. Optimizes for genuine reach — not engagement bait. Invoked by `distribute-social`.
 
 ### Format rules
 - Opening earns the fold-expand with a specific fact, not a teaser
