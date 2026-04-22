@@ -81,8 +81,9 @@ Before starting the audit, check which tools are available and adjust accordingl
 Ask the user for:
 
 **Required:**
-- **Target URLs**: The pages to analyze (homepage, key landing pages, important content)
-  - If user says "my website" without URLs, ask them to provide 2-5 specific pages to start with
+- **Target URLs or Local Files**: The pages or codebase files to analyze.
+  - If user provides live URLs: Proceed with the multi-agent web crawling in Steps 2-6.
+  - If user asks you to audit a local codebase (e.g., within Claude Code): **Skip Steps 2 through 6**. Use your file reading tools to inspect the source files directly, extract schema/structure, and begin your evaluation directly at **Step 7**.
 
 **⚠️ Before proceeding, verify actual Google indexing status:**
 
