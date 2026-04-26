@@ -11,7 +11,7 @@ Run before publishing or updating any page. Unless otherwise specified, fix fail
 
 Read `.claude/skills/publish-checklist/CONFIG.md` and load:
 - `PUBLISH_SCRIPT` — the automated validation script command
-- `SITE_CHECKLIST_PATH` — path to the site-specific checklist file
+- `SITE_CHECKLIST_PATH` — path to the site-specific checklist instruction file
 
 Read the file at `SITE_CHECKLIST_PATH` — it defines page type detection, the automated script flags, and all Phase 2 page-type-specific checks.
 
