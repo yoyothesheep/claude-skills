@@ -30,8 +30,8 @@
   <rect x="230" y="120" width="400" height="64" rx="3" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
   <rect x="230" y="120" width="400" height="22" rx="3" fill="#f1f5f9" stroke="#475569" stroke-width="1.5"/>
   <text x="430" y="135" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="700" letter-spacing="1.5">GROWTH-PM</text>
-  <text x="430" y="157" text-anchor="middle" fill="#334155" font-size="11">Central brain · Prioritizes 4 workstreams</text>
-  <text x="430" y="173" text-anchor="middle" fill="#64748b" font-size="10">Routes work · Tracks citations · Learns from GSC</text>
+  <text x="430" y="157" text-anchor="middle" fill="#334155" font-size="11">Growth strategy · Orchestrates workstreams</text>
+  <text x="430" y="173" text-anchor="middle" fill="#64748b" font-size="10"> Performance tracking · Bottleneck diagnosis · Learning loops </text>
 
   <!-- Routing arrows from GROWTH-PM -->
   <path d="M430,184 L430,204 L220,204 L220,224" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-sm)"/>
