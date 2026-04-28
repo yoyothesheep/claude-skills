@@ -7,3 +7,7 @@ TRACKER_AEO_CONTENT=docs/tracker/AEO_Content.md
 TRACKER_PARTNERSHIPS=docs/tracker/Partnerships.md
 TRACKER_DATA_INSIGHTS=docs/tracker/Data_Insights.md
 TRACKER_TOOLS=docs/tracker/Tools.md
+
+# GSC API credentials (gitignored — desktop OAuth credential from GCP Console)
+GSC_CLIENT_SECRET=scripts/client_secret.json
+GSC_TOKEN=scripts/token.json

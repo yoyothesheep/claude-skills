@@ -33,11 +33,13 @@ Ask the user which post/recommendation they're targeting if not obvious. Referen
 **3. Sanity-check against the Winning Content Formula (Section 6 of the report):**
 Before writing, verify the planned post will include:
 - Direct answer paragraph (2–3 sentences) at the very top
+- Key Takeaway (2–3 sentences, specific numbers) after the opening paragraph, before the first H2 — only if the opening paragraph is narrative rather than data-dense. If the opening already leads with strong stats, skip it.
 - Key Takeaways box (3–5 bullets) near the top
 - Numbered list with consistent sub-structure per entry (if it's a listicle)
 - At least one inline table for salary/comparison data
 - Table of contents (for posts over 2,500 words)
-- FAQ section (5–7 Q&A pairs in FAQPage schema via `faqPairs` prop)
+- FAQPage schema via `faqPairs` prop (6–8 pairs, schema-only — not a visible section)
+- Question-formatted H2s throughout, each followed by a direct-answer first paragraph
 - Visible data attribution line near the top
 - Minimum 3–5 external citations to authoritative sources
 
@@ -62,7 +64,7 @@ You must generate all of the following:
 #### A. Post Component
 - Export named constants at the top: slug, title, published date, published date ISO, description. Add edited date constants if this is an edit.
 - Must follow the structure: Lead with finding → Show evidence → Explain meaning → Caveats → Actionable takeaway.
-- Define exactly **4 FAQ pairs**. Each pair:
+- Define **6–8 FAQ pairs** (schema-only — not rendered on page). Each pair:
   - `question`: a natural-language query ending with `?` that a real user would type
   - `answer`: 2 sentences max, names specific numbers or named entities, directly answers the question
 - Pass `faqPairs` to the layout component.
@@ -85,8 +87,8 @@ Add a `<url>` block per the sitemap format in CLAUDE.md. Set `<lastmod>` to toda
 To ensure the content is picked up by AI search engines (Perplexity, ChatGPT, Google AI Overviews):
 - **Direct Answers:** The first paragraph of any section must directly answer the implied question without preamble.
 - **High Information Density:** Use specific numbers, percentages, and named entities. AI engines prefer dense, factual text over narrative fluff.
-- **Clear Structure:** Use descriptive `<h2>` and `<h3>` tags that match common user queries (e.g., "Will AI Replace Software Engineers?").
-- **Schema Readiness:** The 4 FAQ pairs you write drive the `FAQPage` JSON-LD schema injected by the layout component. Write questions that match real search queries. Answers must be ≤2 sentences with a specific data point in each.
+- **Question H2s:** Where natural, frame section headings as questions users actually search (e.g., "Will AI Replace Software Engineers?"). The paragraph immediately following must answer in the first 1–2 sentences — no preamble. Don't force it if the section topic doesn't map cleanly to a question.
+- **Schema Readiness:** `faqPairs` drive the `FAQPage` JSON-LD schema injected by the layout component — they are schema-only, not rendered on page. Write questions that match real search queries distinct from the H2s. Answers must be ≤2 sentences with a specific data point in each. Target 6–8 pairs.
 
 ### Step 4: Accessibility & Mobile
 Apply these explicitly — do not defer to the publish-checklist skill:
@@ -98,7 +100,15 @@ Apply these explicitly — do not defer to the publish-checklist skill:
 - Charts/graphs: use `grid-cols-1 sm:grid-cols-[...]` so labels stack above bars on mobile.
 - Content previews on index pages: `line-clamp-3`.
 
-### Step 5: Output and Handoff
+### Step 5: Internal Linking
+
+Every new post must:
+1. Link to 2–3 existing published pages (blog posts, career pages, or industry pages) where naturally relevant. Use descriptive anchor text matching the target page's topic.
+2. After writing, identify which existing pages should link *forward* to the new post. List them in the handoff: "Also add a link to this post from [page] in the section about [topic]."
+
+Do not skip — internal linking shares page authority across the cluster and signals topical depth to Google.
+
+### Step 6: Output and Handoff
 1. Write all files per the paths in CLAUDE.md.
 2. Ask the user to review the new content live in their browser at the local dev URL.
 3. Once the user approves the live preview, run the publish-checklist on the new post.

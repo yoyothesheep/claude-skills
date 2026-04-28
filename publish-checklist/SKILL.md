@@ -12,6 +12,7 @@ Run before publishing or updating any page. Unless otherwise specified, fix fail
 Read `.claude/skills/publish-checklist/CONFIG.md` and load:
 - `PUBLISH_SCRIPT` — the automated validation script command
 - `SITE_CHECKLIST_PATH` — path to the site-specific checklist instruction file
+- `TRACKER_AEO_CONTENT` — content tracker file (all published pages)
 
 Read the file at `SITE_CHECKLIST_PATH` — it defines page type detection, the automated script flags, and all Phase 2 page-type-specific checks.
 
@@ -55,3 +56,16 @@ Run the automated script from `PUBLISH_SCRIPT` and fix all FAILs before continui
 ## Phase 2: Page-Type Checks
 
 Run the section from `SITE_CHECKLIST_PATH` matching the detected page type.
+
+---
+
+## Phase 3: Update Content Tracker
+
+After all checks pass, update `TRACKER_AEO_CONTENT`:
+
+- If the page already has a row: update its Status to `Published YYYY-MM-DD` (today's date).
+- If no row exists: add one to the Content Status table with columns: `Title | Type | Status | Priority | Slug | Notes`. Set Type to `Blog`, `Career`, `Industry`, or `Now`. Set Priority to `—`. Leave Notes blank unless there's something actionable.
+
+The automated script (`publish_check.py`) handles this for pages already in the tracker with a Draft/Planned status. Only intervene manually if the script reports "no Draft/Planned row found."
+
+**For blog posts only:** The script also creates `docs/tracker/citation_baselines/[slug]-baseline.md` with the Day 0/7/14 schedule pre-filled from the post's `faqQuestion`. After the script runs, open that file and fill in the Day 0 query results by running the listed queries in ChatGPT, Perplexity, Google AI Overview, and Gemini. Add 2 additional queries from the post's key claims before saving.

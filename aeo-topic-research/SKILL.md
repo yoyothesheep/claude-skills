@@ -581,6 +581,8 @@ Create a structured report with:
 
 ### Prioritized Recommendations
 
+**CRITICAL: This section MUST be titled exactly `## Prioritized Recommendations` (H2, no variation).** growth-pm scans for this exact string to extract citation candidates. Do not rename it, reorder it, or nest it under another heading.
+
 **What to include:**
 - **All** 🔴 Create Now and 🟡 Plan Soon opportunities — no cap, no omissions
 - **Top 2** 🟢 Monitor items, selected by highest score
