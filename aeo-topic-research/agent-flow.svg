@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" font-family="system-ui, -apple-system, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="700" fill="#f8fafc"/>
+
+  <!-- COORDINATOR -->
+  <rect x="300" y="24" width="300" height="56" rx="10" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+  <text x="450" y="47" text-anchor="middle" fill="#3730a3" font-size="13" font-weight="600">Coordinator</text>
+  <text x="450" y="65" text-anchor="middle" fill="#6366f1" font-size="11">Scan site · Gather input · Orchestrate</text>
+
+  <!-- Coordinator → Brand Radar stack -->
+  <line x1="450" y1="80" x2="450" y2="102" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="450,108 444,98 456,98" fill="#94a3b8"/>
+  <text x="460" y="96" fill="#64748b" font-size="9">Market + Competitors + Region</text>
+
+  <!-- Brand Radar — stacked boxes (×4 engines) -->
+  <rect x="312" y="108" width="276" height="68" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="306" y="114" width="276" height="68" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="300" y="120" width="276" height="68" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="438" y="144" text-anchor="middle" fill="#374151" font-size="11" font-weight="600">Haiku · Brand Radar Agent  ×4</text>
+  <text x="438" y="161" text-anchor="middle" fill="#374151" font-size="10">One per AI engine</text>
+  <text x="438" y="178" text-anchor="middle" fill="#9ca3af" font-size="9">questions · domains · pages</text>
+
+  <!-- Brand Radar → Collect Wave 1 -->
+  <line x1="450" y1="188" x2="450" y2="208" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="450,214 444,204 456,204" fill="#94a3b8"/>
+  <text x="460" y="202" fill="#64748b" font-size="9">Topic clusters · citations</text>
+
+  <!-- COORDINATOR COLLECT WAVE 1 -->
+  <rect x="300" y="214" width="300" height="56" rx="10" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+  <text x="450" y="237" text-anchor="middle" fill="#3730a3" font-size="12" font-weight="600">Coordinator</text>
+  <text x="450" y="255" text-anchor="middle" fill="#6366f1" font-size="10">Select top 15–20 cited URLs</text>
+
+  <!-- Collect Wave 1 → branch -->
+  <line x1="450" y1="270" x2="450" y2="300" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- Horizontal branch Wave 2 -->
+  <line x1="302" y1="300" x2="598" y2="300" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Drop to Reddit -->
+  <line x1="302" y1="300" x2="302" y2="320" stroke="#94a3b8" stroke-width="1.5"/>
+  <polygon points="302,326 296,316 308,316" fill="#94a3b8"/>
+
+  <!-- Drop to Page Crawl -->
+  <line x1="598" y1="300" x2="598" y2="320" stroke="#94a3b8" stroke-width="1.5"/>
+  <polygon points="598,326 592,316 604,316" fill="#94a3b8"/>
+
+  <!-- Reddit Agent — stacked -->
+  <rect x="176" y="326" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="170" y="332" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="164" y="338" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="302" y="360" text-anchor="middle" fill="#374151" font-size="11" font-weight="600">Haiku · Reddit Agent</text>
+  <text x="302" y="378" text-anchor="middle" fill="#374151" font-size="10">Search + fetch threads</text>
+  <text x="302" y="395" text-anchor="middle" fill="#9ca3af" font-size="9">per topic cluster</text>
+
+  <!-- Page Crawl — stacked -->
+  <rect x="472" y="326" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="466" y="332" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="460" y="338" width="276" height="72" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="598" y="360" text-anchor="middle" fill="#374151" font-size="11" font-weight="600">Haiku · Page Crawl Agent</text>
+  <text x="598" y="378" text-anchor="middle" fill="#374151" font-size="10">Fetch each cited URL</text>
+  <text x="598" y="395" text-anchor="middle" fill="#9ca3af" font-size="9">Extract format · structure · authority · depth</text>
+
+  <!-- Rise from Reddit -->
+  <line x1="302" y1="410" x2="302" y2="440" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Rise from Page Crawl -->
+  <line x1="598" y1="410" x2="598" y2="440" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Horizontal join Wave 2 -->
+  <line x1="302" y1="440" x2="598" y2="440" stroke="#94a3b8" stroke-width="1.5"/>
+
+  <!-- Join → Collect Wave 2 -->
+  <line x1="450" y1="440" x2="450" y2="458" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="450,464 444,454 456,454" fill="#94a3b8"/>
+
+  <!-- COORDINATOR COLLECT WAVE 2 -->
+  <rect x="300" y="464" width="300" height="56" rx="10" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+  <text x="450" y="487" text-anchor="middle" fill="#3730a3" font-size="12" font-weight="600">Coordinator</text>
+  <text x="450" y="505" text-anchor="middle" fill="#6366f1" font-size="10">Assemble all Haiku payloads → pass to Sonnet</text>
+
+  <!-- Collect Wave 2 → Sonnet -->
+  <line x1="450" y1="520" x2="450" y2="538" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="450,544 444,534 456,534" fill="#94a3b8"/>
+
+  <!-- SONNET SYNTHESIS AGENT -->
+  <rect x="300" y="544" width="300" height="56" rx="10" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+  <text x="450" y="567" text-anchor="middle" fill="#3730a3" font-size="12" font-weight="600">Sonnet · Synthesis Agent</text>
+  <text x="450" y="585" text-anchor="middle" fill="#6366f1" font-size="10">Synthesize patterns · Score and prioritize opportunities</text>
+
+  <!-- Sonnet → Final Report -->
+  <line x1="450" y1="600" x2="450" y2="618" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="450,624 444,614 456,614" fill="#94a3b8"/>
+
+  <!-- FINAL OUTPUT -->
+  <rect x="300" y="624" width="300" height="56" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="450" y="647" text-anchor="middle" fill="#15803d" font-size="12" font-weight="600">Final Report</text>
+  <text x="450" y="665" text-anchor="middle" fill="#6b7280" font-size="10">Opportunities · content briefs · citation gap analysis</text>
+
+  <!-- DATA FLOW LABELS -->
+  <text x="460" y="292" fill="#64748b" font-size="9">topic clusters + top cited URLs</text>
+  <text x="460" y="455" fill="#64748b" font-size="9">AI questions · citation gaps · community language · winning content patterns</text>
+
+  <!-- LEGEND -->
+  <rect x="18" y="634" width="190" height="46" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="28" y="642" width="11" height="11" rx="3" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+  <text x="46" y="652" fill="#374151" font-size="10">Coordinator / Sonnet</text>
+  <rect x="28" y="660" width="11" height="11" rx="3" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="46" y="670" fill="#374151" font-size="10">Haiku (stacked = ×N)</text>
+
+</svg>
