@@ -627,9 +627,25 @@ Order within each tier by score (descending). For each item:
 
 
 ### AI Question Landscape
-- Full list of discovered questions, grouped by topic cluster
-- Volume estimates for each
-- Which questions currently cite you vs. competitors vs. neither
+
+Full list of discovered questions, grouped by topic cluster.
+
+**Format: table, one row per question, ordered by volume descending within each cluster.**
+
+| Question | Cluster | Est. Monthly Volume | Channels | Cited: You | Cited: Competitors |
+|----------|---------|---------------------|----------|------------|-------------------|
+| What is the best X for Y? | best-for-use-case | 1,000–5,000 | ChatGPT, Perplexity, Reddit | ✗ | ✓ Competitor A |
+
+**Volume format depends on data source:**
+- **With Brand Radar**: use numeric ranges derived from the raw `volume` value:
+  - < 500 → `< 500`
+  - 500–999 → `500–1,000`
+  - 1,000–4,999 → `1,000–5,000`
+  - 5,000–9,999 → `5,000–10,000`
+  - 10,000+ → `10,000+`
+- **Without Brand Radar** (fallback mode): use `High / Medium / Low` based on how frequently the question appeared across manual AI engine queries and Reddit. Never show numbers you don't have.
+
+**Channels column:** List every source where this question appeared — e.g. `ChatGPT, Perplexity, Reddit`. If a question appeared across all engines, write `All engines`. If it surfaced only in Reddit threads, write `Reddit only`. This signals where to prioritize distribution.
 
 ### Reddit Language Glossary
 - Natural language question phrasings extracted from top threads, per topic cluster
