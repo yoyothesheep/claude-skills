@@ -90,6 +90,21 @@ To ensure the content is picked up by AI search engines (Perplexity, ChatGPT, Go
 - **Question H2s:** Where natural, frame section headings as questions users actually search (e.g., "Will AI Replace Software Engineers?"). The paragraph immediately following must answer in the first 1–2 sentences — no preamble. Don't force it if the section topic doesn't map cleanly to a question.
 - **Schema Readiness:** `faqPairs` drive the `FAQPage` JSON-LD schema injected by the layout component — they are schema-only, not rendered on page. Write questions that match real search queries distinct from the H2s. Answers must be ≤2 sentences with a specific data point in each. Target 6–8 pairs.
 
+### Step 3b: Self-Evaluation Pass
+
+After completing the draft, run a self-evaluation before saving. Read the tone guide at `TONE_GUIDE_PATH` and check the draft against:
+
+1. **AEO formula** — quick answer block present, FAQ pairs written, at least one comparison table, question H2s throughout
+2. **Author assignment** — assign the correct author based on topic per the tone guide's author assignment rules
+3. **Tone checklist** — flag any instance of banned phrases, vague claims that could be specific, sections that don't lead with the answer, generic CTAs
+4. **Competitor differentiation** — does at least one section say something top-cited competitors in this niche don't?
+
+Output the evaluation as a brief flagged list before the draft. Format:
+- ✓ pass or ✗ [specific issue] for each criterion
+- If any ✗, fix before saving. Do not ask the user to fix — fix it yourself.
+
+---
+
 ### Step 4: Accessibility & Mobile
 Apply these explicitly — do not defer to the publish-checklist skill:
 - Expandable sections (career cards, accordions): `aria-expanded` on the toggle button.
@@ -112,3 +127,12 @@ Do not skip — internal linking shares page authority across the cluster and si
 1. Write all files per the paths in CLAUDE.md.
 2. Ask the user to review the new content live in their browser at the local dev URL.
 3. Once the user approves the live preview, run the publish-checklist on the new post.
+
+**Optional — Google Docs sync (only if the user requests it):**
+- Check CONFIG.md for a `GOOGLE_DOCS_*` key matching the content type (e.g. `GOOGLE_DOCS_BLOG`).
+- If no key is set, tell the user and stop.
+- Google Drive MCP must be authenticated. If tools are unavailable, prompt: "Run /mcp and select Google Drive to enable doc sync."
+- Always call `mcp__claude_ai_Google_Drive__read_file_content` before any write to get current doc state.
+- **Write (new draft):** Append to the doc with a `---` separator and an H1 post title above the content.
+- **Edit (user asks to edit a section):** Read the doc, locate the section, make the targeted change only.
+- Confirm after: "Done. View at https://docs.google.com/document/d/[ID]/edit"
