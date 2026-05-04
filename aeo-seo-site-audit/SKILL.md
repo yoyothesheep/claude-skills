@@ -30,8 +30,8 @@ Trigger this skill when the user:
 ## Core Workflow
 
 Steps 1-2. **[Coordinator]** Gather Input — get URLs, Ahrefs project ID (optional), business context
-Steps 3-5. **[Haiku Agent, parallel per URL]** Fetch Ahrefs data (if provided) + crawl pages + extract all raw signals
-Steps 6-11. **[Sonnet Agent]** Validate schema, analyze content quality, assess authority, prioritize gaps, generate report
+Steps 3–8. **[Haiku Agents]** Fetch Ahrefs data (if provided) + extract entity/structure signals + crawl pages + content gap analysis
+Steps 9–16. **[Sonnet Agent]** Validate schema, assess entity/cluster authority, analyze content quality, prioritize gaps, generate report
 
 ## Agent Architecture
 
@@ -82,8 +82,8 @@ Ask the user for:
 
 **Required:**
 - **Target URLs or Local Files**: The pages or codebase files to analyze.
-  - If user provides live URLs: Proceed with the multi-agent web crawling in Steps 2-6.
-  - If user asks you to audit a local codebase (e.g., within Claude Code): **Skip Steps 2 through 6**. Use your file reading tools to inspect the source files directly, extract schema/structure, and begin your evaluation directly at **Step 7**.
+  - If user provides live URLs: Proceed with the multi-agent web crawling in Steps 2-8.
+  - If user asks you to audit a local codebase (e.g., within Claude Code): **Skip Steps 2 through 8**. Use your file reading tools to inspect the source files directly, extract schema/structure, and begin your evaluation directly at **Step 9**.
 
 **⚠️ Before proceeding, verify actual Google indexing status:**
 
@@ -109,21 +109,28 @@ If user reports the site is "not indexed":
 
 ## Step 2: Orchestrate Agents
 
-After gathering input, launch Haiku agents in parallel using the Task tool — one per URL, plus one for the Ahrefs API call if a project ID was provided. Do not wait for one to finish before launching the next.
+After gathering input, launch Haiku agents in parallel using the Task tool — one per URL, plus one for the Ahrefs API call if a project ID was provided, plus one site-level agent for entity signals (Step 4), site structure (Step 5), and content gap analysis (Step 6). Do not wait for one to finish before launching the next.
 
 ```
 For each URL in target_urls:
   Task(
     subagent_type: "general-purpose",
     model: "haiku",
-    prompt: <full HAIKU AGENT instructions below> + "\n\nURL to process: {url}"
+    prompt: <full HAIKU AGENT — Per-URL instructions, Steps 6 + 7 + 8> + "\n\nURL to process: {url}"
   )
+
+# Site-level agent (runs once, not per URL)
+Task(
+  subagent_type: "general-purpose",
+  model: "haiku",
+  prompt: <HAIKU AGENT — Site-Level instructions, Steps 4 + 5> + "\n\nBrand name: {brand_name}\nHomepage: {homepage_url}"
+)
 
 If ahrefs_project_id provided:
   Task(
     subagent_type: "general-purpose",
     model: "haiku",
-    prompt: <Step 3 instructions> + "\n\nProject ID: {ahrefs_project_id}"
+    prompt: <HAIKU AGENT — Ahrefs instructions, Step 3> + "\n\nProject ID: {ahrefs_project_id}"
   )
 ```
 
@@ -131,7 +138,7 @@ Collect all Task results. Once every Haiku agent has returned its JSON payload, 
 
 ---
 
-## HAIKU AGENT
+## HAIKU AGENT — Ahrefs (optional, one agent per audit)
 
 ## Step 3: Fetch Ahrefs Audit Issues (Optional)
 
@@ -159,7 +166,130 @@ ahrefs_issues = site_audit_issues(
 
 ---
 
-## Step 4: Crawl Target Pages, Extract JSON-LD & Content Signals
+## HAIKU AGENT — Site-Level (one agent per audit)
+
+## Step 4: Entity Signal Extraction
+
+Run once per audit (not per URL). Extract signals that establish whether the brand is recognized as a trusted entity by AI systems.
+
+**Checks:**
+
+```bash
+# 1. Google Knowledge Panel — fetch SERP for brand name
+curl -s -A "Mozilla/5.0" "https://www.google.com/search?q=[Brand+Name]" | python3 -c "
+import sys; html = sys.stdin.read()
+print('knowledge_panel_detected:', 'kp-wholepage' in html or 'knowledge-panel' in html)
+"
+
+# 2. Wikipedia presence
+curl -s -o /dev/null -w "%{http_code}" "https://en.wikipedia.org/wiki/[Brand_Name]"
+# 200 = exists, 404 = not found
+
+# 3. sameAs in Organization schema (from homepage JSON-LD already extracted)
+# Check if any sameAs value contains: linkedin.com/company, wikidata.org, wikipedia.org
+```
+
+**Output — add to Haiku payload (site-level, run once):**
+```json
+"entity_signals": {
+  "knowledge_panel_detected": false,
+  "wikipedia_exists": false,
+  "wikipedia_url": null,
+  "linkedin_sameas_present": false,
+  "wikidata_sameas_present": false,
+  "organization_schema_present": false,
+  "nap_fields_found": ["name", "url"],
+  "nap_consistent_across_pages": null
+}
+```
+
+**NAP consistency:** Extract `name`, `url`, `address`, `telephone` from Organization schema on each page. Flag if values differ across pages.
+
+**Cross-platform consensus proxy:** If Ahrefs data available, count referring domains that are news/media/industry sites (not directories). Store count as `authoritative_referring_domains`.
+
+---
+
+## Step 5: Site Structure Sampling
+
+Run once per audit. Goal: map content cluster architecture to assess topical authority.
+
+**Steps:**
+1. Fetch `/sitemap.xml` (or check `robots.txt` for sitemap URL). Parse all URLs.
+2. Group by path segment (e.g., `/blog/`, `/guides/`, `/learn/`).
+3. For each section: identify if a pillar/index page exists (path depth 1) vs sub-pages (depth 2+).
+4. Fetch homepage HTML → extract top-level `<nav>` links.
+5. For each pillar page found: count internal links to sub-pages and from sub-pages back to pillar.
+
+**Output — add to Haiku payload (site-level):**
+```json
+"site_structure": {
+  "sitemap_found": true,
+  "total_urls_in_sitemap": 87,
+  "content_sections": [
+    {
+      "section": "/blog/",
+      "pillar_page_exists": false,
+      "sub_page_count": 34,
+      "internal_links_to_pillar": 0
+    }
+  ],
+  "nav_links": ["About", "Blog", "Pricing"],
+  "orphaned_pages_detected": true
+}
+```
+
+If sitemap not found, attempt to discover sections from homepage navigation links only. Note the limitation.
+
+---
+
+## HAIKU AGENT — Per-URL (one agent per URL)
+
+## Step 6: Content Gap Analysis (SERP Fallback — skip if Ahrefs available)
+
+**If Ahrefs project ID provided:** Use Ahrefs Content Gap tool instead. Pass competitor keyword gaps as `content_gap.gap_subtopics` in the payload.
+
+**If no Ahrefs access:** For each target URL, run SERP-based gap analysis:
+
+```bash
+# 1. Infer primary keyword from page H1/title (already extracted in Step 4)
+# 2. Fetch Google SERP for that keyword
+curl -s -A "Mozilla/5.0" "https://www.google.com/search?q=[primary+keyword]" | python3 << 'EOF'
+import sys, re
+html = sys.stdin.read()
+# Extract People Also Ask questions
+paa = re.findall(r'data-q="([^"]+)"', html)
+# Extract top organic result URLs (first 3)
+urls = re.findall(r'href="/url\?q=(https://[^&"]+)', html)[:3]
+print("PAA:", paa[:8])
+print("Competitor URLs:", urls)
+EOF
+
+# 3. For each competitor URL, fetch and extract H2/H3 headings
+curl -s "[competitor_url]" | python3 -c "
+import sys, re
+html = sys.stdin.read()
+headings = re.findall(r'<h[23][^>]*>([^<]+)</h[23]>', html)
+print(headings)
+"
+```
+
+**Output — add to per-URL Haiku payload:**
+```json
+"content_gap": {
+  "primary_keyword_inferred": "best project management tools",
+  "method": "serp_fallback",
+  "paa_questions": ["What is the best PM tool for small teams?"],
+  "competitor_subtopics": ["Integrations", "Pricing comparison", "Free tier breakdown"],
+  "subtopics_covered_on_page": ["Features", "Pricing"],
+  "gap_subtopics": ["Integrations", "Free tier breakdown"]
+}
+```
+
+Diff logic: `gap_subtopics = competitor_subtopics − subtopics_covered_on_page` (fuzzy match on keywords, not exact string).
+
+---
+
+## Step 7: Crawl Target Pages, Extract JSON-LD & Content Signals
 
 **⚠️ CRITICAL: JSON-LD extraction is mandatory on every page. Do ONE fetch per URL (not two) to ensure efficiency.**
 
@@ -243,7 +373,7 @@ result = web_fetch(url, text_content_token_limit=50000)
 
 ---
 
-## Step 5: Required Representative Sampling
+## Step 8: Required Representative Sampling
 
 To ensure consistent, reproducible findings, crawl at least **2 representative pages per page type** present on the site. This sampling is **required** — not optional. Skipping dynamic or category pages is the most common cause of missed critical findings (CSR rendering gaps, listing schema gaps).
 
@@ -263,7 +393,7 @@ To ensure consistent, reproducible findings, crawl at least **2 representative p
 - Maximum 10 additional pages beyond user-specified URLs
 - If fetch fails, include the URL with `"error": "..."` — do not omit it
 
-**For each sampled page:** Use Step 4 methodology (environment-aware fetch + JSON-LD extraction + content signal extraction, store HTML for parsing).
+**For each sampled page:** Use Step 7 methodology (environment-aware fetch + JSON-LD extraction + content signal extraction, store HTML for parsing).
 
 ---
 
@@ -297,7 +427,32 @@ Each Haiku agent outputs one JSON payload per URL. This is the only data the Son
   "internal_links": ["https://example.com/related-page"],
   "image_count": 4,
   "images_with_captions": 2,
+  "content_gap": {
+    "primary_keyword_inferred": "...",
+    "method": "serp_fallback",
+    "paa_questions": [],
+    "competitor_subtopics": [],
+    "subtopics_covered_on_page": [],
+    "gap_subtopics": []
+  },
   "ahrefs_issues": [],
+  "entity_signals": {
+    "knowledge_panel_detected": false,
+    "wikipedia_exists": false,
+    "wikipedia_url": null,
+    "linkedin_sameas_present": false,
+    "wikidata_sameas_present": false,
+    "organization_schema_present": false,
+    "nap_fields_found": [],
+    "nap_consistent_across_pages": null
+  },
+  "site_structure": {
+    "sitemap_found": false,
+    "total_urls_in_sitemap": 0,
+    "content_sections": [],
+    "nav_links": [],
+    "orphaned_pages_detected": false
+  },
   "token_usage": {
     "model": "claude-haiku-4-5-20251001",
     "input_tokens": 0,
@@ -330,7 +485,7 @@ The Sonnet agent receives all Haiku JSON payloads and the Ahrefs issues data. It
 ```
 Use actual API response metadata if available; otherwise estimate from input/output length.
 
-## Step 6: Schema Validation
+## Step 9: Schema Validation
 
 **Using JSON-LD blocks from Haiku payloads:**
 
@@ -342,7 +497,42 @@ Use actual API response metadata if available; otherwise estimate from input/out
 
 ---
 
-## Step 7: Schema Markup & Structure Validation
+## Step 10: Entity Layer Assessment
+
+Using `entity_signals` from the Haiku payload. This is the foundation — if the brand isn't recognized as an entity, schema and content improvements have limited AEO impact.
+
+| Signal | Finding | Priority |
+|--------|---------|----------|
+| `organization_schema_present: false` | ❌ No machine-readable brand identity | 🔴 Critical |
+| `knowledge_panel_detected: false` | ❌ Brand not recognized as Google entity | 🔴 Critical if org schema also absent |
+| `wikipedia_exists: false` | ❌ No encyclopedic reference — low Knowledge Graph authority | 🟡 Important |
+| `linkedin_sameas_present: false` | ❌ AI can't cross-reference brand on LinkedIn | 🟡 Important |
+| `wikidata_sameas_present: false` | ❌ Missing Wikidata entity link | 🟢 Enhancement |
+| `nap_consistent_across_pages: false` | ❌ Conflicting entity signals across pages | 🟡 Important |
+
+**Fix guidance:**
+- Add Organization schema with `sameAs` array pointing to LinkedIn, Wikipedia (if exists), Wikidata, and Crunchbase
+- To earn a Knowledge Panel: ensure Wikipedia article exists or claim Google Business Profile; build consistent brand mentions on authoritative external sites
+- NAP inconsistency: standardize `name`, `url`, `address` across all page-level Organization schema
+
+---
+
+## Step 11: Content Cluster Assessment
+
+Using `site_structure` from the Haiku payload. Topical depth through clustering is how AI systems assess subject matter authority — individual pages aren't enough.
+
+**Checks:**
+- ❌ Content section has 5+ sub-pages but no pillar/index page (sub-articles floating without a hub)
+- ❌ Pillar page exists but `internal_links_to_pillar: 0` (cluster is broken — sub-pages don't reinforce the hub)
+- ❌ `orphaned_pages_detected: true` — pages in sitemap not reachable from navigation
+- ❌ Sitemap not found — AI crawlers can't discover full content scope
+- ✅ Each content section has a pillar page + 3+ supporting sub-articles with bidirectional internal linking
+
+**Priority:** 🔴 Critical if a key topical section has 5+ pages with no pillar. 🟡 Important for linking gaps and orphaned content.
+
+---
+
+## Step 12: Schema Markup & Structure Validation
 
 Analyze all crawled pages for JSON-LD completeness and AEO readiness:
 
@@ -387,7 +577,7 @@ Analyze all crawled pages for JSON-LD completeness and AEO readiness:
 
 ---
 
-## Step 8: Content Quality and Structure (SEO and AEO)
+## Step 13: Content Quality and Structure (SEO and AEO)
 
 Evaluate all content for SEO quality and AEO (Answer Engine Optimization)—how well it serves both traditional search engines and AI systems like ChatGPT, Perplexity, and Google AI Overviews.
 
@@ -398,6 +588,12 @@ Evaluate all content for SEO quality and AEO (Answer Engine Optimization)—how 
 - ❌ Content is too shallow for user intent
 - ✅ Good: Comprehensive coverage matching search intent
 - ✅ Good: First paragraph directly answers the main question
+
+**Content Gap Analysis (from `content_gap` payload field)**
+- ❌ PAA questions unaddressed — list each specific unanswered question (e.g., "Page doesn't answer: 'What is the best PM tool for small teams?'")
+- ❌ Competitor subtopics missing — list specific H2/H3 gaps vs top 3 ranking pages
+- ✅ Good: Page covers all identified PAA questions and matches competitor subtopic depth
+- Note the method used: `serp_fallback` (less precise, no volume data) vs `ahrefs_content_gap` (with keyword volume)
 
 **Direct Answer Formats (AEO Priority)**
 - ❌ Content doesn't answer specific questions directly; answers buried in prose
@@ -462,6 +658,20 @@ Evaluate all content for SEO quality and AEO (Answer Engine Optimization)—how 
 - ✅ Good: Clear publish date and "Last updated: [date]" for freshness
 - ✅ Good: datePublished and dateModified in schema; references recent information
 
+### Experience Proof (AEO Priority)
+
+AI systems deprioritize content they could have generated themselves. Score on three dimensions using content signals from the Haiku payload:
+
+| Dimension | Pass | Fail |
+|-----------|------|------|
+| **Original data** | Specific statistics, percentages, study sizes, or dates from a named primary source | All claims hedged ("many experts say", "studies show") or link only to other aggregators |
+| **Firsthand evidence** | Named case study, specific customer result, before/after outcome, or explicit "in our experience" with context | Generic how-to advice with no specific organizational context |
+| **Replication barrier** | Contains proprietary methodology, internal benchmark, unique dataset, or direct interview quote | Could have been written by summarizing 3 Wikipedia articles |
+
+- ❌ Zero firsthand evidence — AI deprioritizes content it could generate itself
+- ❌ All statistics link to aggregators (Forbes, HubSpot roundups) not primary sources — indirect citations reduce citability
+- ✅ Named examples + quantitative outcomes present (e.g., "Acme reduced churn by 23% using X")
+
 ### Natural Language Optimization (AEO Priority)
 
 **Conversational & Accessible Language**
@@ -502,7 +712,7 @@ Identify and optimize for AI-friendly formats:
 
 ---
 
-## Step 9: Authority & Citability Assessment
+## Step 14: Authority & Citability Assessment
 
 Evaluate how well pages establish expertise and enable AI systems to cite the content.
 
@@ -549,13 +759,16 @@ Evaluate how well pages establish expertise and enable AI systems to cite the co
 
 ---
 
-## Step 10: Prioritize Content & AEO Gaps
+## Step 15: Prioritize Content & AEO Gaps
 
 Group all identified issues into three priority tiers:
 
 ### 🔴 High Priority (Critical for AEO)
 
 Issues that significantly impact AI citability and content quality:
+- **No Organization schema** (AI has no machine-readable brand identity — entity layer foundation missing)
+- **No Knowledge Panel + no Organization schema** (brand not recognized as a trusted entity by AI)
+- **Content section with 5+ sub-pages but no pillar page** (no topical authority hub; AI can't assess depth)
 - **Missing schema for content type** (e.g., no FAQPage on FAQ content, no Article on blog posts)
 - **No author/expertise signals** (missing author name, credentials, or author schema)
 - **Content doesn't directly answer main question** (answer buried in prose)
@@ -565,6 +778,12 @@ Issues that significantly impact AI citability and content quality:
 ### 🟡 Medium Priority (Improves AEO)
 
 Issues that enhance content quality and extractability:
+- **Missing Wikipedia page or `sameAs` schema links** (LinkedIn, Wikidata not cross-referenced — entity recognition incomplete)
+- **NAP inconsistency across pages** (conflicting Organization schema signals reduce AI confidence)
+- **Pillar page exists but sub-pages don't link back** (broken cluster; topical authority signal diluted)
+- **Orphaned pages** (in sitemap but unreachable from navigation)
+- **Content gaps vs competitors** (PAA questions unaddressed; competitor subtopics missing)
+- **Zero firsthand evidence or original data** (content is replicable by AI; low citability)
 - **Thin content** (<300 words for informational pages; missing depth vs competitors)
 - **No source citations** (claims made without supporting links or attribution)
 - **Only prose formatting** (no lists, tables, or scannable structure for how-to/comparison content)
@@ -589,7 +808,7 @@ For each issue, include:
 
 ---
 
-## Step 11: Generate Content & AEO Report
+## Step 16: Generate Content & AEO Report
 
 Create a well-structured document (markdown or docx) with:
 
@@ -651,6 +870,19 @@ For each item:
 - Use metrics: "3 of 11 pages" not "some pages"
 - Distinguish between content quality and schema completeness
 
+#### Entity & Brand Authority
+- Knowledge Panel status (detected vs not)
+- Wikipedia and Wikidata presence
+- `sameAs` cross-platform links in Organization schema
+- NAP consistency across pages
+- Authoritative referring domain count (if Ahrefs data available)
+
+#### Site Structure & Content Clusters
+- Sections with pillar pages vs floating sub-articles
+- Internal linking gaps (pillar → sub and sub → pillar)
+- Orphaned pages (sitemap vs navigation reachability)
+- Sitemap presence and coverage
+
 #### Schema Markup Gaps
 For each page/content type:
 - Missing or incomplete schema (e.g., "FAQPage present but 3 of 10 Q&As missing 'answer' field")
@@ -660,6 +892,8 @@ For each page/content type:
 
 #### Content Quality Issues
 - Thin content vs competitors (word count, depth analysis)
+- Content gap analysis: PAA questions unaddressed, competitor subtopics missing (list specific gaps per URL)
+- Experience proof gaps: zero firsthand evidence, statistics only from aggregator sources, no replication barrier
 - Direct answer format gaps (where content buries answers in prose)
 - Scannable formatting (lack of lists, tables, sections for how-to/comparison content)
 - Authority signal gaps (missing author info, credentials, source citations)
@@ -764,6 +998,10 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 - Schema completeness & validity
 - Authority & citability signals
 - AEO-friendly content structure
+- Entity layer (brand recognition, Knowledge Graph, cross-platform `sameAs`)
+- Site structure & content cluster architecture
+- Content gap analysis (vs SERP competitors or Ahrefs Content Gap)
+- Experience proof (firsthand evidence, original data, replication barrier)
 
 **This skill assumes Ahrefs has checked:**
 - Title tags, meta descriptions
@@ -865,6 +1103,10 @@ Always save the final report to `/mnt/user-data/outputs/` and use the `present_f
 A successful audit includes:
 - ✅ Ahrefs data fetched automatically (if project ID provided)
 - ✅ JSON-LD extracted and validated on every page (not "no schema found" without verification)
+- ✅ Entity layer assessed: Organization schema, Knowledge Panel status, Wikipedia/Wikidata presence, `sameAs` links
+- ✅ Site structure mapped: content sections identified, pillar pages vs floating sub-articles, internal linking gaps
+- ✅ Content gaps identified per URL: specific PAA questions unaddressed, competitor subtopics missing
+- ✅ Experience proof scored: firsthand evidence, original data, replication barrier assessed
 - ✅ Clear schema gaps identified (e.g., "FAQPage schema incomplete: missing 'answer' field on X Q&As")
 - ✅ Content quality issues specific to ranking/citability (e.g., "Content doesn't answer main question in first paragraph")
 - ✅ Authority signal assessment (author, dates, citations present/missing)
