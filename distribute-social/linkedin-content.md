@@ -22,10 +22,32 @@ LinkedIn's algorithm rewards posts that hold attention and generate meaningful r
 LinkedIn has specific mechanics worth knowing:
 
 - **The fold is after ~3 lines.** The opening must earn the expand tap. Do this by naming something specific and true — not a teaser, not a cliffhanger.
-- **No links in the first comment** (this is a myth). In the post body, a link is fine, but put it near the end after the post has earned it.
+- **Links go in the first comment, not the post body.** 360Brew penalizes external links in post body — they signal distribution gaming. Post without the link, then add it as the first comment immediately after publishing.
 - **Line breaks are your friend.** Short paragraphs. White space. One idea per block.
-- **Images stop the scroll.** Use a graphic. Every post should have one.
+- **Format hierarchy (post-360Brew):** PDF document posts lead (21.77% median engagement, 3× better than video). Text-only is strong for voice-driven posts (up 12% YoY). Static images only when the image carries real information. Video down 36–72% — avoid unless the clip has standalone value.
 - **No hashtag wall.** 2–3 max, at the very end, and only if they're specific. `#careerdevelopment` is fine. `#AI #careers #jobs #work #future` is not.
+
+---
+
+## How the Algorithm Works Now
+
+LinkedIn replaced its old ranking system with **360Brew** in March 2026 — a 150-billion-parameter LLaMA 3 model that reads post content semantically before ranking it.
+
+**What it rewards:**
+- Dwell time (people stopping to read, not just scrolling past)
+- Saves (treated as a utility signal — someone found this worth keeping)
+- Substantive comments (depth and length matter more than volume)
+- Topical consistency — creators who stay in 3–4 defined topic pillars build authority faster than those who drift
+- Profile-content coherence (your posts should match what your profile says you do)
+
+**What it penalizes:**
+- Engagement bait: "Comment YES if you agree," "Tag someone who needs this"
+- Engagement pods and coordinated activity rings (60–90 day recovery window)
+- Generic AI-generated content without original perspective or first-party data
+- External links in post body
+- Daily posting — optimal cadence is **2–3 posts per week**; daily posting reduces reach ~45%
+
+**Timing:** Early engagement drives a +35% visibility boost. Post when your audience is active, not just when content is ready.
 
 ---
 
@@ -128,19 +150,27 @@ Avoid quotes that:
 
 ## Graphics
 
-Every post should have an image. Text-only posts perform worse in feed and look unfinished.
+**Format by performance (post-360Brew):**
 
-**What works on LinkedIn:**
+| Format | When to use | Signal |
+|---|---|---|
+| **PDF document post** | Data tables, career guides, multi-step comparisons, anything with scannable structure | 21.77% median engagement — best current format |
+| **Text-only** | Shorter voice-driven posts, strong takes, human moments | Up 12% YoY; 360Brew reads semantically so quality beats decoration |
+| **Multi-image carousel** | Visual comparisons, sequential data, before/after | Strong for likes; use when images are genuinely informative |
+| **Static image** | Data chart, quote card, screenshot of a real thing | Only when the image carries information, not as decoration |
+| **Video** | Only if the clip has strong standalone value | Down 36–72%; autoplay views don't signal depth to 360Brew |
+
+**When using a static image, what works:**
 
 | Type | When to use |
 |---|---|
-| **Data screenshot** | When announcing research or labor market numbers. Pull a chart directly from the career guides or industry pages. |
-| **Career score table** | For industry deep-dive announcements. The layered score table is immediately scannable and interesting to people in that field. |
-| **Side-by-side stat** | Two numbers that tell a story: "Junior dev postings: –78%. Senior postings: –50%, recovering." Clean, dark background, minimal text. |
-| **A real quote card** | A human quote from the Anthropic 81k interviews, typeset cleanly. Light background, name/context below. Not overlaid on a stock photo. |
-| **The site itself** | A screenshot of a career page or industry landing — shows what you're launching, not just talking about it. |
+| **Data screenshot** | Announcing research or labor market numbers. Pull a chart from career guides or industry pages. |
+| **Career score table** | Industry deep-dives. The layered score table is immediately scannable. |
+| **Side-by-side stat** | Two numbers that tell a story. Clean, dark background, minimal text. |
+| **A real quote card** | A human quote typeset cleanly. Light background, name/context below. Not overlaid on a stock photo. |
+| **The site itself** | A screenshot of a career page or industry landing — shows what you're launching. |
 
-**Graphic tone:**
+**Visual tone:**
 - Same visual language as the site (clean, minimal, not corporate)
 - No clip art, no gradient "brand kit" backgrounds
 - No inspiration-quote aesthetics (script fonts, sunsets)
@@ -201,6 +231,9 @@ LinkedIn posts get shared when they do one of three things:
 - "Share this if you agree" explicit asks
 - Manufactured controversy or hot takes to drive replies
 - Engagement bait leading paragraphs
+- Engagement pods or coordinated engagement rings (60–90 day algorithm recovery window if caught)
+- Daily posting (2–3 posts/week is optimal; daily posting cuts reach ~45%)
+- External links in post body (always first comment)
 
 ---
 
@@ -216,3 +249,7 @@ LinkedIn posts get shared when they do one of three things:
 - [ ] Fewer than 4 hashtags?
 - [ ] No "crushed it" / "don't get left behind" / "it's not X it's Y" constructions? (See `now-page-voice/SKILL.md`)
 - [ ] Read it aloud. Would you share this if a peer had written it?
+- [ ] Is the link in the first comment, not the post body?
+- [ ] Does this post fit one of our established topic pillars? (Topic drift hurts 360Brew authority scores)
+- [ ] Would someone **save** this? (Saves signal utility to 360Brew, not just approval)
+- [ ] Is posting cadence reasonable? (Not daily)

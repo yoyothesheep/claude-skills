@@ -2,9 +2,10 @@
 
 SEO, AEO, and content distribution skills for Claude — a tested workflow for researching, writing, and distributing content that gets cited by AI answer engines and ranks in search.
 
-**Two skill groups:**
+**Three skill groups:**
 - **Research & Audit** — understand what AI engines are citing, find keyword gaps, audit existing pages
 - **Content & Distribution** — write AEO-optimized content, distribute it via Reddit/LinkedIn/etc, track citations
+- **Design & UI** — push a design past the generic "AI slop" look, then QA the rendered result against your guidelines
 
 Designed to complement Ahrefs/Semrush by:
 - Understanding your site's content, intent, and target audience
@@ -48,6 +49,10 @@ Each skill has a `CONFIG.example.md`. Change it to `CONFIG.md` in the same folde
 - [8. distribute-outreach](#8-distribute-outreach--backlink--citation-outreach)
 - [9. reddit-content](#9-reddit-content--reddit-draft-generator)
 - [10. linkedin-content](#10-linkedin-content--linkedin-post-writer)
+
+**Design & UI**
+- [11. no-design-slop](#11-no-design-slop--design-direction-generator)
+- [12. frontend-review](#12-frontend-review--screenshot-driven-ui-qa)
 
 ---
 
@@ -352,5 +357,60 @@ Writes LinkedIn posts announcing launches, new content, or data findings. Optimi
 
 ### Output
 One ready-to-post LinkedIn draft (short or long form) with graphic suggestions.
+
+---
+
+## 11. `no-design-slop` — Design Direction Generator
+
+**File:** `no-design-slop/SKILL.md`
+**References:** `references/ai-tells-checklist.md`, `references/critic-prompt-template.md`
+
+### Goal
+Produces several genuinely distinct design directions instead of one templated result. LLMs pick the most probable option at every design decision, so unguided output converges on the average — gradient hero, text-left/graphic-right, three feature cards. This skill imposes variance from outside (randomly drawn layout/type/color axes, a non-software "domain transplant," and a falsifiable dare per variant) and judges the result with a critic agent that didn't build it.
+
+### When to use
+- "Build/redesign this landing page, app screen, or dashboard"
+- "This looks AI-generated / generic / like every other AI site"
+- "Give me a few design directions to choose between"
+
+### How it works
+**Interactive and checkpointed — not one-shot.** Three stages, each stopping for your judgment:
+- **Discover** — draws N distinct directions, builds each as an isolated subagent, gates on diversity, critiques, then shows all N side by side
+- **Define** — pushes the chosen direction with fresh-context critic passes, before/after each round
+- **Deliver** — subtracts: cut dead weight, AI-tells pass, copy rewrite, one pass at a time
+
+Nothing advances without `auto-advance: true`. Re-invoking on an already-polished design is normal and expected.
+
+### Input
+- What you're designing, plus access to the product's **real** content — real names, copy, photographs. No placeholder geometry.
+- [Optional] Knobs: entry point (`fresh`/`re-pass`), stage scope, variant count (default 3), critic loop ceiling, model, polish passes
+
+### Output
+Real headless-Chrome screenshots inline at every checkpoint, N critiqued variants to pick or blend from, then an iterated build. No invented features, fields, or data — ever.
+
+---
+
+## 12. `frontend-review` — Screenshot-Driven UI QA
+
+**File:** `frontend-review/SKILL.md`
+**Config:** `frontend-review/CONFIG.md` (falls back to defaults if absent)
+
+### Goal
+Screenshots a running dev server with Puppeteer, compares the result against your design guidelines, applies fixes, and repeats until the UI passes — catching visual correctness that type-checking and tests cannot.
+
+### When to use
+- "Review the UI", "check how this looks", "polish the frontend"
+- After implementing a feature, to visually QA before shipping
+- "Make it match the design guidelines"
+
+### How it works
+Captures **both viewports** per page — desktop (1440px) and mobile (375px) at 2× — reads the images against `DESIGN-GUIDELINES.md`, lists issues tagged desktop/mobile/both, fixes surgically, then retakes and re-evaluates. A fix that breaks mobile is not a fix. Loops until clean or `MAX_ITERATIONS` is hit.
+
+### Input
+- A **running** dev server (the skill will not start one for you) and `puppeteer` installed in the project
+- `CONFIG.md` values: `DEV_URL`, `PAGES`, `SCREENSHOT_PATH`, `DESIGN_GUIDELINES_PATH`, `MAX_ITERATIONS`
+
+### Output
+A report of pages reviewed, issues found and fixed with before/after description, remaining issues and why they weren't auto-fixed, and total iterations used.
 
 ---

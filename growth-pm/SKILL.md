@@ -205,13 +205,33 @@ Trigger when: a draft is ready to ship.
 Skills: `distribute-social`, `distribute-outreach`
 Trigger when: a post was published and not yet distributed. Distribution should happen within 48h of publish.
 
+#### Distribution Tracking — read every run
+
+| File | Purpose |
+|------|---------|
+| `POSTING_VENUES` | Which venues to use per content type (strategy reference) |
+| `LINKEDIN_DRAFTS` | LinkedIn draft queue + posted status |
+| `TRACKER_PARTNERSHIPS` | Reddit confirmed posts + view counts |
+| `REDDIT_OUTPUT_PATH` | Reddit draft text files per slug |
+| `OUTREACH_CONTACTS` | Journalist/writer pitches sent + reply status |
+| `OUTREACH_PROFILES` | Per-contact background files (reference when generating pitches) |
+
+For each published post, check all three channels:
+1. **Reddit** — confirmed post in `TRACKER_PARTNERSHIPS`? If not, check `REDDIT_OUTPUT_PATH` for a draft.
+2. **LinkedIn** — Status = Posted in `LINKEDIN_DRAFTS`? If Status = Ready and target date passed, flag.
+3. **Outreach** — pitch sent in `OUTREACH_CONTACTS` for that slug? If Sent 5+ business days ago with no reply, flag for follow-up.
+
+Distribution lag on a post older than 48h = 🔴 Do Now. Use `POSTING_VENUES` to recommend specific subreddits and newsletter targets when routing to `distribute-social` or `distribute-outreach`.
+
 ### Prioritization Logic
 
 1. **Unblock the critical path** — any task blocking another workstream goes first
 2. **Citation follow-ups due** — Day 7 or Day 14 checks that are overdue
-3. **Distribution lag** — published posts not yet distributed
-4. **Highest-impact content gap** — from research findings
-5. **Feedback-driven** — if learning loop flagged a skill update, surface it
+3. **Distribution lag** — published posts with no Reddit, LinkedIn, or outreach activity
+4. **LinkedIn drafts past target date** — Status = Ready but target week elapsed
+5. **Outreach follow-up** — Sent pitches with no reply after 5+ business days
+6. **Highest-impact content gap** — from research findings
+7. **Feedback-driven** — if learning loop flagged a skill update, surface it
 
 ### Task Board Output Format
 
