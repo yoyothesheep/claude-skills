@@ -6,7 +6,8 @@ description: >-
   system behaviors and human-in-the-loop workflows. Use whenever designing, specifying, or
   testing a feature; before writing code or tests; when auditing edge cases; or whenever the
   user asks to "think through all scenarios" or "map out edge cases". Reads domain entities
-  and custom rules from a project-level scenarios.config.md or CONFIG.md if available.
+  and custom rules from CONFIG.md in this skill directory (.claude/skills/product-scenarios/CONFIG.md
+  or .agents/skills/product-scenarios/CONFIG.md).
 ---
 
 # product-scenarios
@@ -20,15 +21,15 @@ A systematic framework for discovering, mapping, and specifying all product scen
 ```mermaid
 flowchart TD
     Step1["Step 1: Discover Scope & Domain Config
-(Read local scenarios.config.md / CONFIG.md)"] --> Step2["Step 2: Walk the 8 Universal Dimensions"]
+(Read CONFIG.md in skill directory)"] --> Step2["Step 2: Walk the 8 Universal Dimensions"]
     Step2 --> Step3["Step 3: Overlay Domain AI Behaviors"]
     Step3 --> Step4["Step 4: Generate Structured Scenario Matrix & Test Map"]
 ```
 
 ### Step 1: Discover Scope & Domain Config
 1. Identify the feature boundary being specified.
-2. Check if the project has a `scenarios.config.md` or `CONFIG.md` in the project root, `.agents/`, or `.claude/`.
-3. If present, load:
+2. Read `CONFIG.md` in this skill directory (`.claude/skills/product-scenarios/CONFIG.md` or `.agents/skills/product-scenarios/CONFIG.md`). If it does not exist, use `CONFIG.example.md` as reference.
+3. Load:
    - **Domain Entities**: Core business objects and their relationships.
    - **Domain AI Scenarios**: App-specific probabilistic tasks (e.g. multi-image grouping, OCR deduplication, entity extraction).
    - **Invariants**: Non-negotiable product constraints.
@@ -45,7 +46,7 @@ Evaluate the feature across each universal dimension:
 8. **Platform & Hardware Engine**: Mobile touch/viewport, desktop pointer/keyboard, OS sandbox limitations, accessibility.
 
 ### Step 3: Overlay Domain AI Behaviors
-Layer the project-specific AI capabilities on top:
+Layer the project-specific AI capabilities defined in `CONFIG.md`:
 - Does the feature involve grouping multiple raw assets into one entity?
 - Does it involve decomposing one asset into multiple entities?
 - Does it involve continuous/overlapping captures (e.g. scrolling screenshots)?

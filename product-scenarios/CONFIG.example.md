@@ -1,5 +1,6 @@
 # CONFIG.example.md — Product Scenarios Configuration Template
-# Copy this file to `scenarios.config.md` in your project root or `.agents/`.
+# Copy this file to `CONFIG.md` in this skill directory (`.claude/skills/product-scenarios/CONFIG.md` or `.agents/skills/product-scenarios/CONFIG.md`).
+# `CONFIG.md` is gitignored.
 
 PROJECT_NAME: "Example Project"
 
