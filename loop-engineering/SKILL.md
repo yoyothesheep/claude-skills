@@ -3,10 +3,11 @@ name: loop-engineering
 description: >-
   Disciplined spec-driven dev loop and engineering operating system. Structures all
   software work into 6 strict phase gates: Milestone Planning with full upfront unit
-  pre-documentation (T1..Tn test scenarios for all units), Architectural Decision Records
-  (ADRs), Test-First Scaffolding, Core & Seam Implementation, Independent Maker/Verifier
-  Gate, and Living Spec Finalization. Use when planning, developing, testing,
-  refactoring, or verifying features and subsystems. Invoke as `/loop` or `/loop <phase> [target]`.
+  pre-documentation (automated T1..Tn test scenarios and manual E2E M1..Mk walkthroughs
+  for all units), Architectural Decision Records (ADRs), Test-First Scaffolding, Core
+  & Seam Implementation, Independent Maker/Verifier Gate, and Living Spec Finalization.
+  Use when planning, developing, testing, refactoring, or verifying features and subsystems.
+  Invoke as `/loop` or `/loop <phase> [target]`.
 ---
 
 # loop-engineering
@@ -18,17 +19,19 @@ An end-to-end engineering operating system for building maintainable, high-integ
 ## Core Tenets & System Invariants
 
 1. **Upfront End-to-End Pre-Documentation**:
-   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `history/units/` with its scope boundaries, architectural seams, explicit test matrix ($T_1..T_n$), and acceptance criteria. Never leave downstream phases as vague one-liners.
+   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `history/units/` with its scope boundaries, architectural seams, dual test matrix (automated $T_1..T_n$ and manual E2E $M_1..M_k$), and acceptance criteria. Never leave downstream phases as vague one-liners.
    $$\text{Living Spec / Roadmap} \longrightarrow \text{Pre-Document All Units } (01..N) \longrightarrow \text{Iterate } [\text{Test} \to \text{Build} \to \text{Verify} \to \text{Finalize}]$$
 
-2. **Spec-and-Test Traceability**:
-   Every code change maps directly to an enumerated test scenario ID ($T_1..T_n$) defined in that unit's specification. No unmapped tests; no untested features.
+2. **Dual-Layer Spec-and-Test Traceability (Automated + Manual E2E)**:
+   Every unit must define two complementary test layers before implementation:
+   - **Automated Test Scenarios ($T_1..T_n$)**: Programmatic, deterministic CI unit/integration tests mapping 1:1 to explicit scenario tokens.
+   - **Manual E2E Scenarios ($M_1..M_k$)**: Concrete, step-by-step user-verifiable browser/device walkthroughs specifying exact user actions, expected visual changes, and error recovery states.
 
 3. **Architectural Seams & Determinism**:
    Deterministic domain logic lives in isolated core modules (`lib/`, domain packages, core models). Route handlers, API endpoints, and CLI tools are thin adapters. Multitenancy, permissions, and scoping boundaries are enforced structurally at the data access seam, making unscoped leaks impossible.
 
 4. **Maker / Verifier Independence**:
-   The session or agent that writes the code **must not self-approve** its own work. An independent verification pass audits mechanical CI facts, test fidelity, and semantic acceptance criteria without maker rationalization.
+   The session or agent that writes the code **must not self-approve** its own work. An independent verification pass audits mechanical CI facts, test fidelity, manual E2E repeatability, and semantic acceptance criteria without maker rationalization.
 
 5. **Living Documentation & Safe Git Hygiene**:
    - **Living Specs (`specs/*.md`, `DESIGN.md`)**: Source of truth for what the system does *today*. Never use strikethroughs or describe decommissioned architectures.
@@ -46,7 +49,7 @@ flowchart TD
         P1["Phase 1: Milestone Plan & Full Unit Decomposition
 (/loop plan)
 • Pre-document ALL unit specs (01..N)
-• Enumerate T1..Tn test matrix for each unit
+• Enumerate dual test matrix (T1..Tn automated + M1..Mk manual E2E)
 • Verify seam topology & dependency order"]
         P2{"Architectural Tradeoff
 or Schema Shift?"}
@@ -72,6 +75,7 @@ or Schema Shift?"}
         P6["Phase 5: Independent Maker/Verifier Gate
 (/loop verify NN)
 • Run check_loop.py runner
+• Verify manual E2E walkthroughs (M1..Mk)
 • Audit test fidelity & semantic criteria
 • Emit structured PASS/FAIL verdict"]
         P7["Phase 6: Living Spec Sync & Milestone Handoff
@@ -100,11 +104,15 @@ or Schema Shift?"}
    - Break the initiative into sequential, bounded Build Units ($01..N$).
    - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `history/units/NN-<slug>.md`.
    - Ensure no unit is left as an unspecified placeholder.
-3. **Formulate Test Matrix ($T_1..T_n$) for Every Unit**:
-   - Enumerate explicit, bold test IDs for each unit:
+3. **Formulate Dual Test Matrix for Every Unit**:
+   - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions:
      - `- **T1 [Happy Path]** — ...`
      - `- **T2 [Edge Case / Malformed Input]** — ...`
      - `- **T3 [Boundary / Security / Invariant]** — ...`
+   - **Part B: Manual E2E Scenarios ($M_1..M_k$)**: Step-by-step user-verifiable browser/device walkthroughs:
+     - `- **M1 [Desktop Happy Path]** — Steps: 1. ... 2. ... Expected: ...`
+     - `- **M2 [Mobile / Responsive State]** — Steps: 1. ... Expected: ...`
+     - `- **M3 [Error State & Recovery]** — Steps: 1. ... Expected: ...`
 4. **Validate Seam & Dependency Topology**:
    - Check data flow between units: Does Unit 02 rely on a schema or seam that Unit 01 fails to output?
    - Resolve schema, API, or contract conflicts before any code is written.
@@ -163,7 +171,7 @@ or Schema Shift?"}
 **Goal**: Perform an independent, multi-tiered audit of the implementation against the pre-documented acceptance criteria.
 
 > [!IMPORTANT]
-> **Independence Invariant**: The maker agent never signs off on its own work. A separate verification pass audits code, test assertions, and observed behavior against the unit spec without rationalization.
+> **Independence Invariant**: The maker agent never signs off on its own work. A separate verification pass audits code, test assertions, manual E2E reproducibility, and observed behavior against the unit spec without rationalization.
 
 1. **Mechanical CI Gate (Deterministic)**:
    Run the verification runner:
@@ -174,18 +182,22 @@ or Schema Shift?"}
    - Test suite exit code & summary.
    - Linter & formatter exit codes.
    - Full mapping of $T_1..T_n$ test tokens (zero missing test tokens permitted).
-2. **Test Fidelity Audit (Judgment)**:
+2. **Manual E2E Walkthrough Audit (Verification)**:
+   - Step through each documented manual scenario ($M_1..M_k$).
+   - Verify that UI components, responsive breakpoints, error recovery states, and navigation routes function as specified.
+3. **Test Fidelity Audit (Judgment)**:
    - Verify assertions are substantive, not tautological or hollow.
    - Check that error branches explicitly assert status codes, error types, and error messages.
-3. **Semantic Acceptance Criteria Audit (Judgment)**:
+4. **Semantic Acceptance Criteria Audit (Judgment)**:
    - Audit every checkbox item in the unit spec's `Acceptance Criteria` against actual code and runtime behavior.
-4. **Structured Verdict Table**:
+5. **Structured Verdict Table**:
    Emit a clean sign-off table:
    ```markdown
    ### Unit NN — <Unit Name> Verification Verdict
    | Criterion / Gate | Status | Evidence |
    | :--- | :--- | :--- |
-   | Test Mapping (T1..Tn) | PASS | n/n mapped and asserting correctly |
+   | Automated Tests (T1..Tn) | PASS | n/n mapped and passing green |
+   | Manual E2E Tests (M1..Mk) | PASS | All browser walkthroughs verified |
    | CI & Linter Gates | PASS | Tests green; 0 lint/format warnings |
    | Seam & Architecture Invariants | PASS | Logic isolated in core; scoping verified |
    | Semantic Acceptance Criteria | PASS | All bullet criteria verified |
@@ -203,9 +215,10 @@ or Schema Shift?"}
    - Remove obsolete architectural descriptions (no strikethroughs).
 2. **Update Unit Status**:
    - Mark acceptance criteria checkboxes complete in `history/units/NN-*.md`.
+   - Document any manual testing notes or observations.
    - If next pre-documented unit exists, queue it for Phase 3.
 3. **Clean Review State**:
-   - Present a concise summary of user impact, modified files, and test results.
+   - Present a concise summary of user impact, modified files, test results, and exact manual E2E test steps for the user.
    - Leave diffs uncommitted for human review. Never auto-commit.
 
 ---
@@ -214,9 +227,9 @@ or Schema Shift?"}
 
 | Command | Action | Output / Gate |
 | :--- | :--- | :--- |
-| `/loop plan <name>` | Decompose milestone & pre-document ALL units | Complete set of `history/units/01..N-*.md` with $T_1..T_n$ |
+| `/loop plan <name>` | Decompose milestone & pre-document ALL units | Complete set of `history/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
 | `/loop decide <title>` | Record architectural pivot / decision | Immutable record in `decisions/NNN-*.md` |
 | `/loop test-first <unit>` | Scaffold test suite mapping $T_1..T_n$ | Deterministic test scaffolding verified in red state |
 | `/loop build <unit>` | Implement core domain & thin adapters | Passing tests + zero linter/formatter errors |
-| `/loop verify <unit>` | Independent maker/verifier audit | Structured PASS/FAIL criteria verdict table |
+| `/loop verify <unit>` | Independent maker/verifier audit | Structured PASS/FAIL verdict table with automated + manual proof |
 | `/loop finalize <unit>` | Sync living specs & handoff | Updated `specs/`, marked unit contract, staged diff |
