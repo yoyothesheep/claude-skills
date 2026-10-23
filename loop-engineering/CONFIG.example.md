@@ -4,11 +4,12 @@
 SPECS_DIR: specs
 DECISIONS_DIR: decisions
 HISTORY_UNITS_DIR: history/units
+HISTORY_MILESTONES_DIR: history/milestones
 TESTS_DIR: tests
 
 # Living documentation files
 LIVING_DESIGN: DESIGN.md
-LIVING_SPEC: SPEC.md
+LIVING_SPEC: specs/README.md
 WORKING_RULES: CLAUDE.md
 
 # Command configurations

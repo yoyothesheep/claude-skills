@@ -26,6 +26,10 @@
 - **Case 1**: [Behavior]
 - **Case 2**: [Behavior]
 
+## Known Gaps
+
+- [Places where shipped behavior differs from intent, or a documented limitation. Remove when fixed.]
+
 ## Verification & Testing Strategy
 
 - Unit & integration tests live under `tests/[subsystem]/`.

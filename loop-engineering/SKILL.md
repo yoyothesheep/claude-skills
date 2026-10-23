@@ -35,6 +35,10 @@ An end-to-end engineering operating system for building maintainable, high-integ
 
 5. **Living Documentation & Safe Git Hygiene**:
    - **Living Specs (`specs/*.md`, `DESIGN.md`)**: Source of truth for what the system does *today*. Never use strikethroughs or describe decommissioned architectures.
+     - Organized by **system structure** (stack layer / subsystem, e.g. `specs/platform.md`, `specs/contact.md`), never by project, milestone, or migration. A spec outlives the project that created it.
+     - `specs/README.md` is the index: system overview, stack, route/module map, and links to each subsystem spec.
+     - Describes only what has shipped. No roadmaps, target states, unbuilt routes, or "will" statements. Known gaps between intent and reality are listed explicitly as gaps.
+   - **Milestone Plans (`history/milestones/NN-*.md`)**: Project-scoped roadmaps, migration matrices, unit sequencing, and target end states. They are planning artifacts and never live in `specs/`.
    - **Decision Records (`decisions/NNN-*.md`)**: Immutable ADRs capturing *why* choices, pivots, and cuts occurred. Once accepted, they are never edited; future changes supersede them via a new ADR.
    - **Historical Build Units (`history/units/NN-*.md`)**: Completed milestone contracts with frozen acceptance criteria and mapped test cases.
    - **Git Safety**: Never auto-commit without explicit user instruction. Leave diffs staged/uncommitted for human inspection.
@@ -104,6 +108,8 @@ or Schema Shift?"}
    - Break the initiative into sequential, bounded Build Units ($01..N$).
    - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `history/units/NN-<slug>.md`.
    - Ensure no unit is left as an unspecified placeholder.
+   - Write the milestone roadmap (unit sequence, target end state, migration matrices) to `history/milestones/NN-<slug>.md`. Do **not** put it in `specs/`.
+   - In each unit contract, fill **Living Specs Affected**: which `specs/*.md` files the unit will create or update once it ships.
 3. **Formulate Dual Test Matrix for Every Unit**:
    - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions:
      - `- **T1 [Happy Path]** — ...`
@@ -210,8 +216,10 @@ or Schema Shift?"}
 
 **Goal**: Synchronize living specifications with current production reality and prepare clean diffs for human review.
 
-1. **Sync Living Specs**:
-   - Update `specs/<subsystem>.md` and `DESIGN.md` to reflect current behavior.
+1. **Sync Living Specs** (mandatory; a unit is not complete until this is done):
+   - Create or update every `specs/<subsystem>.md` listed under the unit's **Living Specs Affected**, plus any other subsystem the unit actually changed. Use `templates/LIVING_SPEC_TEMPLATE.md` for new files.
+   - Document shipped behavior from the code, not from the unit contract. Where the contract and the code differ, the spec follows the code and lists the difference under **Known Gaps**.
+   - Update `specs/README.md` (index, route/module map) if routes, modules, or env vars changed.
    - Remove obsolete architectural descriptions (no strikethroughs).
 2. **Update Unit Status**:
    - Mark acceptance criteria checkboxes complete in `history/units/NN-*.md`.
@@ -227,9 +235,9 @@ or Schema Shift?"}
 
 | Command | Action | Output / Gate |
 | :--- | :--- | :--- |
-| `/loop plan <name>` | Decompose milestone & pre-document ALL units | Complete set of `history/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
+| `/loop plan <name>` | Decompose milestone & pre-document ALL units | `history/milestones/NN-*.md` roadmap + complete set of `history/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
 | `/loop decide <title>` | Record architectural pivot / decision | Immutable record in `decisions/NNN-*.md` |
 | `/loop test-first <unit>` | Scaffold test suite mapping $T_1..T_n$ | Deterministic test scaffolding verified in red state |
 | `/loop build <unit>` | Implement core domain & thin adapters | Passing tests + zero linter/formatter errors |
 | `/loop verify <unit>` | Independent maker/verifier audit | Structured PASS/FAIL verdict table with automated + manual proof |
-| `/loop finalize <unit>` | Sync living specs & handoff | Updated `specs/`, marked unit contract, staged diff |
+| `/loop finalize <unit>` | Sync living specs & handoff | Created/updated subsystem specs in `specs/` + `specs/README.md`, marked unit contract, staged diff |

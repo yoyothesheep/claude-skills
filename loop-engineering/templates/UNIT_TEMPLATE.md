@@ -23,6 +23,14 @@
 
 ---
 
+## Living Specs Affected
+
+*Subsystem specs in `specs/` this unit creates or updates during `/loop finalize`. Organized by system structure, not by milestone.*
+- `specs/[subsystem].md` — [create | update]: [what behavior gets documented]
+- `specs/README.md` — [update if routes, modules, or env vars change]
+
+---
+
 ## Test Matrix (Automated & Manual E2E)
 
 ### A. Automated Test Scenarios (T1..Tn)
@@ -47,4 +55,5 @@
 - [ ] [Semantic criterion 2: e.g. Seam separation respected, no leak across boundaries]
 - [ ] [Behavioral / E2E criterion: e.g. Web UI renders cleanly on desktop and mobile viewports]
 - [ ] Code formatting and linting pass clean.
+- [ ] Living specs listed above created/updated to match shipped code.
 - [ ] Independent verification pass confirms all criteria.
