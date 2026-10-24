@@ -223,6 +223,7 @@ or Schema Shift?"}
    - Remove obsolete architectural descriptions (no strikethroughs).
 2. **Update Unit Status**:
    - Mark acceptance criteria checkboxes complete in `history/units/NN-*.md`.
+   - Update the unit's status row in the milestone tracker (`history/milestones/NN-*.md`).
    - Document any manual testing notes or observations.
    - If next pre-documented unit exists, queue it for Phase 3.
 3. **Clean Review State**:
