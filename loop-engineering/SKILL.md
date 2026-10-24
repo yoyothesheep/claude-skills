@@ -24,8 +24,8 @@ An end-to-end engineering operating system for building maintainable, high-integ
 
 2. **Dual-Layer Spec-and-Test Traceability (Automated + Manual E2E)**:
    Every unit must define two complementary test layers before implementation:
-   - **Automated Test Scenarios ($T_1..T_n$)**: Programmatic, deterministic CI unit/integration tests mapping 1:1 to explicit scenario tokens.
-   - **Manual E2E Scenarios ($M_1..M_k$)**: Concrete, step-by-step user-verifiable browser/device walkthroughs specifying exact user actions, expected visual changes, and error recovery states.
+   - **Automated Test Scenarios ($T_1..T_n$)**: Programmatic, deterministic CI unit/integration tests mapping 1:1 to explicit scenario tokens. For UI work, behavior that only exists in a browser (hover, focus, keyboard, JS-driven state, layout/overflow, accessible names) gets **automated browser tests** (Playwright or equivalent) named by the same tokens; source-text assertions don't count as covering it.
+   - **Manual E2E Scenarios ($M_1..M_k$)**: Concrete, step-by-step user-verifiable browser/device walkthroughs specifying exact user actions, expected visual changes, and error recovery states. They cover what automation can't judge (visual feel, third-party pages) and act as a human sanity pass over key flows, even ones the browser suite already automates.
 
 3. **Architectural Seams & Determinism**:
    Deterministic domain logic lives in isolated core modules (`lib/`, domain packages, core models). Route handlers, API endpoints, and CLI tools are thin adapters. Multitenancy, permissions, and scoping boundaries are enforced structurally at the data access seam, making unscoped leaks impossible.
@@ -165,6 +165,7 @@ or Schema Shift?"}
 2. **Injectable & Deterministic I/O**:
    - Mock external networks, third-party APIs (e.g. Resend, Stripe), system clocks, or AI model calls.
    - Tests must run fast, offline, and deterministically.
+   - The configured `TEST_COMMAND` runs every suite (unit + browser), so the gate in Phase 5 sees both.
 3. **Verify Red State**:
    - Run tests to confirm they fail for the expected reasons prior to implementation.
 

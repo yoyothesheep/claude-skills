@@ -40,8 +40,10 @@
 - **T2 [Edge Case / Failure Mode]** — [Given bad input or boundary condition, clean handling asserted]
 - **T3 [Data Invariant / Security Boundary]** — [Data scoping or invariant held]
 
+*Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
+
 ### B. Manual E2E Scenarios (M1..Mk)
-*Step-by-step user-verifiable walkthroughs for browser and device testing.*
+*Step-by-step user-verifiable walkthroughs: a human sanity pass over key flows (including ones the browser suite automates) plus anything automation can't judge.*
 - **M1 [Desktop Happy Path]** — **Steps**: 1. Navigate to `/...` 2. Click `...` 3. Verify `...`. **Expected**: [Exact visual/functional outcome].
 - **M2 [Mobile / Responsive State]** — **Steps**: 1. Resize viewport to 375px 2. Tap `...`. **Expected**: [Drawer/layout adapts cleanly without horizontal overflow].
 - **M3 [Edge / Error Recovery State]** — **Steps**: 1. Trigger `...` with bad input. **Expected**: [Human-readable error state, clean recovery path].
