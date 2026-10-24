@@ -96,6 +96,10 @@ def run_cmd(cmd: list[str] | str) -> tuple[int, str]:
 
 def last_summary_line(output: str) -> str:
     lines = [ln.strip() for ln in output.splitlines() if ln.strip()]
+    # A command may chain several runners (e.g. unit + browser); report each runner's pass/fail count
+    counts = [ln for ln in lines if re.search(r"\b\d+ (passed|failed)\b", ln) and len(ln) < 120]
+    if counts:
+        return " | ".join(dict.fromkeys(counts))
     return lines[-1] if lines else ""
 
 
