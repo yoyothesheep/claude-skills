@@ -168,7 +168,8 @@ def find_test_files(target: str, spec_title: str = "") -> list[str]:
         return []
 
     valid_exts = (".py", ".ts", ".js", ".mjs", ".tsx", ".jsx")
-    found: set[str] = set()
+    by_number: set[str] = set()
+    by_keyword: set[str] = set()
     for root, _, files in os.walk(str(test_dir)):
         for f in files:
             f_lower = f.lower()
@@ -177,9 +178,12 @@ def find_test_files(target: str, spec_title: str = "") -> list[str]:
             if not (f_lower.startswith("test_") or ".test." in f_lower or ".spec." in f_lower):
                 continue
             full_rel = str(Path(root, f).relative_to(REPO))
-            if any(k in f_lower for k in keywords):
-                found.add(full_rel)
-    return sorted(list(found))
+            # A file named for the unit number (test_03_*) is authoritative; title words are a fallback
+            if re.match(rf"test[_-]{re.escape(target)}[_-]", f_lower):
+                by_number.add(full_rel)
+            elif any(k in f_lower for k in keywords):
+                by_keyword.add(full_rel)
+    return sorted(by_number or by_keyword)
 
 
 def test_mapping(target: str, test_ids: list[str], test_files: list[str]) -> dict:
