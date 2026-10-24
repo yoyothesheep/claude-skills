@@ -2,7 +2,7 @@
 
 - **Date**: YYYY-MM
 - **Status**: `Proposed` | `Accepted` | `Deprecated` | `Superseded by ADR-XXX`
-- **Related Units / Specs**: Unit NN ([specs/NN-*.md](specs/NN-*.md))
+- **Related Units / Specs**: Unit NN ([active/NN-*/units/NN-*.md](../../active/)), [specs/engineering/*.md](../../specs/engineering/)
 
 ## Context & Problem Statement
 

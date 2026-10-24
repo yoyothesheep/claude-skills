@@ -1,6 +1,6 @@
 # Build Unit NN — [Unit Name]
 
-*Part of **[Milestone / Epic]** ([Parent Spec Link]), after Unit [Prev].*
+*Part of **[Milestone]** ([plan.md](../plan.md)), after Unit [Prev].*
 
 ## Scope & User Story
 
@@ -25,8 +25,9 @@
 
 ## Living Specs Affected
 
-*Subsystem specs in `specs/` this unit creates or updates during `/loop finalize`. Organized by system structure, not by milestone.*
-- `specs/[subsystem].md` — [create | update]: [what behavior gets documented]
+*Specs this unit creates or updates during `/loop finalize`.*
+- `specs/product/[file].md` — [create | update]: [requirement added or changed] *(omit if requirements unchanged)*
+- `specs/engineering/[subsystem].md` — [create | update]: [what behavior gets documented]
 - `specs/README.md` — [update if routes, modules, or env vars change]
 
 ---

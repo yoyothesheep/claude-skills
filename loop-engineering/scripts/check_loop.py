@@ -6,7 +6,7 @@ structured JSON evidence to stdout. The LLM verifier layer consumes this JSON to
 perform judgment checks (test fidelity, behavioral drive, and semantic acceptance).
 
 Features:
-- Discovers unit specs in history/units/, specs/, or units/
+- Discovers unit contracts in active/*/units/ or history/milestones/*/units/
 - Parses enumerated test IDs (T1..Tn, T1.1..Tn.m) and acceptance criteria
 - Validates test collection mapping against test files in tests/
 - Executes configured test suite and linters (supporting CONFIG.md overrides)
@@ -14,7 +14,7 @@ Features:
 
 Usage:
     python check_loop.py NN            # e.g. python check_loop.py 01
-    python check_loop.py <path-to-spec> # e.g. python check_loop.py history/units/01-scaffold.md
+    python check_loop.py <path-to-spec> # e.g. python check_loop.py active/01-rebuild/units/01-scaffold.md
 """
 
 from __future__ import annotations
@@ -107,12 +107,10 @@ def find_spec_path(target: str) -> Path | None:
         return _repo(target)
 
     search_patterns = [
-        f"history/units/{target}-*.md",
-        f"history/units/*{target}*.md",
-        f"specs/{target}-*.md",
-        f"specs/{target}.md",
-        f"units/{target}-*.md",
-        f"specs/*{target}*.md",
+        f"active/*/units/{target}-*.md",
+        f"active/*/units/*{target}*.md",
+        f"history/milestones/*/units/{target}-*.md",
+        f"history/milestones/*/units/*{target}*.md",
     ]
     for pattern in search_patterns:
         matches = sorted(glob.glob(str(_repo(pattern))))

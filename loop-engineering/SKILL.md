@@ -19,7 +19,7 @@ An end-to-end engineering operating system for building maintainable, high-integ
 ## Core Tenets & System Invariants
 
 1. **Upfront End-to-End Pre-Documentation**:
-   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `history/units/` with its scope boundaries, architectural seams, dual test matrix (automated $T_1..T_n$ and manual E2E $M_1..M_k$), and acceptance criteria. Never leave downstream phases as vague one-liners.
+   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `active/NN-<milestone>/units/` with its scope boundaries, architectural seams, dual test matrix (automated $T_1..T_n$ and manual E2E $M_1..M_k$), and acceptance criteria. Never leave downstream phases as vague one-liners.
    $$\text{Living Spec / Roadmap} \longrightarrow \text{Pre-Document All Units } (01..N) \longrightarrow \text{Iterate } [\text{Test} \to \text{Build} \to \text{Verify} \to \text{Finalize}]$$
 
 2. **Dual-Layer Spec-and-Test Traceability (Automated + Manual E2E)**:
@@ -34,13 +34,27 @@ An end-to-end engineering operating system for building maintainable, high-integ
    The session or agent that writes the code **must not self-approve** its own work. An independent verification pass audits mechanical CI facts, test fidelity, manual E2E repeatability, and semantic acceptance criteria without maker rationalization.
 
 5. **Living Documentation & Safe Git Hygiene**:
-   - **Living Specs (`specs/*.md`, `DESIGN.md`)**: Source of truth for what the system does *today*. Never use strikethroughs or describe decommissioned architectures.
-     - Organized by **system structure** (stack layer / subsystem, e.g. `specs/platform.md`, `specs/contact.md`), never by project, milestone, or migration. A spec outlives the project that created it.
-     - `specs/README.md` is the index: system overview, stack, route/module map, and links to each subsystem spec.
-     - Describes only what has shipped. No roadmaps, target states, unbuilt routes, or "will" statements. Known gaps between intent and reality are listed explicitly as gaps.
-   - **Milestone Plans (`history/milestones/NN-*.md`)**: Project-scoped roadmaps, migration matrices, unit sequencing, and target end states. They are planning artifacts and never live in `specs/`.
-   - **Decision Records (`decisions/NNN-*.md`)**: Immutable ADRs capturing *why* choices, pivots, and cuts occurred. Once accepted, they are never edited; future changes supersede them via a new ADR.
-   - **Historical Build Units (`history/units/NN-*.md`)**: Completed milestone contracts with frozen acceptance criteria and mapped test cases.
+   Three top-level documentation directories, by lifecycle:
+   ```
+   active/                       # work in progress
+     NN-<milestone>/
+       plan.md                   # roadmap + status tracker
+       units/NN-<slug>.md        # unit contracts
+   specs/                        # what the system is today
+     README.md                   # index: system overview, links to both halves
+     product/                    # what & why
+     engineering/                # how
+   history/                      # append-only record of change
+     decisions/NNN-<slug>.md     # ADRs
+     milestones/NN-<milestone>/  # finished active/ folders, moved here intact
+   ```
+   - **Active work (`active/NN-<milestone>/`)**: the milestone plan (unit sequence, target end state, migration matrices, status tracker) and its unit contracts. Planning artifacts never live in `specs/`.
+   - **Living Specs (`specs/`)**: source of truth for what the system does *today*. Describe only what has shipped: no roadmaps, unbuilt features, or "will" statements. Never use strikethroughs or describe decommissioned designs. Gaps between intent and reality are listed explicitly as **Known Gaps**. A spec outlives the milestone that created it.
+     - **`specs/product/`**: requirements from the user's side: who it is for, goals, required capabilities and content, constraints, non-goals. Can be a single short `README.md` for small products.
+     - **`specs/engineering/`**: design from the builder's side, one file per system layer / subsystem (e.g. `platform.md`, `contact.md`), never per milestone.
+   - **History (`history/`)**:
+     - **Decision Records (`history/decisions/NNN-*.md`)**: ADRs capturing *why* choices, pivots, and cuts occurred. Written here directly when the decision is made. Once accepted, never edited; a new ADR supersedes an old one.
+     - **Completed Milestones (`history/milestones/NN-*/`)**: when every unit is done, move the whole `active/NN-*/` folder here. Contracts are then frozen.
    - **Git Safety**: Never auto-commit without explicit user instruction. Leave diffs staged/uncommitted for human inspection.
 
 ---
@@ -59,7 +73,7 @@ flowchart TD
 or Schema Shift?"}
         P3["Phase 2: Architectural Decision Gate
 (/loop decide)
-• Draft immutable ADR (decisions/NNN-*.md)"]
+• Draft immutable ADR (history/decisions/NNN-*.md)"]
         P1 --> P2
         P2 -- Yes --> P3
         P2 -- No --> P4
@@ -84,7 +98,7 @@ or Schema Shift?"}
 • Emit structured PASS/FAIL verdict"]
         P7["Phase 6: Living Spec Sync & Milestone Handoff
 (/loop finalize NN)
-• Update specs/*.md with production reality
+• Update specs/product + specs/engineering
 • Mark unit complete
 • Present reviewable diff to user"]
 
@@ -106,10 +120,10 @@ or Schema Shift?"}
    - Frame tradeoffs in terms of user experience (gains vs. losses), not raw implementation details.
 2. **Decompose Entire Milestone Upfront**:
    - Break the initiative into sequential, bounded Build Units ($01..N$).
-   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `history/units/NN-<slug>.md`.
+   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`.
    - Ensure no unit is left as an unspecified placeholder.
-   - Write the milestone roadmap (unit sequence, target end state, migration matrices) to `history/milestones/NN-<slug>.md`. Do **not** put it in `specs/`.
-   - In each unit contract, fill **Living Specs Affected**: which `specs/*.md` files the unit will create or update once it ships.
+   - Write the milestone roadmap and status tracker (unit sequence, target end state, migration matrices) to `active/NN-<milestone>/plan.md`. Do **not** put it in `specs/`.
+   - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
 3. **Formulate Dual Test Matrix for Every Unit**:
    - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions:
      - `- **T1 [Happy Path]** — ...`
@@ -132,7 +146,7 @@ or Schema Shift?"}
 1. **Trigger Conditions**:
    - Framework or runtime selections, schema migrations, third-party API provider choices, security boundaries, or deliberate cuts of planned scope.
 2. **Draft the ADR**:
-   - Use `templates/ADR_TEMPLATE.md` under `decisions/NNN-<slug>.md`.
+   - Use `templates/ADR_TEMPLATE.md` under `history/decisions/NNN-<slug>.md`.
    - Capture:
      - **Context & Problem Statement**: User friction and engineering constraints.
      - **Decision**: Concrete architectural choice and boundary enforcement.
@@ -217,15 +231,15 @@ or Schema Shift?"}
 **Goal**: Synchronize living specifications with current production reality and prepare clean diffs for human review.
 
 1. **Sync Living Specs** (mandatory; a unit is not complete until this is done):
-   - Create or update every `specs/<subsystem>.md` listed under the unit's **Living Specs Affected**, plus any other subsystem the unit actually changed. Use `templates/LIVING_SPEC_TEMPLATE.md` for new files.
+   - Create or update every spec listed under the unit's **Living Specs Affected**, plus any other area the unit actually changed: `specs/engineering/<subsystem>.md` (use `templates/LIVING_SPEC_TEMPLATE.md`) and, if requirements changed, `specs/product/` (use `templates/PRODUCT_SPEC_TEMPLATE.md`).
    - Document shipped behavior from the code, not from the unit contract. Where the contract and the code differ, the spec follows the code and lists the difference under **Known Gaps**.
    - Update `specs/README.md` (index, route/module map) if routes, modules, or env vars changed.
    - Remove obsolete architectural descriptions (no strikethroughs).
 2. **Update Unit Status**:
-   - Mark acceptance criteria checkboxes complete in `history/units/NN-*.md`.
-   - Update the unit's status row in the milestone tracker (`history/milestones/NN-*.md`).
+   - Mark acceptance criteria checkboxes complete in `active/NN-*/units/NN-*.md`.
+   - Update the unit's status row in `active/NN-*/plan.md`.
    - Document any manual testing notes or observations.
-   - If next pre-documented unit exists, queue it for Phase 3.
+   - If next pre-documented unit exists, queue it for Phase 3. If this was the last unit, move `active/NN-*/` to `history/milestones/NN-*/`.
 3. **Clean Review State**:
    - Present a concise summary of user impact, modified files, test results, and exact manual E2E test steps for the user.
    - Leave diffs uncommitted for human review. Never auto-commit.
@@ -236,9 +250,9 @@ or Schema Shift?"}
 
 | Command | Action | Output / Gate |
 | :--- | :--- | :--- |
-| `/loop plan <name>` | Decompose milestone & pre-document ALL units | `history/milestones/NN-*.md` roadmap + complete set of `history/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
-| `/loop decide <title>` | Record architectural pivot / decision | Immutable record in `decisions/NNN-*.md` |
+| `/loop plan <name>` | Decompose milestone & pre-document ALL units | `active/NN-*/plan.md` + complete set of `active/NN-*/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
+| `/loop decide <title>` | Record architectural pivot / decision | Immutable record in `history/decisions/NNN-*.md` |
 | `/loop test-first <unit>` | Scaffold test suite mapping $T_1..T_n$ | Deterministic test scaffolding verified in red state |
 | `/loop build <unit>` | Implement core domain & thin adapters | Passing tests + zero linter/formatter errors |
 | `/loop verify <unit>` | Independent maker/verifier audit | Structured PASS/FAIL verdict table with automated + manual proof |
-| `/loop finalize <unit>` | Sync living specs & handoff | Created/updated subsystem specs in `specs/` + `specs/README.md`, marked unit contract, staged diff |
+| `/loop finalize <unit>` | Sync living specs & handoff | Updated `specs/engineering/` (+ `specs/product/` if requirements changed), contract + `plan.md` status, staged diff |

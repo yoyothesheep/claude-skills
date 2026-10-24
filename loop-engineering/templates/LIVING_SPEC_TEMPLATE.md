@@ -1,4 +1,6 @@
-# Living Specification — [Subsystem Name]
+# Engineering Spec — [Subsystem Name]
+
+*Lives in `specs/engineering/`.*
 
 *Authoritative living technical specification of this subsystem as it operates **today in production**. No strikethroughs or retired architectures.*
 
