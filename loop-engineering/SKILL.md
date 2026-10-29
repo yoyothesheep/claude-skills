@@ -7,7 +7,6 @@ description: >-
   for all units), Architectural Decision Records (ADRs), Test-First Scaffolding, Core
   & Seam Implementation, Independent Maker/Verifier Gate, and Living Spec Finalization.
   Use when planning, developing, testing, refactoring, or verifying features and subsystems.
-  Invoke as `/loop` or `/loop <phase> [target]`.
 ---
 
 # loop-engineering
@@ -65,14 +64,13 @@ An end-to-end engineering operating system for building maintainable, high-integ
 flowchart TD
     subgraph StageA["Stage A: Upfront Architecture & Specification"]
         P1["Phase 1: Milestone Plan & Full Unit Decomposition
-(/loop plan)
+• Verify CONFIG.md stack & ingest F1..Fm flows
 • Pre-document ALL unit specs (01..N)
-• Enumerate dual test matrix (T1..Tn automated + M1..Mk manual E2E)
-• Verify seam topology & dependency order"]
+• Enumerate dual test matrix (T1..Tn automated + M1..Mk manual E2E)"]
         P2{"Architectural Tradeoff
 or Schema Shift?"}
         P3["Phase 2: Architectural Decision Gate
-(/loop decide)
+• Align with user on options & tradeoffs
 • Draft immutable ADR (history/decisions/NNN-*.md)"]
         P1 --> P2
         P2 -- Yes --> P3
@@ -82,25 +80,20 @@ or Schema Shift?"}
 
     subgraph StageB["Stage B: Unit Execution Loop (Iterated for Units 01 to N)"]
         P4["Phase 3: Test-First Scaffolding
-(/loop test-first NN)
 • Scaffold tests mapping 1:1 to T1..Tn
 • Confirm failing (red) state"]
         P5["Phase 4: Core & Seam Implementation
-(/loop build NN)
-• Implement minimal domain core logic
-• Wire thin adapters & routes
+• Implement minimal domain core logic & thin adapters
+• Auto-simplify (strip single-use wrappers & dead weight)
 • Verify clean lint & format"]
         P6["Phase 5: Independent Maker/Verifier Gate
-(/loop verify NN)
 • Run check_loop.py runner
 • Verify manual E2E walkthroughs (M1..Mk)
 • Audit test fidelity & semantic criteria
 • Emit structured PASS/FAIL verdict"]
         P7["Phase 6: Living Spec Sync & Milestone Handoff
-(/loop finalize NN)
-• Update specs/product + specs/engineering
-• Mark unit complete
-• Present reviewable diff to user"]
+• Update specs/product + specs/engineering + invariants
+• Mark unit complete & present reviewable diff"]
 
         P4 --> P5 --> P6 --> P7
     end
@@ -111,13 +104,14 @@ or Schema Shift?"}
 
 ---
 
-### Phase 1: Milestone Planning & Full Unit Pre-Documentation (`/loop plan [milestone/unit]`)
+### Phase 1: Milestone Planning & Full Unit Pre-Documentation
 
 **Goal**: Iron out architectural seams, edge cases, and dependencies by pre-documenting all build units across the entire milestone *before* touching code.
 
-1. **Product Framing**:
-   - Define user outcomes, high-level user stories, and strict out-of-scope boundaries.
-   - Frame tradeoffs in terms of user experience (gains vs. losses), not raw implementation details.
+1. **Product Framing & Stack Alignment**:
+   - Inspect `CONFIG.md` and ensure `TEST_COMMAND`, `LINT_COMMAND`, and `FORMAT_COMMAND` match the repository's tech stack.
+   - Define user outcomes, high-level user stories, and strict out-of-scope boundaries. If `specs/product/` already defines scoped requirements and Key User Flows ($F_1..F_m$), ingest them directly.
+   - Frame tradeoffs in terms of user experience (gains vs. losses) and concrete engineering cost. If non-obvious architectural forks exist, **ask the user first** with concrete options before generating unit files.
 2. **Decompose Entire Milestone Upfront**:
    - Break the initiative into sequential, bounded Build Units ($01..N$).
    - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`.
@@ -125,6 +119,7 @@ or Schema Shift?"}
    - Write the milestone roadmap and status tracker (unit sequence, target end state, migration matrices) to `active/NN-<milestone>/plan.md`. Do **not** put it in `specs/`.
    - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
 3. **Formulate Dual Test Matrix for Every Unit**:
+   - Map product user flows ($F_1..F_m$) and edge cases directly into each unit's test scenarios:
    - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions:
      - `- **T1 [Happy Path]** — ...`
      - `- **T2 [Edge Case / Malformed Input]** — ...`
@@ -139,14 +134,15 @@ or Schema Shift?"}
 
 ---
 
-### Phase 2: Architectural Decision Gate (`/loop decide [title]`)
+### Phase 2: Architectural Decision Gate
 
 **Goal**: Lock in non-obvious technical choices, migrations, API selections, or structural cuts in immutable ADRs.
 
 1. **Trigger Conditions**:
    - Framework or runtime selections, schema migrations, third-party API provider choices, security boundaries, or deliberate cuts of planned scope.
-2. **Draft the ADR**:
-   - Use `templates/ADR_TEMPLATE.md` under `history/decisions/NNN-<slug>.md`.
+2. **Align First, Then Draft the ADR**:
+   - Present the options, user/technical tradeoffs, and recommended choice to the user before locking in a major decision.
+   - Once aligned, write `templates/ADR_TEMPLATE.md` under `history/decisions/NNN-<slug>.md`.
    - Capture:
      - **Context & Problem Statement**: User friction and engineering constraints.
      - **Decision**: Concrete architectural choice and boundary enforcement.
@@ -155,7 +151,7 @@ or Schema Shift?"}
 
 ---
 
-### Phase 3: Test-First Scaffolding (`/loop test-first <unit>`)
+### Phase 3: Test-First Scaffolding
 
 **Goal**: Write deterministic tests mapping 1:1 to the unit's pre-documented $T_1..T_n$ matrix before touching production logic.
 
@@ -171,7 +167,7 @@ or Schema Shift?"}
 
 ---
 
-### Phase 4: Core & Seam Implementation (`/loop build <unit>`)
+### Phase 4: Core & Seam Implementation
 
 **Goal**: Implement minimal, high-integrity code satisfying the unit contract and passing all tests.
 
@@ -181,13 +177,14 @@ or Schema Shift?"}
 2. **Thin Web/API/CLI Adapters Second**:
    - Wire route handlers, controllers, templates, and CLI endpoints.
    - Enforce multitenancy and scoping at the data access seam.
-3. **Clean Code Baseline**:
-   - Verify all unit tests pass green.
-   - Run project linter and formatter (e.g. `ruff check .` / `eslint`, `ruff format` / `prettier`).
+3. **Simplify & Clean Code Baseline**:
+   - Once tests pass, perform an automatic simplification pass on modified files: inline single-use wrappers, remove speculative abstractions, and strip redundant comments.
+   - Verify all unit tests still pass green.
+   - Run project linter and formatter (via configured `LINT_COMMAND` and `FORMAT_COMMAND`).
 
 ---
 
-### Phase 5: Independent Maker/Verifier Gate (`/loop verify <unit>`)
+### Phase 5: Independent Maker/Verifier Gate
 
 **Goal**: Perform an independent, multi-tiered audit of the implementation against the pre-documented acceptance criteria.
 
@@ -227,13 +224,14 @@ or Schema Shift?"}
 
 ---
 
-### Phase 6: Living Spec Sync & Milestone Handoff (`/loop finalize <unit>`)
+### Phase 6: Living Spec Sync & Milestone Handoff
 
 **Goal**: Synchronize living specifications with current production reality and prepare clean diffs for human review.
 
-1. **Sync Living Specs** (mandatory; a unit is not complete until this is done):
+1. **Sync Living Specs & Compound Learnings** (mandatory; a unit is not complete until this is done):
    - Create or update every spec listed under the unit's **Living Specs Affected**, plus any other area the unit actually changed: `specs/engineering/<subsystem>.md` (use `templates/LIVING_SPEC_TEMPLATE.md`) and, if requirements changed, `specs/product/` (use `templates/PRODUCT_SPEC_TEMPLATE.md`).
    - Document shipped behavior from the code, not from the unit contract. Where the contract and the code differ, the spec follows the code and lists the difference under **Known Gaps**.
+   - Record any non-obvious domain invariants discovered during implementation or verification in `specs/engineering/<subsystem>.md`, and update `CONFIG.md` if repository tooling quirks were encountered.
    - Update `specs/README.md` (index, route/module map) if routes, modules, or env vars changed.
    - Remove obsolete architectural descriptions (no strikethroughs).
 2. **Update Unit Status**:
@@ -247,13 +245,9 @@ or Schema Shift?"}
 
 ---
 
-## Quick Reference Commands
+## Stage Progression & Human Checkpoints
 
-| Command | Action | Output / Gate |
-| :--- | :--- | :--- |
-| `/loop plan <name>` | Decompose milestone & pre-document ALL units | `active/NN-*/plan.md` + complete set of `active/NN-*/units/01..N-*.md` with dual $T_n$ & $M_k$ matrices |
-| `/loop decide <title>` | Record architectural pivot / decision | Immutable record in `history/decisions/NNN-*.md` |
-| `/loop test-first <unit>` | Scaffold test suite mapping $T_1..T_n$ | Deterministic test scaffolding verified in red state |
-| `/loop build <unit>` | Implement core domain & thin adapters | Passing tests + zero linter/formatter errors |
-| `/loop verify <unit>` | Independent maker/verifier audit | Structured PASS/FAIL verdict table with automated + manual proof |
-| `/loop finalize <unit>` | Sync living specs & handoff | Updated `specs/engineering/` (+ `specs/product/` if requirements changed), contract + `plan.md` status, staged diff |
+Do not force the user to remember or type phase subcommands. Inspect `active/`, `specs/`, and `tests/` to determine where work stands and advance naturally:
+
+1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs, and pause for approval to start building.
+2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
