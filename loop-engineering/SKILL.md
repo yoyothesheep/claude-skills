@@ -128,6 +128,7 @@ or Schema Shift?"}
      - `- **M1 [Desktop Happy Path]** — Steps: 1. ... 2. ... Expected: ...`
      - `- **M2 [Mobile / Responsive State]** — Steps: 1. ... Expected: ...`
      - `- **M3 [Error State & Recovery]** — Steps: 1. ... Expected: ...`
+   - **Viewport coverage (UI units)**: when `VIEWPORT_BREAKPOINTS` is set in CONFIG.md, every UI unit is verified at **each** listed width, not one desktop and one phone width. Automated tests must assert no horizontal overflow at every width; responsive scenarios name the widths they check. When `PARITY_REFERENCE_URL` is set, parity means measured element boxes (position, size, font-size) match the reference at every width; read the reference's CSS for `min-width` and `max-width` media queries so wide-screen tiers aren't missed.
 4. **Validate Seam & Dependency Topology**:
    - Check data flow between units: Does Unit 02 rely on a schema or seam that Unit 01 fails to output?
    - Resolve schema, API, or contract conflicts before any code is written.
@@ -177,7 +178,9 @@ or Schema Shift?"}
 2. **Thin Web/API/CLI Adapters Second**:
    - Wire route handlers, controllers, templates, and CLI endpoints.
    - Enforce multitenancy and scoping at the data access seam.
-3. **Simplify & Clean Code Baseline**:
+3. **Root-Cause Before Fix**:
+   - When a test fails unexpectedly during implementation, read the full failure output and trace the root cause in the data flow before editing code—never guess or apply shotgun fixes, and never weaken a spec-mandated test assertion just to make it pass.
+4. **Simplify & Clean Code Baseline**:
    - Once tests pass, perform an automatic simplification pass on modified files: inline single-use wrappers, remove speculative abstractions, and strip redundant comments.
    - Verify all unit tests still pass green.
    - Run project linter and formatter (via configured `LINT_COMMAND` and `FORMAT_COMMAND`).
@@ -203,6 +206,7 @@ or Schema Shift?"}
 2. **Manual E2E Walkthrough Audit (Verification)**:
    - Step through each documented manual scenario ($M_1..M_k$).
    - Verify that UI components, responsive breakpoints, error recovery states, and navigation routes function as specified.
+   - When `VIEWPORT_BREAKPOINTS` is set, check every listed width, not a sample. For parity work, measure key elements (title, lead, hero media, nav, dividers) on both the build and `PARITY_REFERENCE_URL` at each width, and report any difference over ~10px or any font-size mismatch as a finding.
 3. **Test Fidelity Audit (Judgment)**:
    - Verify assertions are substantive, not tautological or hollow.
    - Check that error branches explicitly assert status codes, error types, and error messages.

@@ -2,10 +2,13 @@
 
 *Lives in `specs/product/`. What the product does for its users today and why. No internal implementation detail; that belongs in `specs/engineering/`.*
 
-## Users & Goals
+## Users, Goals & Success Metrics
 
 - **Who**: [Primary user role/audience and context in which they arrive]
-- **Goals**: [What they come to accomplish; measurable outcome when successful]
+- **Goals**: [What they come to accomplish; outcome when successful]
+- **Success Metrics**:
+  - **[Metric 1]**: `[Target / threshold]` — measured via `[observable signal, timing, or event]`
+  - **[Metric 2]**: `[Target / threshold]` — measured via `[observable signal, timing, or event]`
 
 ## Scope & Feature Prioritization
 

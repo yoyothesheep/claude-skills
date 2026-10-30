@@ -45,7 +45,7 @@
 ### B. Manual E2E Scenarios (M1..Mk)
 *Step-by-step user-verifiable walkthroughs: a human sanity pass over key flows (including ones the browser suite automates) plus anything automation can't judge.*
 - **M1 [Desktop Happy Path]** — **Steps**: 1. Navigate to `/...` 2. Click `...` 3. Verify `...`. **Expected**: [Exact visual/functional outcome].
-- **M2 [Mobile / Responsive State]** — **Steps**: 1. Resize viewport to 375px 2. Tap `...`. **Expected**: [Drawer/layout adapts cleanly without horizontal overflow].
+- **M2 [Responsive State]** — **Steps**: 1. At each width in `VIEWPORT_BREAKPOINTS` (CONFIG.md; else 375px) load `/...` 2. Tap `...`. **Expected**: [Layout matches each breakpoint tier, wide screens included; no horizontal overflow].
 - **M3 [Edge / Error Recovery State]** — **Steps**: 1. Trigger `...` with bad input. **Expected**: [Human-readable error state, clean recovery path].
 
 ---
@@ -56,7 +56,7 @@
 - [ ] All manual E2E scenarios (`M1..Mk`) verified and documented.
 - [ ] [Semantic criterion 1: e.g. Domain logic is 100% deterministic and isolated from UI]
 - [ ] [Semantic criterion 2: e.g. Seam separation respected, no leak across boundaries]
-- [ ] [Behavioral / E2E criterion: e.g. Web UI renders cleanly on desktop and mobile viewports]
+- [ ] [Behavioral / E2E criterion: e.g. Web UI renders correctly at every width in `VIEWPORT_BREAKPOINTS`]
 - [ ] Code formatting and linting pass clean.
 - [ ] Living specs listed above created/updated to match shipped code.
 - [ ] Independent verification pass confirms all criteria.
