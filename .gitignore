@@ -4,4 +4,4 @@ drafts/
 .DS_Store
 **/CONFIG.md
 publish-checklist/site-checklist.md
-aeo-distribution/
+aeo-distribution/*.pdf

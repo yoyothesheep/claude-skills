@@ -109,7 +109,7 @@ or Schema Shift?"}
 **Goal**: Iron out architectural seams, edge cases, and dependencies by pre-documenting all build units across the entire milestone *before* touching code.
 
 1. **Product Framing & Stack Alignment**:
-   - Inspect `CONFIG.md` and ensure `TEST_COMMAND`, `LINT_COMMAND`, and `FORMAT_COMMAND` match the repository's tech stack.
+   - Inspect `CONFIG.md` and existing `specs/engineering/` to detect the repository's tech stack and storage layer. Only ask about stack or database choices on a brand-new empty repository; for new features in an existing codebase, reuse the established stack and only surface feature-specific tradeoffs.
    - Define user outcomes, high-level user stories, and strict out-of-scope boundaries. If `specs/product/` already defines scoped requirements and Key User Flows ($F_1..F_m$), ingest them directly.
    - Frame tradeoffs in terms of user experience (gains vs. losses) and concrete engineering cost. If non-obvious architectural forks exist, **ask the user first** with concrete options before generating unit files.
 2. **Decompose Entire Milestone Upfront**:

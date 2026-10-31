@@ -51,7 +51,7 @@ Each skill has a `CONFIG.example.md`. Change it to `CONFIG.md` in the same folde
 - [10. linkedin-content](#10-linkedin-content--linkedin-post-writer)
 
 **Design & UI**
-- [11. no-design-slop](#11-no-design-slop--design-direction-generator)
+- [11. product-design](#11-product-design--design-direction-generator)
 - [12. frontend-review](#12-frontend-review--screenshot-driven-ui-qa)
 
 ---
@@ -360,9 +360,9 @@ One ready-to-post LinkedIn draft (short or long form) with graphic suggestions.
 
 ---
 
-## 11. `no-design-slop` — Design Direction Generator
+## 11. `product-design` — Design Direction Generator
 
-**File:** `no-design-slop/SKILL.md`
+**File:** `product-design/SKILL.md`
 **References:** `references/ai-tells-checklist.md`, `references/critic-prompt-template.md`
 
 ### Goal
