@@ -11,6 +11,7 @@ substitutes) — try the alternative, show both, keep whichever's better.
 | Excessive cards/containers | Every section boxed, even simple 3-item lists | Flatter layouts — grids, tiles, no border |
 | Too many fonts/text styles | 4+ type treatments on one screen | 1-2 fonts, 2-4 styles; accent sparingly |
 | Same layout every time | Text-left/graphic-right hero, regardless of brief | Vary structure per direction — a Discover-stage fix, not Deliver |
+| Custom-built standard controls | Hand-styled buttons, text fields, toggles, tab bars that look worse than the platform's own | Native components (iOS/Android/system web controls) unless custom does something native can't |
 | Decorative elements with no function | Glows/blobs/icons that carry no state or information | Cut it unless it does real work |
 | AI-voiced copy | Long, hedge-y, overexplaining marketing copy | Human rewrite pass — shorter, plainer, in a real voice |
 | Manila folder / oat-milk wash | Defaulting to `#F4EFE6` or `#F5EDD6` beige/cream background on everything | Crisp optical whites (`#FFFFFF`, `#F8F9FA`), warm stone, rich tint, or deliberate dark mode |

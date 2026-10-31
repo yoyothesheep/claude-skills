@@ -185,7 +185,9 @@ subtraction. Apply passes one at a time, screenshot after each, stop for confirm
 
 1. **Cut dead weight** — does this element carry information, or fill space? Cut filler:
    redundant counters, labels stating the default case, decorative rules, watermarks, chrome
-   that crowds out content. Count the chrome-to-content ratio on the first screen.
+   that crowds out content. Count the chrome-to-content ratio on the first screen. Swap
+   custom buttons, fields, and controls for the platform's native components unless the
+   custom one does something the native one can't.
 2. **AI-tells pass** — `references/ai-tells-checklist.md`. Try the alternative, show both.
 3. **Copy rewrite** — AI copy is placeholder, like Lorem ipsum. A human rewrites every line
    before shipping. Never auto-finalize copy.
