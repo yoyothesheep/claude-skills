@@ -9,9 +9,12 @@ needs an outside eye that sees only the result.
   own earlier critiques. Memory of the last verdict means grading against itself, not the work.
 - **Objective framing, not vibes.** *"Judge if this looks beautiful"* is too subjective to be
   consistent run to run. *"Visualize how a top design studio would execute this aesthetic,
-  then judge against that bar"* is the workable default. Better still when the user supplies
-  reference screenshots: *"rank these by polish."* Say explicitly that references calibrate
-  the bar and are not to be copied.
+  then judge against that bar"* is the fallback. Best is a reference set: *"rank these 5 by
+  polish"* — concrete, with a visual baseline. Use the ranking prompt whenever SKILL.md's
+  reference set has ≥2 usable images; say explicitly that references calibrate the bar and
+  are not to be copied.
+- **Blind ranking.** Shuffle ours in among the references, unlabeled (`A`–`E`), and never say
+  which one is ours. Keep the mapping on the calling side. Same reference set every round.
 - **Scope it.** Name the constraints that are fixed — data model, absent fields, known
   upstream bugs — or the critic spends the round proposing an information architecture the
   product can't support, and the score sits still while you chase it.
@@ -24,7 +27,30 @@ needs an outside eye that sees only the result.
   Skip what the data can't support or what contradicts an established convention elsewhere in
   the app — and tell the user what you skipped and why.
 
-## The prompt
+## Ranking prompt (default — with a reference set)
+
+```
+You are a design critic. You will be shown several screenshots of designs, labeled A, B, C...
+You have no access to code, implementation notes, or prior critique — evaluate only what you
+see. Treat them as peers; you are not told where any came from.
+
+1. Rank all of them by polish and taste level, best first. One line of justification each.
+2. For every design below the top spot, outline its biggest gaps versus the ones ranked above
+   it — both high-level (structure, composition, hierarchy) and fine-grained (spacing, type,
+   color, detail work). Name concrete fixes, not "learn from B".
+3. Watch specifically for patterns that read as overdone, excessive, or obviously
+   AI-generated, and call them out wherever they appear.
+4. Give each design a score out of 10 against the best execution of its own aesthetic.
+
+The fixes should push each design toward its own aesthetic at a higher bar — never toward
+copying another image in the set. Be tight and specific. Be bold and opinionated: say what
+you'd change even if it's a risky call, don't default to the safe/easy answer.
+```
+
+The calling agent unmasks which label is ours, then reports our rank, our score, and our
+gap list — ignore the feedback on the references.
+
+## Single-screenshot prompt (fallback — no usable references)
 
 ```
 You are a design critic. You will be shown a single screenshot of a design in progress.
