@@ -7,46 +7,59 @@
 - **Who**: [Primary user role/audience and context in which they arrive]
 - **Goals**: [What they come to accomplish; outcome when successful]
 
+## Core Hypothesis
+
+- **Hypothesis**: [The one belief that, if false, makes this not worth building]
+- **Hypothesis Metric**: [Metric] — continue if [≥ threshold]; rethink if below.
+- **P0 Journeys**: [F1, …]
+
 ## Metrics
 
 ### 1. Usage & Adoption Metrics
-*Onboarding, screen/feature depth, and retention telemetry.*
-- **Onboarding & Activation**: [e.g., Workspace creation/join rate, multi-member join rate, Time to First Value (TTFV)]
-- **Key Screen & Feature Usage**: [e.g., Views and primary actions across each core screen/feature]
-- **Engagement & Retention**: [e.g., DAU/WAU/WAF, W1 and W4 cohort retention]
+*Mostly supplied by the analytics platform; name the events.*
+- **Onboarding & Activation**: [Activation event, time to first value]
+- **Feature Usage**: [One view + one primary-action event per P0–P2 capability]
+- **Engagement & Retention**: [Active users, W1 and W4 cohort retention]
 
 ### 2. Feature Success Metrics
-*End-to-end funnel conversion and user-value signals showing the workflow solved the user's problem.*
-- **[Success Metric 1]**: [e.g., Upload-to-approval funnel conversion rate]
-- **[Success Metric 2]**: [e.g., Plan-to-action completion rate]
+*End-to-end funnel conversion showing each flow solved the user's problem.*
+- **[F1 funnel]**: [Start event → completion event conversion]
 
 ### 3. Production Quality & Reliability Metrics
-*Live monitoring of AI/parser quality and system health in production.*
-- **AI / Parser Quality in Prod**: [e.g., Pre-approval manual edit rate by field, edit distance, empty/fallback rate]
-- **System & Sync Reliability**: [e.g., p50/p95 latency, timeout/error rate, multi-user sync latency]
+*Live quality and health signals in production.*
+- **Output Quality**: [Implicit quality signals, e.g. user edit rate on generated output, empty/fallback rate]
+- **System Reliability**: [p50/p95 latency, timeout/error rate]
 
 ### 4. Pre-Release QA & Offline Eval Metrics
-*Offline benchmark gates and deterministic invariants verified before shipping.*
-- **Golden Dataset AI Eval**: [e.g., $\ge 90\%$ extraction completeness across benchmark fixture inputs]
-- **Negative Fixture & Deterministic Gates**: [e.g., $0\%$ hallucinated fields on negative fixtures; $100\%$ pass rate on deterministic `T1..Tn` logic tests]
+*Offline gates verified before shipping.*
+- **Offline Eval**: [e.g. $\ge 90\%$ accuracy on golden fixtures; $0\%$ fabricated fields on negative fixtures]
+- **Deterministic Gates**: [e.g. $100\%$ pass rate on `T1..Tn` logic tests]
 
-## Scope & Feature Prioritization
+## Scope & Priorities
 
-### Core (In Scope)
-- **[Capability 1]**: [User-facing capability required for the primary flow]
-- **[Capability 2]**: [User-facing capability required for the primary flow]
+*Ranked by hypothesis risk and unlock, not setup order. `loop-engineering` builds P0 → P1 → P2.*
+
+### P0 — Hypothesis Journeys
+- **[Capability]**: [Why it is P0]
+
+### P1 — Worth a Second Use
+- **[Capability]**: [Why it is P1] *(downgraded: [cheaper mechanism now]; full version in P2)*
+
+### P2 — Planned, Built Last
+- **[Capability]**: [Why it is P2]
 
 ### Deferred (Next Milestone)
-- **[Deferred Capability from Request]**: [Why deferred — specific complexity multiplier avoided now]
+- **10-Star Experience**: [The end goal if everything works. Direction, not scope.]
+- **[Capability from request]**: [Complexity avoided]
 
-### Non-Goals (Out of Scope)
+### Non-Goals
 - **[Excluded Capability]**: [What this product deliberately does not do]
 
 ## Key User Flows ($F_1..F_m$)
 
-*Used directly by `loop-engineering` to generate automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) test matrices.*
+*Priority order: P0 flows first, starting at F1. Every header carries its tier. `loop-engineering` derives automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from these.*
 
-### F1 — [Primary Flow Name]
+### F1 — [P0 Journey Name] [P0]
 - **Actor & Precondition**: [Who is acting and what state exists before starting]
 - **Steps**:
   1. [User action] $\to$ [Observable system response]
@@ -57,7 +70,7 @@
   - *Invalid / Boundary Input*: [Validation error and recovery path]
   - *Failure Recovery*: [What the user sees and can do if an operation fails]
 
-### F2 — [Secondary / Alternate Flow Name]
+### F2 — [Flow Name] [P1]
 - **Actor & Precondition**: [...]
 - **Steps**:
   1. [User action] $\to$ [Observable system response]

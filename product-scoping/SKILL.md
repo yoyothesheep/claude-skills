@@ -1,137 +1,87 @@
 ---
 name: product-scoping
 description: >-
-  Scopes a product or feature into a tight, test-ready specification (specs/product/<slug>.md).
-  Inspects the existing codebase and specs first, surfaces real engineering and product constraints,
-  defines measurable success metrics, ruthlessly prioritizes features by complexity multiplier
-  (Core vs. Deferred vs. Out of Scope), and enumerates concrete user flows (F1..Fm) with
-  edge/failure states that map directly to engineering test matrices. Use whenever starting a
-  new product, scoping a feature, or turning a raw idea into a product spec before implementation.
+  Scopes a product or feature into a prioritized, test-ready specification (specs/product/<slug>.md).
+  Inspects the existing codebase and specs first, names the core hypothesis, pushes back hard on
+  scope by cutting or downgrading complexity multipliers, ranks every capability P0/P1/P2 by
+  biggest unlock and riskiest hypothesis, defines metrics led by one hypothesis metric, and writes
+  priority-ordered user flows (F1..Fm) with edge/failure states that map directly to engineering
+  test matrices. Use whenever starting a new product, scoping a feature, or turning a raw idea
+  into a product spec before implementation.
 ---
 
 # product-scoping
 
-Turns an ambiguous product idea or feature request into a tight, bounded product specification in `specs/product/` with measurable success metrics, prioritized scope, and enumerated user flows ($F_1..F_m$) that downstream engineering (`loop-engineering`) can build and test against directly.
+Turns a product idea or feature request into `specs/product/<slug>.md`: a core hypothesis, prioritized scope, metrics, and priority-ordered user flows ($F_1..F_m$) that `loop-engineering` plans, builds, and tests against.
+
+**Progression**: Stage 1 Ground & Challenge → ⏸ → Stage 2 Prioritize, Metrics & Flows → ⏸ → Stage 3 Write Spec → optional `product-design` pass. Pause at each ⏸ for the user's decisions unless they explicitly ask to skip ahead; when skipping, still apply every rule below.
 
 ---
 
-## Core Principles
+## Principles
 
-1. **Inspect Existing Reality First**:
-   Before asking the user anything, inspect the repository (`specs/`, data models, routes, existing UI components). Never ask questions the codebase already answers.
-
-2. **Grounded Constraints, Not Hypothetical Theater**:
-   Do not ask artificial startup-theater questions (*"If you had to ship in 48 hours..."*, *"What is the 10-star experience?"*). Ground every question in concrete system and product constraints: data sources, persistence requirements, auth boundaries, external dependencies, and failure states.
-
-3. **Ruthless Scope Cutting by Complexity Multiplier**:
-   Evaluate every requested feature by the engineering surface area it introduces relative to the core user outcome. Explicitly flag items that require new infrastructure (extra database tables, background queues, multi-role permissions, webhook listeners, third-party sync) and recommend deferring them if the primary user flow works without them. Never invent unrequested features just to pad the `Deferred` or `Non-Goals` sections—only list items that came from the user's request or were explicitly clarified during scoping.
-
-4. **Four-Tier Metrics Framework (Usage, Feature Success, Production Quality, Pre-Release QA/Eval)**:
-   Define four distinct categories of metrics:
-   - **Usage & Adoption Metrics**: Broken down into *Onboarding & Activation* (signup-to-workspace, multi-member join, time-to-first-value), *Key Screen & Feature Usage* (views and actions per core surface), and *Engagement & Retention* (DAU/WAU/WAF, week-over-week cohort retention).
-   - **Feature Success Metrics**: End-to-end funnel conversion and user-value signals showing the workflow solved the user's problem (e.g., upload-to-approval conversion, plan-to-shopping completion rate).
-   - **Production Quality & Reliability Metrics**: Live monitoring of AI/parser quality and system health in the wild using implicit user-feedback proxies and runtime telemetry (e.g., field-level manual edit rate/edit distance before approval, parser empty/fallback rate, API p50/p95 latency, error/timeout rate, multi-device sync latency).
-   - **Pre-Release QA & Offline Eval Metrics**: Offline benchmark gates and deterministic invariants checked before shipping (e.g., extraction accuracy on a golden dataset of fixture inputs, $0\%$ hallucination on negative fixtures, $100\%$ deterministic logic accuracy across `T1..Tn` test cases).
-
-5. **User Flows ($F_1..F_m$) as Test Foundations**:
-   Every in-scope capability must be expressed as numbered, end-to-end **Key User Flows ($F_1..F_m$)** with explicit preconditions, user actions, system responses, and edge/error recovery states. These flows serve as the direct source for `loop-engineering`'s automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) test matrices.
+1. **Inspect reality first.** Read `specs/`, data models, routes, and UI components before asking anything. Never ask what the codebase already answers.
+2. **Grounded questions, no startup theater.** No *"if you had 48 hours…"* prompts. Ask about data sources, persistence, auth boundaries, external dependencies, and failure states.
+3. **Ruthless scoper.** The request is a wish list, not a scope. Every capability has to earn its tier, and the default answer to a complexity multiplier is "cheaper mechanism first." Cutting and downgrading what the user asked for is the job; inventing features they didn't ask for is not.
+4. **Priority by risk and unlock, never by setup order.** Rank by (a) the hypothesis that most needs validating and (b) what unlocks the most downstream value. Onboarding, accounts, and sharing take the tier of what they unlock, which is rarely first.
+5. **Flows are test foundations.** Every in-scope capability becomes a numbered flow with preconditions, steps, end state, and edge/failure cases. `loop-engineering` derives its automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from them.
 
 ---
 
-## Progression: 3 Checkpointed Stages (+ Optional UI Design Pass)
+## Stage 1: Ground & Challenge Scope
 
-Run stage by stage. Pause after Stage 1 and Stage 2 for user decisions; do not one-shot a spec without aligning on scope cuts and user flows first unless the user explicitly asks to skip ahead.
+1. **Read the current system**: `specs/README.md`, `specs/product/`, `specs/engineering/`, and the models, routes, or components the request touches.
+2. **Name the end goal, then the bet**:
+   - **10-star experience**: what the product looks like if everything works. This sets direction; it is not scope. It goes into the spec under Deferred.
+   - **Core hypothesis**: the one belief that, if false, makes the product not worth building.
+   - **Biggest unlock**: the capability most other capabilities depend on.
+   - **P0 journeys**: the end-to-end flow(s) needed to test the hypothesis. Keep them as few as possible.
+3. **Audit each requested capability**:
+   - **Actor & trigger**: who starts it, from what state, behind what auth boundary.
+   - **Data & persistence**: where input comes from, what is persisted vs. computed, what cold start looks like.
+   - **Complexity multipliers**: new tables, multi-user or roles, real-time sync, schedulers or background jobs, external APIs, notifications.
+   - **Failure reality**: malformed, empty, or over-limit input; a dependency failing mid-flow.
+4. **Push back.** For every multiplier, propose the cheaper mechanism that delivers the same user outcome now, and rank the full version later:
+   - *Good*: "Live cross-device sync needs a realtime channel and conflict handling. Refresh-on-open gives the same outcome for a list edited a few times a week. Recommend refresh-on-open in P1, realtime in P2."
+   - *Bad*: "If you only had 48 hours, would you really need sync?"
 
-```mermaid
-flowchart TD
-    S1["Stage 1: Ground & Challenge Scope
-• Inspect repo & existing specs/
-• Identify real constraints & complexity multipliers
-• Ask 3–5 concrete questions with recommended cuts"]
-    C1(["⏸ Checkpoint 1: User aligns on constraints & cuts"])
-    S2["Stage 2: Prioritize, Metrics & Flows
-• Partition into Core / Deferred / Out of Scope
-• Define Usage, Success & QA/Eval Metrics
-• Draft Key User Flows (F1..Fm) with edge & failure states"]
-    C2(["⏸ Checkpoint 2: User confirms flows, metrics & priorities"])
-    S3["Stage 3: Write Product Spec
-• Write specs/product/<slug>.md
-• Update specs/README.md index if present"]
-    S4["Optional Stage 4: Iterative UI Design & Mocks (via product-design)
-• Generate & iterate visual mocks for key screens
-• Embed approved mock screenshots in specs/product/<slug>.md
-• Ready for loop-engineering"]
-
-    S1 --> C1 --> S2 --> C2 --> S3 --> S4
-```
+   If you recommend cutting or downgrading fewer than ~30% of the requested capabilities, state why the request is already minimal.
+5. **Present** the hypothesis, P0 journeys, proposed cuts and downgrades, and 3–5 grounded questions, each paired with a recommendation. **Stop and wait.**
 
 ---
 
-### Stage 1: Ground & Challenge Scope
+## Stage 2: Prioritize, Metrics & Flows
 
-1. **Read the Current System**:
-   - Check `specs/README.md`, `specs/product/`, and `specs/engineering/` if they exist.
-   - Scan existing models, routes, or components relevant to the request.
-2. **Audit Across 5 Concrete Constraint Dimensions**:
-   - **Actor & Trigger**: Who initiates this workflow, what state are they starting from, and what permissions/auth boundary applies?
-   - **Outcome & Success Metric**: What measurable user or system signal proves this feature succeeded?
-   - **Data & Persistence**: Where does the input data come from, what must be persisted vs. computed on the fly, and what does the cold start (zero-data state) look like?
-   - **Complexity Multipliers**: Which parts of the request introduce new tables, async jobs, external API dependencies, or multi-actor state? Can a simpler mechanism achieve the same user outcome first?
-   - **Failure & Boundary Reality**: What happens when input is malformed, empty, exceeds limits, or an external service fails?
-3. **Ask 3–5 Grounded Questions + Proposed Cuts**:
-   - Keep questions specific, analytical, and paired with a concrete recommendation explaining the mechanism/cost tradeoff:
-     - *Good*: "Persisting saved filters across devices requires a new `saved_filters` table and user auth check, whereas URL query parameters give shareable/bookmarkable filters with zero schema changes. Recommend URL params for Core and deferring DB persistence."
-     - *Bad*: "If you only had 48 hours to launch, would you really need saved filters?"
-   - **Stop and wait for the user's response.**
+1. **Tier every capability**, each with a one-line reason:
 
----
+   | Tier | Rule |
+   | :--- | :--- |
+   | **P0** | The journeys that test the hypothesis, and only what they need. |
+   | **P1** | Needed before the product is worth using a second time. |
+   | **P2** | In scope and planned, built last. Usually the full versions of downgraded multipliers. |
+   | **Deferred** | Requested, but outside this milestone. Name the complexity avoided. |
+   | **Non-goal** | Explicitly excluded during scoping. |
 
-### Stage 2: Ruthless Prioritization, Metrics & Key User Flows ($F_1..F_m$)
+   A downgraded capability names both mechanisms: *"P1: refresh on open; P2: realtime sync."*
+2. **Metrics**:
+   - **Hypothesis metric** (leads the spec): exactly one metric with a continue/rethink threshold. Everything else is secondary.
+   - **Usage & Adoption**: activation, time to first value, retention cohorts, and a usage event (view + primary action) for **every** P0–P2 capability. The analytics platform supplies the aggregates; the spec names the events.
+   - **Feature Success**: funnel conversion per flow.
+   - **Production Quality & Reliability**: runtime health and implicit quality signals (user edit rate on generated output, empty/fallback rate, p95 latency, error rate).
+   - **Pre-Release QA & Offline Eval**: offline gates checked before shipping (golden-dataset accuracy, negative fixtures, deterministic test pass rate).
+3. **Flows, numbered in priority order.** P0 flows come first, starting at F1. Every header carries its tier: `### F1 — <Name> [P0]`. Each flow has:
+   - **Actor & Precondition**: starting state, screen, and data.
+   - **Steps**: `User does [action] → System responds with [observable result]`.
+   - **Expected End State**: user-visible outcome and persisted state.
+   - **Edge & Failure Cases**: cold start, invalid/boundary input, failure recovery.
 
-Once the user responds to Stage 1:
-
-1. **Partition Features into 3 Strict Tiers**:
-   - **Core (Build Now)**: Capabilities strictly required for the primary user workflow to function end-to-end.
-   - **Deferred (Next Milestone)**: Valid features from the user's request cut from the initial milestone because they add disproportionate surface area without blocking the core flow. State the specific complexity mechanism saved. Do not invent unrequested features.
-   - **Out of Scope (Non-Goals)**: Capabilities and behaviors explicitly excluded during scoping.
-
-2. **Define the 4 Metric Categories**:
-   - **Usage & Adoption Metrics**:
-     - *Onboarding & Activation*: Workspace creation/join rate, multi-member join rate, time to first value (TTFV).
-     - *Key Screen & Feature Usage*: Views and primary actions across each core screen/feature.
-     - *Engagement & Retention*: Active users/workspaces (DAU/WAU/WAF) and cohort retention (W1, W4).
-   - **Feature Success Metrics**: Funnel completion and outcome metrics proving the feature delivered user value (e.g., upload-to-approval rate, plan-to-shopping completion rate).
-   - **Production Quality & Reliability Metrics**: Live monitoring of AI/parser quality and system health in production (e.g., field-level manual edit rate/distance before approval, parser empty/fallback rate, p50/p95 latency, timeout/error rate, sync latency).
-   - **Pre-Release QA & Offline Eval Metrics**: Offline benchmark gates and deterministic invariants verified before release (e.g., golden-dataset extraction accuracy, $0\%$ hallucination on negative fixtures, $100\%$ deterministic logic pass rate).
-
-3. **Enumerate Key User Flows ($F_1..F_m$)**:
-   Translate the Core capabilities into numbered user flows that downstream engineering will use to build tests:
-   - **`F1 — [Flow Name]`** (e.g., *Primary Happy Path*)
-     - **Actor & Precondition**: Starting state, route/screen, and data state.
-     - **Steps**:
-       1. User does `[action]` $\to$ System responds with `[observable result / state change]`.
-       2. User does `[action]` $\to$ System responds with `[observable result / state change]`.
-     - **Expected End State**: Final user-visible outcome and persisted state.
-     - **Edge & Error Cases**:
-       - *Cold Start / Empty State*: Behavior when no data exists yet.
-       - *Invalid / Boundary Input*: Validation behavior and recovery path.
-       - *Failure Recovery*: Behavior if an operation or dependency fails mid-flow.
-
-   *(If the feature involves complex multi-actor concurrency, offline state, or probabilistic/AI outputs, cross-check against `product-scenarios` dimensions to ensure no critical failure mode is missed.)*
-
-4. **Present Prioritization, Metrics & Flows for Confirmation**:
-   - Show the Core / Deferred / Out of Scope breakdown, all 3 metric categories, and $F_1..F_m$ flows.
-   - **Stop and confirm with the user before writing the spec file.**
+   For multi-actor concurrency, offline state, or AI outputs, cross-check against `product-scenarios` dimensions.
+4. **Present** tiers, metrics, and flows. **Stop and confirm before writing the spec.**
 
 ---
 
-### Stage 3: Write the Product Specification (+ UI Design Handoff)
+## Stage 3: Write the Spec
 
-Once confirmed:
-
-1. **Write `specs/product/<slug>.md`** (or `specs/product/README.md` for small single-surface products) using `templates/PRODUCT_SPEC_TEMPLATE.md`.
-   - Describe behavior from the user's side: what the product does, for whom, the 3 metric categories, prioritized requirements, $F_1..F_m$ user flows, UI Design & Mocks placeholder, constraints, non-goals, and known gaps.
-   - Keep internal implementation details (file paths, function names, library internals) out of `specs/product/`; those belong in `specs/engineering/` during `loop-engineering`.
-2. **Update `specs/README.md`** (if present) to link the new or updated product spec.
-3. **Handoff to Iterative UI Design (`product-design`) or Engineering (`loop-engineering`)**:
-   - For UI-facing products, offer to run `product-design` next as a separate iterative phase to explore directions, render screen mocks using the real copy/flows from the PRD, and embed the chosen mock screenshots into `## UI Design & Mocks` in `specs/product/<slug>.md` before starting `loop-engineering`.
+1. Write `specs/product/<slug>.md` (or `specs/product/README.md` for a small single-surface product) from `templates/PRODUCT_SPEC_TEMPLATE.md`. Describe behavior from the user's side; file paths, function names, and library details belong in `specs/engineering/`.
+2. Link the spec from `specs/README.md` if one exists.
+3. Hand off: for UI-facing products, offer `product-design` to render mocks from the spec's real copy and flows and embed the chosen ones in `## UI Design & Mocks`. Then `loop-engineering`.
