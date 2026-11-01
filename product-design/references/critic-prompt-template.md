@@ -19,7 +19,7 @@ needs an outside eye that sees only the result.
   upstream bugs — or the critic spends the round proposing an information architecture the
   product can't support, and the score sits still while you chase it.
 - **Cap the loop.** An uncapped critic can decide nothing is ever good enough. Check back with
-  the user before every extra round — never loop unattended past the ceiling knob in
+  the user before every extra round — never loop unattended past the critic loop ceiling in
   SKILL.md.
 - **Don't reveal the passing score to the critic.** Keep its number an independent read; the
   calling agent compares it against the user's bar, not the critic itself.

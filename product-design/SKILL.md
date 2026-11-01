@@ -27,7 +27,11 @@ Not one-shot. Three checkpointed stages — Discover, Define, Deliver — stop a
 wait for a decision. Chain only if the user says so (`auto-advance`). Re-invoking on an
 already-polished design is normal.
 
-State the knobs in one line before each stage. Don't silently pick and proceed.
+State the settings in one line before each stage. Don't silently pick and proceed.
+
+**Write for people, not prompts.** Design terms (hero, above the fold, affordance) are fine.
+Coined AI phrasing isn't — no abstract labels or slogans ("proximity does the sorting"). If a
+non-designer couldn't act on a sentence, rewrite it.
 
 **Screenshot every stage, every iteration. No exceptions.** Show the actual pixels inline
 before asking anything; a prose description never substitutes.
@@ -41,9 +45,9 @@ Serve local files first if they load images or fonts (`python3 -m http.server`).
 window to fit the whole frame — a cropped screenshot produces bogus critique. Then read the
 PNG back and show it.
 
-### Knobs
+### Settings
 
-| Knob | Values | Default |
+| Setting | Values | Default |
 |---|---|---|
 | Entry point | `fresh` / `re-pass` | Infer. On a re-pass, builders get **explicit permission to break the existing design system** — see below |
 | Stage scope | `discover` / `define` / `deliver` / `full` | `full` |
@@ -78,7 +82,46 @@ Then tell builders: **no placeholder geometry.** Every region that will hold con
 real content. If something is genuinely missing — a recipe with no photo, a null value —
 that absence is a real design problem to solve honestly, not to paper over with a shape.
 
-## Stage 1 — Discover
+**Real ≠ exhaustive.** Real content fills the regions the screen plan (below) allows. It is
+not a reason to show every field, edge case, and data quirk in one frame.
+
+## Screen plan — edit before you design
+
+A spec lists everything a screen *can* hold; a mock that shows all of it at once is a
+spreadsheet. Screens scroll and reveal on tap. Before any builder sees a brief, write a plan
+for each screen in the spec's "Key Screens to Mock" (or the screens the user names):
+
+- **Job to be done** — the one thing the user does here, in one line.
+- **Hero** — the single element that carries that job.
+- **Shows first** — only what the job needs before any scroll. Aim for ≤5 distinct groups.
+- **Below the fold / on tap** — everything else that belongs. In the mock it appears only as a
+  scroll hint: a section peeking at the bottom edge. Don't squeeze it in.
+- **States** — errors, empty, and edge cases are separate states, not decorations on the
+  default frame. Mark issues in place quietly; the fix UI lives on tap. Mock a state only when
+  it's the point of the screen, one per frame.
+- **Cut** — anything that restates, explains the obvious, or is metadata nobody acts on:
+  per-row counts, helper lines, inline fix buttons, "N more" footers, summary rows for content
+  that's one scroll away, duplicate add buttons.
+
+Alongside the screen plans, write short **design rules** for this product — derived from its
+users and flows, not a generic list:
+
+- **When they use it**, one line per screen: who holds the device, where, with how much
+  attention ("one hand, moving, distracted" vs. "seated, browsing, unhurried").
+- **4–6 design principles** for *this* product, each tagged with the screen it governs. Draw
+  on any UX, interaction, or behavioral design knowledge (progressive disclosure, Hick's law,
+  thumb reach, forgiving errors — examples, not a menu). Write each as a plain instruction
+  anyone can check against the mock — "do X, so that Y" — not a slogan or a principle's name.
+  Bad: "Proximity does the sorting." Good: "Put similar items next to each other (all
+  vegetables together) instead of adding headings."
+- **Best moment** — the one emotional beat in the product worth extra care.
+- **No dark patterns** — no fake urgency, guilt copy, or engagement bait. Always included.
+
+Show the screen plans and design rules together and stop for edits. Builders get both
+verbatim: plans cap what's on screen, rules shape how it's arranged. Critic fixes that would
+add elements must fit the plan or be skipped.
+
+## Stage 1 — Discover (explore options)
 
 Goal: breadth. Always produce N, never one.
 
@@ -86,10 +129,12 @@ Goal: breadth. Always produce N, never one.
 Distinctiveness comes from the user's taste, not the model's ideas — pasting AI ideas straight
 back into AI gets what anyone else would get. Skip only if `concept ideation: off`.
 
-1. **Go broad, not deep.** List 12–20 bold design-language concepts, one line each, no detail
-   — an inspiration source (a game genre, an interior trend, an art movement, a physical
-   object) and how it would shape the UI. Include the inferred vibes, and include ideas that
-   sound like they can't work: "there's no way this works" is the right zone.
+1. **Go broad, not deep — from random draws.** Unprompted, the model proposes the same
+   concepts every time (Swiss, Apple-native, magazine…). Run `scripts/concept_draws.py 20` and
+   hand the draws to a **fresh-context subagent** (so earlier lists can't leak in). It writes
+   one concept per draw, one line each: how that draw would shape the UI. The user's
+   references and the inferred vibes are a lens applied to each draw, not the source. Keep
+   ideas that sound like they can't work — "there's no way this works" is the right zone.
 2. **Stop. Ask the user to react** — favorites, what each evokes, what feels tacky, what to
    avoid. Reactions matter more than picks.
 3. **Sharpen** the favorites against those reactions into N concept briefs (2–4 sentences
@@ -124,13 +169,14 @@ Before presenting screenshots to the user, run an automated pairwise check acros
   overthink and swap in stranger substitutes. Tells are checked after the build (diversity
   gate here, AI-tells pass in Deliver).
 - State what must not be invented — features, fields, or data the product doesn't have.
+- Paste the screen plans and design rules verbatim.
 
 ### 4. Build, Critique, Screenshot
 - Build each variant as an isolated subagent on the builder model, fresh context.
 - Screenshot all N side-by-side on the specified canvas.
 - Present to user with critique notes, then stop for the user's pick.
 
-## Stage 2 — Define
+## Stage 2 — Define (improve one)
 
 Goal: push the chosen direction past its first draft using an outside eye.
 
@@ -142,7 +188,7 @@ Goal: push the chosen direction past its first draft using an outside eye.
    support. Give it a visual bar (below) — without one, critics of app screens drift into
    product strategy and scores plateau.
 3. Show the before/after screenshots, the score, and the notes.
-4. **Stop.** Iterate / accept / stop. Loop unattended only to the ceiling knob, then check in
+4. **Stop.** Iterate / accept / stop. Loop unattended only to the critic loop ceiling, then check in
    regardless of score.
 
 ### Reference set (critic visual bar)
@@ -166,11 +212,12 @@ prompt in `references/critic-prompt-template.md`. Our rank is the headline score
 versus higher-ranked images are the fix list. References set the bar — tell the critic not
 to copy them, and tell builders the same.
 
-**Route subtraction to Deliver.** Split the critic's fix list: craft fixes (composition,
-hierarchy, spacing, component consistency) go into the next Define build; pure cuts (redundant
-labels, duplicate state signals, filler metadata) are queued for Deliver's cut pass, where
-each is shown separately. Folding cuts into a Define round changes too much at once to see
-what helped.
+**Apply the critic's cuts in the next round** — don't defer them to Deliver. Clutter left in
+keeps drawing the critic's attention and the score stays flat.
+
+**When the critic attacks the chosen aesthetic itself**, don't strip what the user chose.
+It's usually reacting to the stack of defaults around that choice — remove the stack, keep
+the choice.
 
 **Weigh the critic, don't obey it.** It's judging a picture with no product context. When it
 proposes something the data can't support, or contradicts a convention the rest of the app
@@ -178,14 +225,15 @@ already uses, say so and skip it — and tell the user you did. A flat score acr
 usually means the real lever isn't reachable by layout edits (often: the design needs real
 photography it doesn't have).
 
-## Stage 3 — Deliver
+## Stage 3 — Deliver (polish)
 
 Goal: subtract. AI adds and rarely removes — the fix list at this stage is almost always
 subtraction. Apply passes one at a time, screenshot after each, stop for confirmation.
 
-1. **Cut dead weight** — does this element carry information, or fill space? Cut filler:
-   redundant counters, labels stating the default case, decorative rules, watermarks, chrome
-   that crowds out content. Count the chrome-to-content ratio on the first screen. Swap
+1. **Cut dead weight** — re-check each screen against its plan. Does this element carry
+   information, or fill space? Cut filler: redundant counters, labels stating the default
+   case, decorative rules, watermarks, buttons and labels that crowd out content. On the first
+   screen, compare how much is UI vs. actual content. Swap
    custom buttons, fields, and controls for the platform's native components unless the
    custom one does something the native one can't.
 2. **AI-tells pass** — `references/ai-tells-checklist.md`. Try the alternative, show both.
@@ -215,6 +263,7 @@ Real existing content still beats generated content.
 
 ## Output contract
 
+- Screen plans + design rules: shown and confirmed before Discover.
 - Discover: stops for the user's concept reactions (unless ideation is `off`), then ≥N
   options, diversity-gated and critiqued, stops for a pick.
 - Define: reference set shown once; before/after, rank, and score; stops after every critic pass.
