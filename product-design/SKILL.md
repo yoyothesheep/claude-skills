@@ -52,11 +52,13 @@ PNG back and show it.
 | Entry point | `fresh` / `re-pass` | Infer. On a re-pass, builders get **explicit permission to break the existing design system** — see below |
 | Stage scope | `discover` / `define` / `deliver` / `full` | `full` |
 | Auto-advance | `false` / `true` | `false` — pause after every stage |
+| Surface | `marketing` / `product` | Infer. Marketing (homepage, landing) can go big and bold; product UI is functional first, with personality |
 | Variant count (N) | integer | `3` |
-| Concept ideation | `on` / `off` | `on` — `off` means seeds alone drive Discover |
+| Concept source | `seed` / `ai-list` / `words` | Under test — see Stage 1 |
 | Critic loop ceiling | integer, per "keep going" answer | `3` |
 | Critic references | `auto` / `user-only` / `none` | `auto` — see Stage 2 |
-| Builder & critic model | any available | `opus` for both — this is a taste task, not a cost-optimization one |
+| Builder model | any available | `sonnet` |
+| Critic model | any available | `opus` — the critic supplies the taste |
 | Polish passes | subset of {cut dead weight, AI-tells, copy rewrite} | all three, one at a time |
 
 ## Before anything: check the product spec, infer vibes & find real content
@@ -64,28 +66,16 @@ PNG back and show it.
 **1. Check `specs/product/` (works with `product-scoping` & `loop-engineering`):**
 Look in `specs/product/` for an existing product specification.
 - **If a product spec exists:** Read the target users/personas, goals, scoped features, and Key User Flows ($F_1..F_m$) so the mocks reflect the exact scoped screens and fields without inventing unrequested features.
-- **If no product spec exists:** Ask if the user wants to scope one first via `product-scoping` or jump straight into designing (do **not** require a spec if they want to design directly).
+- **If no product spec exists:** Ask if the user wants to scope one first or jump straight into designing (do **not** require a spec if they want to design directly).
 
 **2. Infer candidate vibes from users/personas & ask for user preferences:**
 Before generating variants, use the target audience, user stories, and domain context to **infer 2–3 distinct visual vibes/directions** that would fit how and where those users use the product (e.g., kitchen glanceability at arm's length vs. editorial cookbook warmth vs. high-contrast utility checklist). These are inputs to concept ideation (Stage 1), not the final directions — inferred vibes are the model's most probable guess. Ask the user for thoughts, reference apps, or vibe preferences; any reference apps they name also feed the Stage 2 critic.
 
-**3. Go get the product's actual content — real names, real copy, real photographs.** Query
+**3. Go get the product's actual content if they exist — real names, real copy, real photographs.** Query
 the database, read the fixtures, look in the image directory. This is the highest-leverage
 step in the whole skill and the easiest to skip.
 
-Gray placeholder bars and gradient rectangles are the single most reliable tell of a
-generated design, and they also lie: they let a design that depends on photography look fine
-without ever being tested with a photo. A recipe app has dish photos. A dashboard has real
-numbers. Use them.
-
-Then tell builders: **no placeholder geometry.** Every region that will hold content holds
-real content. If something is genuinely missing — a recipe with no photo, a null value —
-that absence is a real design problem to solve honestly, not to paper over with a shape.
-
-**Real ≠ exhaustive.** Real content fills the regions the screen plan (below) allows. It is
-not a reason to show every field, edge case, and data quirk in one frame.
-
-## Screen plan — edit before you design
+## Screen plan — edit before you design (product surface only)
 
 A spec lists everything a screen *can* hold; a mock that shows all of it at once is a
 spreadsheet. Screens scroll and reveal on tap. Before any builder sees a brief, write a plan
@@ -103,78 +93,55 @@ for each screen in the spec's "Key Screens to Mock" (or the screens the user nam
   per-row counts, helper lines, inline fix buttons, "N more" footers, summary rows for content
   that's one scroll away, duplicate add buttons.
 
-Alongside the screen plans, write short **design rules** for this product — derived from its
-users and flows, not a generic list:
-
-- **When they use it**, one line per screen: who holds the device, where, with how much
-  attention ("one hand, moving, distracted" vs. "seated, browsing, unhurried").
-- **4–6 design principles** for *this* product, each tagged with the screen it governs. Draw
-  on any UX, interaction, or behavioral design knowledge (progressive disclosure, Hick's law,
-  thumb reach, forgiving errors — examples, not a menu). Write each as a plain instruction
-  anyone can check against the mock — "do X, so that Y" — not a slogan or a principle's name.
-  Bad: "Proximity does the sorting." Good: "Put similar items next to each other (all
-  vegetables together) instead of adding headings."
-- **Best moment** — the one emotional beat in the product worth extra care.
-- **No dark patterns** — no fake urgency, guilt copy, or engagement bait. Always included.
-
-Show the screen plans and design rules together and stop for edits. Builders get both
-verbatim: plans cap what's on screen, rules shape how it's arranged. Critic fixes that would
-add elements must fit the plan or be skipped.
+Show the screen plans and stop for edits. 
 
 ## Stage 1 — Discover (explore options)
 
 Goal: breadth. Always produce N, never one.
 
-### 0. Concept ideation (the user's taste steers)
-Distinctiveness comes from the user's taste, not the model's ideas — pasting AI ideas straight
-back into AI gets what anyone else would get. Skip only if `concept ideation: off`.
+### 1. Directions
+The model can't act randomly or out-think its own averages, so the push has to come from
+outside. How directions are produced depends on `concept source`. The user's references and
+inferred vibes are a lens, not the source.
 
-1. **Go broad, not deep — from random draws.** Unprompted, the model proposes the same
-   concepts every time (Swiss, Apple-native, magazine…). Run `scripts/concept_draws.py 20` and
-   hand the draws to a **fresh-context subagent** (so earlier lists can't leak in). It writes
-   one concept per draw, one line each: how that draw would shape the UI. The user's
-   references and the inferred vibes are a lens applied to each draw, not the source. Keep
-   ideas that sound like they can't work — "there's no way this works" is the right zone.
-2. **Stop. Ask the user to react** — favorites, what each evokes, what feels tacky, what to
-   avoid. Reactions matter more than picks.
-3. **Sharpen** the favorites against those reactions into N concept briefs (2–4 sentences
-   each). Show them; adjust if asked.
+- **`seed`** (no feedback loop) — draw N long random alphanumeric strings with a shell script
+  (`python3 -c 'import secrets,string;print("".join(secrets.choice(string.ascii_letters+string.digits) for _ in range(40)))'`).
+  Each builder gets one string and the product brief: define a creative direction (color,
+  layout, type…) from the string, looking beyond the surface for subpatterns and special
+  numbers, then build it. The string never appears in the UI. Go straight to step 3.
+- **`ai-list`** (user steers) — a fresh-context subagent lists 10 bold, unique design
+  languages for this product, short high-level descriptions, "broad, not deep". Then step 2.
+- **`words`** (no feedback loop) — run `scripts/concept_draws.py <N>`. A fresh-context
+  subagent turns each draw into one **ambitious prompt**: a vivid, specific inspiration and
+  how it would shape the whole design ("each section feels like a still from a video game").
+  Loose inspiration — the draw sparks the idea; the design needn't literally look like it.
+  Each prompt goes straight to a builder. Go to step 3.
 
-Each variant then gets one concept brief **plus** its own seed: the concept supplies intent,
-the seed supplies execution entropy (palette, cadence, details) within it.
+**Product surface:** each prompt or brief describes the look and feel only — palette, type,
+texture, shape language, mood. Never say what a screen or element *is* ("a stair of balconies",
+"folded planes"); builders take it literally and it doesn't survive a real app.
 
-Discover uses a **3-part anti-slop engine** to guarantee that variants do not collapse into the same generic look (especially avoiding the "Claude 2025 Paper Slop" trap: manila beige background, black wireframe boxes, and monospace brackets):
+### 2. The user steers (`ai-list` only)
+Show the list and stop. Help the user react, not just pick: which ideas they'd want to see,
+what each evokes, what feels tacky or overdone, what to keep from one and drop from another,
+where to push further. Then sharpen the favorites against those reactions into N concept
+briefs (2–4 sentences each) and show them; adjust if asked. Steered ideas are what make the
+result the user's rather than anyone's.
 
-### 1. Entropy: Generate a Unique Random Alphanumeric Seed per Variant
-Generate an independent 32-character alphanumeric seed for each variant using a shell script:
-```bash
-python3 -c 'import secrets, string; alphabet = string.ascii_letters + string.digits; print("".join(secrets.choice(alphabet) for _ in range(32)))'
-```
-Instruct each builder subagent:
-- **Decode subpatterns, rhythm, and character combinations** in its assigned string to define its creative anchor (palette temperature, contrast balance, layout cadence, micro-depth).
-- **Look beyond the surface** for inspiration (e.g. sharp geometric cadences, organic curves, high-contrast jumps).
-- **NEVER reveal the string in the UI.** It is purely internal creative entropy to break the LLM's probability bias.
-
-### 2. Diversity Rejection Gate (The Circuit Breaker)
-Before presenting screenshots to the user, run an automated pairwise check across the N variants:
-1. **Palette Check**: If two variants share the same background family (e.g. both use beige/cream `#F4EFE6` or `#F5EDD6`), automatically reject the weaker one and re-roll.
-2. **Surface & Border Check**: If two variants box every section in black `1px solid` wireframes or 0px brutalist cells, reject the weaker one.
-3. **Typography Check**: If two variants rely on monospace for general consumer UI labels or brackets `[ ]`, reject the weaker one.
-
-### 3. Write Briefs Under Contract
-- Product facts go in as **bullets, ≤60 words, no adjectives, no sample phrasings.**
+### 3. Write briefs
 - The orchestrator writes **zero prose copy.** Builders write their own.
 - List what the *other* variants are taking, so each avoids drifting there.
-- **Don't** paste `references/ai-tells-checklist.md` in as bans — banning makes the model
-  overthink and swap in stranger substitutes. Tells are checked after the build (diversity
-  gate here, AI-tells pass in Deliver).
 - State what must not be invented — features, fields, or data the product doesn't have.
-- Paste the screen plans and design rules verbatim.
+- **Product surface:** product facts as bullets (≤60 words, no adjectives), real content, and
+  the screen plans verbatim. Function first — the concept shapes personality, not structure.
+- **Marketing surface:** product facts and the concept; leave room to go big and strange.
+- **Don't** paste `references/ai-tells-checklist.md` in as bans — banning makes the model
+  swap in stranger substitutes. Tells are handled in Deliver.
 
-### 4. Build, Critique, Screenshot
+### 4. Build, screenshot, present
 - Build each variant as an isolated subagent on the builder model, fresh context.
-- Screenshot all N side-by-side on the specified canvas.
-- Present to user with critique notes, then stop for the user's pick.
+- If two variants come out looking alike, rebuild one with an explicit "not that."
+- Screenshot all N side-by-side, present them, stop for the user's pick.
 
 ## Stage 2 — Define (improve one)
 
@@ -182,7 +149,9 @@ Goal: push the chosen direction past its first draft using an outside eye.
 
 1. Screenshot the current build.
 2. Run one critic pass on the critic model using `references/critic-prompt-template.md` —
-   fresh context, screenshot only, no code or prior critique. **Scope it:** tell the critic
+   a new agent per design per round, fresh context, screenshot only, no code or prior
+   critique, same prompt every round. It scores the design against the criteria for its
+   surface. Never have it rank our own variants against each other. **Scope it:** tell the critic
    which constraints are fixed (data model, missing fields, known upstream bugs) so it spends
    its judgment on craft instead of re-proposing an information architecture the data can't
    support. Give it a visual bar (below) — without one, critics of app screens drift into
@@ -204,13 +173,10 @@ per design, and reuse the same set every round so scores stay comparable. Source
    use a remembered list; it goes stale) and screenshot them with the Chrome command above.
    Skip any page that renders a login wall, cookie banner, or broken layout.
 
-Show the user the set before the first critic pass; they can swap any. If fewer than 2 usable
-references turn up, or `critic references: none`, fall back to the single-screenshot prompt.
-
-Run the critic **blind**: shuffle ours in among the references, unlabeled, and use the ranking
-prompt in `references/critic-prompt-template.md`. Our rank is the headline score; the gaps
-versus higher-ranked images are the fix list. References set the bar — tell the critic not
-to copy them, and tell builders the same.
+Show the user the set before the first critic pass; they can swap any. The critic sees one of
+our designs alongside the references as its baseline — a moodboard for the quality bar, not a
+target to copy (tell builders the same). With no usable references, it judges against how a
+top studio would execute the same aesthetic.
 
 **Apply the critic's cuts in the next round** — don't defer them to Deliver. Clutter left in
 keeps drawing the critic's attention and the score stays flat.
@@ -263,10 +229,9 @@ Real existing content still beats generated content.
 
 ## Output contract
 
-- Screen plans + design rules: shown and confirmed before Discover.
-- Discover: stops for the user's concept reactions (unless ideation is `off`), then ≥N
-  options, diversity-gated and critiqued, stops for a pick.
-- Define: reference set shown once; before/after, rank, and score; stops after every critic pass.
+- Product surface: screen plans shown and confirmed before Discover.
+- Discover: `ai-list` stops for the user's concept reactions first; then N options, stops for a pick.
+- Define: reference set shown once; before/after and score; stops after every critic pass.
 - Deliver: one pass at a time, stops after each.
 - A real screenshot, inline, at every point above.
 - No invented features, fields, or data — ever, including in mockups.

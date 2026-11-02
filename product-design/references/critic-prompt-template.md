@@ -1,71 +1,50 @@
 # Design-critic subagent template (Define stage)
 
-The agent that built a design can't judge it objectively — it reviews its own decisions. It
-needs an outside eye that sees only the result.
+The agent that built a design can't judge it objectively — it reviews its own decisions. The
+critic sees only the result: one of our designs, plus reference images as a baseline.
 
-## Rules
+Orchestration rules (fresh agent per round, loop cap, scoping) live in SKILL.md. Fill in the
+`{…}` slots; use the same prompt every round so scores stay comparable. Don't tell the critic
+what score counts as passing.
 
-- **Fresh context every time.** Screenshot only — never code, implementation history, or its
-  own earlier critiques. Memory of the last verdict means grading against itself, not the work.
-- **Objective framing, not vibes.** *"Judge if this looks beautiful"* is too subjective to be
-  consistent run to run. *"Visualize how a top design studio would execute this aesthetic,
-  then judge against that bar"* is the fallback. Best is a reference set: *"rank these 5 by
-  polish"* — concrete, with a visual baseline. Use the ranking prompt whenever SKILL.md's
-  reference set has ≥2 usable images; say explicitly that references calibrate the bar and
-  are not to be copied.
-- **Blind ranking.** Shuffle ours in among the references, unlabeled (`A`–`E`), and never say
-  which one is ours. Keep the mapping on the calling side. Same reference set every round.
-- **Scope it.** Name the constraints that are fixed — data model, absent fields, known
-  upstream bugs — or the critic spends the round proposing an information architecture the
-  product can't support, and the score sits still while you chase it.
-- **Cap the loop.** An uncapped critic can decide nothing is ever good enough. Check back with
-  the user before every extra round — never loop unattended past the critic loop ceiling in
-  SKILL.md.
-- **Don't reveal the passing score to the critic.** Keep its number an independent read; the
-  calling agent compares it against the user's bar, not the critic itself.
-- **The critic advises, it doesn't decide.** It's judging a picture with no product context.
-  Skip what the data can't support or what contradicts an established convention elsewhere in
-  the app — and tell the user what you skipped and why.
-
-## Ranking prompt (default — with a reference set)
+## Prompt
 
 ```
-You are a design critic. You will be shown several screenshots of designs, labeled A, B, C...
-You have no access to code, implementation notes, or prior critique — evaluate only what you
-see. Treat them as peers; you are not told where any came from.
+You are a design critic. You'll see one design in progress ({surface}: {what it is}) and
+{n} reference images of professional work in the same category. The references set the
+quality bar — a moodboard, not a target. Don't suggest copying them. You have no access to
+code, notes, or earlier critiques; judge only what you see.
 
-1. Rank all of them by polish and taste level, best first. One line of justification each.
-2. For every design below the top spot, outline its biggest gaps versus the ones ranked above
-   it — both high-level (structure, composition, hierarchy) and fine-grained (spacing, type,
-   color, detail work). Name concrete fixes, not "learn from B".
-3. Watch specifically for patterns that read as overdone, excessive, or obviously
-   AI-generated, and call them out wherever they appear.
-4. Give each design a score out of 10 against the best execution of its own aesthetic.
+Fixed constraints — don't propose changing these: {data model, missing fields, known bugs,
+the user's chosen direction}.
 
-The fixes should push each design toward its own aesthetic at a higher bar — never toward
-copying another image in the set. Be tight and specific. Be bold and opinionated: say what
-you'd change even if it's a risky call, don't default to the safe/easy answer.
+1. Name the aesthetic the design is going for in one line.
+2. Score each criterion 1–10 against how the references (or, without references, a top
+   design studio) would execute this same aesthetic. For each: one line on the biggest gap
+   and one concrete fix.
+{criteria}
+3. List patterns that read as overdone or obviously AI-generated, if any.
+4. Overall score out of 10 (average of the criteria).
+
+Be tight and specific — no vague praise or criticism. Be bold: say what you'd change even if
+it's a risky call.
 ```
 
-The calling agent unmasks which label is ours, then reports our rank, our score, and our
-gap list — ignore the feedback on the references.
+## Criteria
 
-## Single-screenshot prompt (fallback — no usable references)
+**Product surface** — functional first, then personality:
+- Hierarchy — one obvious focal point per screen; the eye knows where to go
+- Legibility — text size and contrast readable at a glance; tap targets thumb-sized
+- Content first — how much of the first screen is real content vs. UI chrome
+- Type discipline — few sizes and weights, used consistently
+- Color discipline — a deliberate palette; color carries meaning, not decoration
+- Alignment & spacing — consistent grid and rhythm
+- Personality — a distinct, intentional look that still serves the task
 
-```
-You are a design critic. You will be shown a single screenshot of a design in progress.
-You do not have access to the code, implementation notes, or any prior critique of this
-design — evaluate only what you see.
-
-1. Identify the aesthetic/design language the piece appears to be going for.
-2. Imagine how a top design studio would execute that exact aesthetic at its best.
-3. Compare what you see against that imagined execution and outline the biggest gaps —
-   both high-level (structure, composition, hierarchy) and fine-grained (spacing, type,
-   color, detail work).
-4. Watch specifically for patterns that read as overdone, excessive, or obviously
-   AI-generated, and call them out.
-5. Give a score out of 10 for how close this is to that studio-level bar.
-
-Be tight and specific — no vague praise or vague criticism. Be bold and opinionated: say
-what you'd change even if it's a risky call, don't default to the safe/easy answer.
-```
+**Marketing surface** — big and bold allowed:
+- Stopping power — does it make you stop and look in the first second
+- One memorable idea — a single concept you'd remember and describe to someone
+- Composition — scale, contrast, tension; nothing templated
+- Type craft — expressive, well-set display type
+- Color & imagery — distinctive and committed
+- Message clarity — what it is and what to do next, despite the boldness
