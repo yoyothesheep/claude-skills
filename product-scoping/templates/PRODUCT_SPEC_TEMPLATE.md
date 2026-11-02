@@ -37,7 +37,7 @@
 
 ## Scope & Priorities
 
-*Ranked by hypothesis risk and unlock, not setup order. `loop-engineering` builds P0 → P1 → P2.*
+*Ranked by hypothesis risk and unlock, not setup order. `product-loop-engineering` builds P0 → P1 → P2.*
 
 ### P0 — Hypothesis Journeys
 - **[Capability]**: [Why it is P0]
@@ -57,7 +57,7 @@
 
 ## Key User Flows ($F_1..F_m$)
 
-*Priority order: P0 flows first, starting at F1. Every header carries its tier. `loop-engineering` derives automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from these.*
+*Priority order: P0 flows first, starting at F1. Every header carries its tier. `product-loop-engineering` derives automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from these.*
 
 ### F1 — [P0 Journey Name] [P0]
 - **Actor & Precondition**: [Who is acting and what state exists before starting]

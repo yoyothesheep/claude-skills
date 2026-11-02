@@ -1,6 +1,6 @@
-# `loop-engineering` Test Cases (Workshop & Eval Suite)
+# `product-loop-engineering` Test Cases (Workshop & Eval Suite)
 
-Use these scenarios to verify that `loop-engineering` advances naturally between checkpoints, asks about architectural tradeoffs before generating files, maps `specs/product/` user flows ($F_1..F_m$) into unit test matrices ($T_1..T_n$ & $M_1..M_k$), simplifies code automatically, and passes `scripts/check_loop.py`.
+Use these scenarios to verify that `product-loop-engineering` advances naturally between checkpoints, asks about architectural tradeoffs before generating files, sequences units skeleton → P0 → P1 → P2 → reporting, maps `specs/product/` user flows ($F_1..F_m$) into unit test matrices ($T_1..T_n$ & $M_1..M_k$) and instrumentation, simplifies code automatically, and passes `scripts/check_loop.py`.
 
 ---
 
@@ -9,15 +9,17 @@ Use these scenarios to verify that `loop-engineering` advances naturally between
 **Precondition:** `specs/product/reading-list.md` exists (from `product-scoping` Test Case 1) with flows `F1..F4`.
 
 **Prompt:**
-> "Let's plan and build this milestone using loop-engineering."
+> "Let's plan and build this milestone using product-loop-engineering."
 
 **Expected Stage 1 Behavior (Pass Criteria):**
 1. **No subcommand memorization required:** Detects that no active milestone exists in `active/` and enters Phases 1–2 automatically.
 2. **Checks `CONFIG.md` against repo stack:** Verifies `TEST_COMMAND`, `LINT_COMMAND`, and `FORMAT_COMMAND` match the project's actual toolchain.
 3. **Pauses on Architectural Tradeoffs first:** Before generating unit files, asks the user to confirm key technical choices (e.g., storage mechanism such as SQLite vs. JSON/in-memory, HTML parser library vs. stdlib) framed in terms of user impact vs. engineering cost.
-4. **Generates Complete Upfront Unit Contracts:** Once aligned, writes `history/decisions/001-*.md` (if needed), `active/01-reading-list/plan.md`, and all unit contracts (`active/01-reading-list/units/01..N-*.md`) with:
-   - Every `F1..F4` flow mapped into explicit **Automated Tests ($T_1..T_n$)** and **Manual E2E Scenarios ($M_1..M_k$)**.
-   - Zero placeholder units.
+4. **Generates Complete Upfront Unit Contracts:** Once aligned, writes `history/decisions/001-*.md` (if needed), `active/01-reading-list/plan.md` (from `PLAN_TEMPLATE.md`), and all unit contracts (`active/01-reading-list/units/01..N-*.md`) with:
+   - **Sequence:** Unit 01 = walking skeleton (`infra`, serves `all`, includes the load-bearing data scoping key); next units serve F1 [P0]; then P1/P2 flows; last unit = `reporting` (dashboard/queries over instrumented events).
+   - Every flow mapped into explicit **Automated Tests ($T_1..T_n$)**, **Manual E2E Scenarios ($M_1..M_k$)**, and a **Testable after this unit** outcome.
+   - Every journey unit lists **Instrumentation** events (view + primary action per capability; hypothesis-metric events in the P0 unit).
+   - Zero placeholder units; `check_loop.py plan` returns `"ok": true`.
 5. **Pauses at Checkpoint 1** for user approval before writing production code.
 
 ---
@@ -35,7 +37,8 @@ Use these scenarios to verify that `loop-engineering` advances naturally between
    - Implements deterministic domain logic in a core module first, then wires thin route/CLI adapters.
    - Automatically simplifies modified files (strips single-use wrapper classes, dead weight, and redundant comments) while keeping tests and linters green.
 3. **Phase 5 (Independent Maker/Verifier Gate):**
-   - Runs `python loop-engineering/scripts/check_loop.py 01` and verifies `"mechanical_ok": true` with `"missing": []`.
+   - Spawns a fresh verifier subagent given only the contract, diff, and `check_loop.py` JSON; the verifier edits nothing.
+   - Runs `python product-loop-engineering/scripts/check_loop.py 01` and verifies `"mechanical_ok": true` with `"missing": []`.
    - Audits test fidelity (substantive assertions, not `assert True`) and manual E2E scenarios ($M_1..M_k$).
    - Emits the structured PASS/FAIL verdict table.
 4. **Phase 6 (Living Spec Sync & Compounding):**
@@ -61,7 +64,7 @@ Use these scenarios to verify that `loop-engineering` advances naturally between
 Run from repository root against any active unit `NN`:
 
 ```bash
-python loop-engineering/scripts/check_loop.py 01
+python product-loop-engineering/scripts/check_loop.py 01
 ```
 
 **Expected JSON Output Invariants:**
@@ -69,3 +72,32 @@ python loop-engineering/scripts/check_loop.py 01
 - `"test_mapping.missing"` is `[]` when matching `test_t1_*` functions exist.
 - `"gates.tests.passed"`, `"gates.linter_check.passed"`, and `"gates.linter_format.passed"` are `true`.
 - `"mechanical_ok"` is `true` (exit code `0`).
+
+---
+
+## Test Case 5: Plan Validator Rejects Bad Sequencing (`check_loop.py plan`)
+
+**Setup:** `active/01-*/plan.md` links a `specs/product/*.md` with flows `F1 [P0]`, `F2 [P1]`, `F3 [P2]`.
+
+**Expected `"errors"` (and exit code `1`) for each defect:**
+- A P1 journey row placed before a P0 row → `Units must run P0 → P1 → P2`.
+- A row with no `units/NN-*.md` file → `has no pre-documented contract`.
+- No `reporting` row, or one that isn't last → `No reporting unit` / `Reporting unit(s) must come last`.
+- No journey unit serving `F3` → `F3 [P2] is not served by any journey unit`.
+- A journey contract without Instrumentation events → `Journey unit lists no Instrumentation events`.
+- A spec flow header without `[P#]` → `Spec flow F2 has no [P0|P1|P2] tier tag`.
+- Spec flows out of tier order, or F1 not P0 → `Spec flows must be ordered P0 → P1 → P2` / `Spec flow F1 must be P0`.
+
+With all defects fixed, `"ok": true` and exit code `0`.
+
+---
+
+## Test Case 6: Verifier Catches a Weakened Test and Scope Creep (`check_loop.py` `diff`)
+
+**Setup:** During Unit 02, the maker replaces `assert len(items) == 3` with `assert items` in a test, adds `page.wait_for_timeout(500)`, and also edits an unrelated `crop.py` that no contract line mentions.
+
+**Expected:**
+- `check_loop.py 02` lists the test file under `diff.test_files_to_justify` (one assertion removed, one sleep added), `diff.needs_justification` is `true`, and `crop.py` appears in `diff.source_files`.
+- The verifier reports the loosened assertion and the `crop.py` change as findings, each quoting its line with a certainty score, and the verdict row `Test Edits & Scope Drift` is `FAIL`.
+- A finding the verifier can't tie to a quoted line (certainty 4–6) is listed under **Unverified** and doesn't block a PASS.
+- After 3 failed fix → re-verify cycles, the agent stops and asks the user.

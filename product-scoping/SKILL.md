@@ -12,7 +12,7 @@ description: >-
 
 # product-scoping
 
-Turns a product idea or feature request into `specs/product/<slug>.md`: a core hypothesis, prioritized scope, metrics, and priority-ordered user flows ($F_1..F_m$) that `loop-engineering` plans, builds, and tests against.
+Turns a product idea or feature request into `specs/product/<slug>.md`: a core hypothesis, prioritized scope, metrics, and priority-ordered user flows ($F_1..F_m$) that `product-loop-engineering` plans, builds, and tests against.
 
 **Progression**: Stage 1 Ground & Challenge → ⏸ → Stage 2 Prioritize, Metrics & Flows → ⏸ → Stage 3 Write Spec → optional `product-design` pass. Pause at each ⏸ for the user's decisions unless they explicitly ask to skip ahead; when skipping, still apply every rule below.
 
@@ -24,7 +24,7 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 2. **Grounded questions, no startup theater.** No *"if you had 48 hours…"* prompts. Ask about data sources, persistence, auth boundaries, external dependencies, and failure states.
 3. **Ruthless scoper.** The request is a wish list, not a scope. Every capability has to earn its tier, and the default answer to a complexity multiplier is "cheaper mechanism first." Cutting and downgrading what the user asked for is the job; inventing features they didn't ask for is not.
 4. **Priority by risk and unlock, never by setup order.** Rank by (a) the hypothesis that most needs validating and (b) what unlocks the most downstream value. Onboarding, accounts, and sharing take the tier of what they unlock, which is rarely first.
-5. **Flows are test foundations.** Every in-scope capability becomes a numbered flow with preconditions, steps, end state, and edge/failure cases. `loop-engineering` derives its automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from them.
+5. **Flows are test foundations.** Every in-scope capability becomes a numbered flow with preconditions, steps, end state, and edge/failure cases. `product-loop-engineering` derives its automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from them.
 
 ---
 
@@ -95,4 +95,4 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 
 1. Write `specs/product/<slug>.md` (or `specs/product/README.md` for a small single-surface product) from `templates/PRODUCT_SPEC_TEMPLATE.md`. Describe behavior from the user's side; file paths, function names, and library details belong in `specs/engineering/`.
 2. Link the spec from `specs/README.md` if one exists.
-3. Hand off: for UI-facing products, offer `product-design` to render mocks from the spec's real copy and flows and embed the chosen ones in `## UI Design & Mocks`. Then `loop-engineering`.
+3. Hand off: for UI-facing products, offer `product-design` to render mocks from the spec's real copy and flows and embed the chosen ones in `## UI Design & Mocks`. Then `product-loop-engineering`.

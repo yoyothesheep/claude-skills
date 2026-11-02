@@ -1,15 +1,16 @@
 ---
-name: loop-engineering
+name: product-loop-engineering
 description: >-
   Disciplined spec-driven dev loop and engineering operating system. Structures all
   software work into 6 strict phase gates: Milestone Planning with full upfront unit
-  pre-documentation (automated T1..Tn test scenarios and manual E2E M1..Mk walkthroughs
-  for all units), Architectural Decision Records (ADRs), Test-First Scaffolding, Core
+  pre-documentation sequenced walking skeleton → P0 → P1 → P2 → analytics reporting
+  (automated T1..Tn tests, manual E2E M1..Mk walkthroughs, and analytics instrumentation
+  for every unit), Architectural Decision Records (ADRs), Test-First Scaffolding, Core
   & Seam Implementation, Independent Maker/Verifier Gate, and Living Spec Finalization.
   Use when planning, developing, testing, refactoring, or verifying features and subsystems.
 ---
 
-# loop-engineering
+# product-loop-engineering
 
 An end-to-end engineering operating system for building maintainable, high-integrity software. It transforms ad-hoc coding into a repeatable, spec-and-test-driven development loop.
 
@@ -18,7 +19,7 @@ An end-to-end engineering operating system for building maintainable, high-integ
 ## Core Tenets & System Invariants
 
 1. **Upfront End-to-End Pre-Documentation**:
-   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `active/NN-<milestone>/units/` with its scope boundaries, architectural seams, dual test matrix (automated $T_1..T_n$ and manual E2E $M_1..M_k$), and acceptance criteria. Never leave downstream phases as vague one-liners.
+   Before writing implementation code for Unit 01, decompose the entire milestone/epic into all its sequential Build Units ($01..N$). **Pre-document every unit contract upfront** in `active/NN-<milestone>/units/` with its scope boundaries, architectural seams, dual test matrix (automated $T_1..T_n$ and manual E2E $M_1..M_k$), and acceptance criteria. Never leave downstream phases as vague one-liners. Planning everything upfront keeps early decisions from boxing in later units; **building** follows priority: walking skeleton → P0 → P1 → P2 → analytics reporting, with each unit leaving the app runnable and testable.
    $$\text{Living Spec / Roadmap} \longrightarrow \text{Pre-Document All Units } (01..N) \longrightarrow \text{Iterate } [\text{Test} \to \text{Build} \to \text{Verify} \to \text{Finalize}]$$
 
 2. **Dual-Layer Spec-and-Test Traceability (Automated + Manual E2E)**:
@@ -56,6 +57,9 @@ An end-to-end engineering operating system for building maintainable, high-integ
      - **Completed Milestones (`history/milestones/NN-*/`)**: when every unit is done, move the whole `active/NN-*/` folder here. Contracts are then frozen.
    - **Git Safety**: Never auto-commit without explicit user instruction. Leave diffs staged/uncommitted for human inspection.
 
+6. **Instrumented by Default**:
+   Every journey unit ships the analytics events for what it builds: one view and one primary-action event per capability, plus the events behind the spec's hypothesis metric in the P0 journeys. The milestone's last unit turns those events into a dashboard, reports, or saved queries against the analytics platform's API or MCP (`ANALYTICS_PLATFORM` in `CONFIG.md`).
+
 ---
 
 ## The 6-Phase Engineering Loop
@@ -65,6 +69,7 @@ flowchart TD
     subgraph StageA["Stage A: Upfront Architecture & Specification"]
         P1["Phase 1: Milestone Plan & Full Unit Decomposition
 • Verify CONFIG.md stack & ingest F1..Fm flows
+• Sequence: skeleton → P0 → P1 → P2 → reporting
 • Pre-document ALL unit specs (01..N)
 • Enumerate dual test matrix (T1..Tn automated + M1..Mk manual E2E)"]
         P2{"Architectural Tradeoff
@@ -110,13 +115,19 @@ or Schema Shift?"}
 
 1. **Product Framing & Stack Alignment**:
    - Inspect `CONFIG.md` and existing `specs/engineering/` to detect the repository's tech stack and storage layer. Only ask about stack or database choices on a brand-new empty repository; for new features in an existing codebase, reuse the established stack and only surface feature-specific tradeoffs.
-   - Define user outcomes, high-level user stories, and strict out-of-scope boundaries. If `specs/product/` already defines scoped requirements and Key User Flows ($F_1..F_m$), ingest them directly.
+   - Ingest `specs/product/`: its prioritized scope and tier-tagged Key User Flows ($F_1..F_m$ `[P0|P1|P2]`). If it doesn't exist, define them with the user first: user outcomes, user stories, out-of-scope boundaries, and a P0/P1/P2 tier per flow, where P0 is the flows that test the riskiest assumption.
    - Frame tradeoffs in terms of user experience (gains vs. losses) and concrete engineering cost. If non-obvious architectural forks exist, **ask the user first** with concrete options before generating unit files.
-2. **Decompose Entire Milestone Upfront**:
-   - Break the initiative into sequential, bounded Build Units ($01..N$).
-   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`.
+2. **Sequence and Decompose the Entire Milestone Upfront**:
+   - Break the initiative into bounded Build Units ($01..N$) covering **every** P0–P2 flow, in this order:
+     1. **Walking skeleton** (`infra`): app shell, data layer, one end-to-end round trip, test/lint running. Only what every journey needs.
+     1a. **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, rate limit on public and login endpoints, every data-touching route behind auth. Cheap now, painful to retrofit.
+     2. **Load-bearing decisions** go in the skeleton even when the feature using them is P2: choices that are expensive to retrofit (data scoping key such as `owner_id`/`tenant_id`, ID scheme, sync model, auth seam as an interface). Record each as an ADR.
+     3. **P0 journeys**, then **P1**, then **P2**. Feature-specific infrastructure (external API seam, eval harness, invite tables, scheduler) arrives just in time, as an `infra` unit right before the first journey that needs it.
+     4. **Reporting** (last unit): dashboard, reports, or saved queries over the events instrumented by earlier units, built through the analytics platform's API or MCP.
+   - **Testable after every unit**: each unit leaves the app runnable and states what a human can try once it ships. Infra units prove themselves through the skeleton's round trip or a runnable harness, never "nothing visible yet."
+   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`, with `Type`, `Serves` (flows), and `Tier` filled in.
    - Ensure no unit is left as an unspecified placeholder.
-   - Write the milestone roadmap and status tracker (unit sequence, target end state, migration matrices) to `active/NN-<milestone>/plan.md`. Do **not** put it in `specs/`.
+   - Write the milestone roadmap and status tracker to `active/NN-<milestone>/plan.md` using `templates/PLAN_TEMPLATE.md`. Do **not** put it in `specs/`.
    - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
 3. **Formulate Dual Test Matrix for Every Unit**:
    - Map product user flows ($F_1..F_m$) and edge cases directly into each unit's test scenarios:
@@ -128,10 +139,16 @@ or Schema Shift?"}
      - `- **M1 [Desktop Happy Path]** — Steps: 1. ... 2. ... Expected: ...`
      - `- **M2 [Mobile / Responsive State]** — Steps: 1. ... Expected: ...`
      - `- **M3 [Error State & Recovery]** — Steps: 1. ... Expected: ...`
-   - **Viewport coverage (UI units)**: when `VIEWPORT_BREAKPOINTS` is set in CONFIG.md, every UI unit is verified at **each** listed width, not one desktop and one phone width. Automated tests must assert no horizontal overflow at every width; responsive scenarios name the widths they check. When `PARITY_REFERENCE_URL` is set, parity means measured element boxes (position, size, font-size) match the reference at every width; read the reference's CSS for `min-width` and `max-width` media queries so wide-screen tiers aren't missed.
+   - **Part C: Instrumentation**: the analytics events the unit emits (name, trigger, properties). Journey units need a view and primary-action event per capability; P0 journeys also emit the hypothesis-metric events.
+   - **Viewport coverage (UI units)**: follow the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
 4. **Validate Seam & Dependency Topology**:
    - Check data flow between units: Does Unit 02 rely on a schema or seam that Unit 01 fails to output?
    - Resolve schema, API, or contract conflicts before any code is written.
+   - Run the plan validator and fix every error before asking for approval:
+     ```bash
+     python .agent/skills/product-loop-engineering/scripts/check_loop.py plan
+     ```
+     It fails when a unit lacks a contract, tiers run out of order, a spec flow has no unit, reporting isn't last, or a contract is missing its type, testable outcome, M scenarios, or (journey units) instrumentation events.
 
 ---
 
@@ -178,6 +195,7 @@ or Schema Shift?"}
 2. **Thin Web/API/CLI Adapters Second**:
    - Wire route handlers, controllers, templates, and CLI endpoints.
    - Enforce multitenancy and scoping at the data access seam.
+   - Emit every event in the unit's **Instrumentation** section through one analytics seam (a single `track()` wrapper), so tests can assert events with a fake sink and no vendor SDK call is scattered through UI code.
 3. **Root-Cause Before Fix**:
    - When a test fails unexpectedly during implementation, read the full failure output and trace the root cause in the data flow before editing code—never guess or apply shotgun fixes, and never weaken a spec-mandated test assertion just to make it pass.
 4. **Simplify & Clean Code Baseline**:
@@ -194,25 +212,38 @@ or Schema Shift?"}
 > [!IMPORTANT]
 > **Independence Invariant**: The maker agent never signs off on its own work. A separate verification pass audits code, test assertions, manual E2E reproducibility, and observed behavior against the unit spec without rationalization.
 
+**How to run it independently**:
+- Spawn a fresh verifier subagent (Agent/Task tool). Its prompt gets only: the unit contract path, `git diff` of the unit's changes, the `check_loop.py` JSON, and the verifier steps below. Never pass the maker's reasoning, summaries, or "known issues" notes.
+- The verifier reads and runs; it does not edit code or tests. It returns the verdict table plus a findings list (file:line, expected vs. observed). Each finding quotes the code line it rests on and carries a certainty from 1 to 10. Findings at 7+ block a PASS; 4–6 go under **Unverified** (listed, non-blocking); below 4 are dropped.
+- On FAIL, the maker fixes the findings, and a **new** verifier subagent re-runs the full gate. Don't reuse the old one or narrow its scope to the fixes. After 3 fix → re-verify cycles, stop and ask the user.
+- If no subagent tool exists, stop and ask the user to run verification in a separate session with the same inputs. Don't verify inline.
+
 1. **Mechanical CI Gate (Deterministic)**:
    Run the verification runner:
    ```bash
-   python .agent/skills/loop-engineering/scripts/check_loop.py NN
+   python .agent/skills/product-loop-engineering/scripts/check_loop.py NN
    ```
    Inspect emitted JSON facts:
    - Test suite exit code & summary.
    - Linter & formatter exit codes.
    - Full mapping of $T_1..T_n$ test tokens (zero missing test tokens permitted).
+   - `hygiene`: likely hardcoded secrets in changed files (fails the gate) and route files that mention no auth (heuristic: the verifier reads each and confirms or dismisses it with file:line).
+   - `diff`: changed source files, and test files that lost assertions or gained skips, sleeps, or timeouts.
 2. **Manual E2E Walkthrough Audit (Verification)**:
    - Step through each documented manual scenario ($M_1..M_k$).
    - Verify that UI components, responsive breakpoints, error recovery states, and navigation routes function as specified.
-   - When `VIEWPORT_BREAKPOINTS` is set, check every listed width, not a sample. For parity work, measure key elements (title, lead, hero media, nav, dividers) on both the build and `PARITY_REFERENCE_URL` at each width, and report any difference over ~10px or any font-size mismatch as a finding.
+   - Apply the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
+   - Trigger each event in the **Instrumentation** section and confirm it arrives with the listed properties (analytics debug/live view via its API or MCP, or the fake sink in tests).
 3. **Test Fidelity Audit (Judgment)**:
    - Verify assertions are substantive, not tautological or hollow.
    - Check that error branches explicitly assert status codes, error types, and error messages.
 4. **Semantic Acceptance Criteria Audit (Judgment)**:
    - Audit every checkbox item in the unit spec's `Acceptance Criteria` against actual code and runtime behavior.
-5. **Structured Verdict Table**:
+5. **Test Edits & Scope Drift (Judgment)**:
+   - For each file in `diff.test_files_to_justify`, every removed or loosened assertion must trace to a line in the unit contract that changed. A test edited to fit the code, with no contract change behind it, is a finding.
+   - **Scope creep**: any hunk in `diff.source_files` that no contract line asks for (a bug fix riding along in a test-only change counts).
+   - **Missing requirement**: any contract line with no code or test behind it.
+6. **Structured Verdict Table**:
    Emit a clean sign-off table:
    ```markdown
    ### Unit NN — <Unit Name> Verification Verdict
@@ -222,7 +253,9 @@ or Schema Shift?"}
    | Manual E2E Tests (M1..Mk) | PASS | All browser walkthroughs verified |
    | CI & Linter Gates | PASS | Tests green; 0 lint/format warnings |
    | Seam & Architecture Invariants | PASS | Logic isolated in core; scoping verified |
+   | Instrumentation | PASS | All listed events fire with expected properties |
    | Semantic Acceptance Criteria | PASS | All bullet criteria verified |
+   | Test Edits & Scope Drift | PASS | Every test edit traced to the contract; no unrequested changes |
    | **OVERALL VERDICT** | **PASS** | **Ready for living spec sync** |
    ```
 
@@ -255,3 +288,4 @@ Do not force the user to remember or type phase subcommands. Inspect `active/`, 
 
 1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs, and pause for approval to start building.
 2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
+3. **P0 Checkpoint**: after the last P0 unit, pause before any P1 work. Have the user run the P0 journeys hands-on, and confirm the hypothesis-metric events are arriving. Before real users, run the `product-launch-audit` skill. If what they learn changes priorities, update the spec and re-run `check_loop.py plan` before continuing.

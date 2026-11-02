@@ -62,7 +62,7 @@ PNG back and show it.
 
 ## Before anything: check the product spec, infer vibes & find real content
 
-**1. Check `specs/product/` (works with `product-scoping` & `loop-engineering`):**
+**1. Check `specs/product/` (works with `product-scoping` & `product-loop-engineering`):**
 Look in `specs/product/` for an existing product specification.
 - **If a product spec exists:** Read the target users/personas, goals, scoped features, and Key User Flows ($F_1..F_m$) so the mocks reflect the exact scoped screens and fields without inventing unrequested features.
 - **If no product spec exists:** Ask if the user wants to scope one first or jump straight into designing (do **not** require a spec if they want to design directly).
@@ -208,7 +208,7 @@ subtraction. Apply passes one at a time, screenshot after each, stop for confirm
 2. **AI-tells pass** — `references/ai-tells-checklist.md`. Try the alternative, show both.
 3. **Copy rewrite** — AI copy is placeholder, like Lorem ipsum. A human rewrites every line
    before shipping. Never auto-finalize copy.
-4. **Sync to Product Spec (`specs/product/`) & Handoff to `loop-engineering`** — Once a design is accepted (either after Discover/Define or after Deliver), if a product spec exists in `specs/product/`, update its `## UI Design & Mocks` section with the chosen design direction, mock source path(s), and final screenshot path(s) so `loop-engineering` can build and verify UI units against them.
+4. **Sync to Product Spec (`specs/product/`) & Handoff to `product-loop-engineering`** — Once a design is accepted (either after Discover/Define or after Deliver), if a product spec exists in `specs/product/`, update its `## UI Design & Mocks` section with the chosen design direction, mock source path(s), and final screenshot path(s) so `product-loop-engineering` can build and verify UI units against them.
 
 ## Re-entering on an existing design
 

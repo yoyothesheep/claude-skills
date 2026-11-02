@@ -2,9 +2,15 @@
 
 *Part of **[Milestone]** ([plan.md](../plan.md)), after Unit [Prev].*
 
+- **Type**: [infra | journey | reporting]
+- **Serves**: [F1, F2 | all]
+- **Tier**: [P0 | P1 | P2 | —]
+
 ## Scope & User Story
 
 [1-2 paragraphs describing what this unit changes for the user. What do they see, do, or experience? What does NOT change?]
+
+**Testable after this unit**: [What a human can do in the running app once this unit ships]
 
 ### In-Scope:
 - [Item 1]
@@ -38,7 +44,7 @@
 *Deterministic, programmatic tests run via test runner / CI.*
 - **T1 [Scenario Name]** — [Given X, when Y, then Z. Exact behavior asserted]
 - **T2 [Edge Case / Failure Mode]** — [Given bad input or boundary condition, clean handling asserted]
-- **T3 [Data Invariant / Security Boundary]** — [Data scoping or invariant held]
+- **T3 [Data Invariant / Security Boundary]** — [Data scoping or invariant held]. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
 
 *Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
 
@@ -48,12 +54,17 @@
 - **M2 [Responsive State]** — **Steps**: 1. At each width in `VIEWPORT_BREAKPOINTS` (CONFIG.md; else 375px) load `/...` 2. Tap `...`. **Expected**: [Layout matches each breakpoint tier, wide screens included; no horizontal overflow].
 - **M3 [Edge / Error Recovery State]** — **Steps**: 1. Trigger `...` with bad input. **Expected**: [Human-readable error state, clean recovery path].
 
+### C. Instrumentation
+*Events emitted through the analytics seam (`ANALYTICS_PLATFORM` in CONFIG.md). Journey units: one view + one primary-action event per capability; P0 journeys also emit their hypothesis-metric events. Reporting unit: list the dashboards/queries built instead.*
+- `[event_name]` — [Trigger]. Properties: `[prop]`, `[prop]`.
+
 ---
 
 ## Acceptance Criteria
 
 - [ ] All automated test cases (`T1..Tn`) pass green.
 - [ ] All manual E2E scenarios (`M1..Mk`) verified and documented.
+- [ ] Every Instrumentation event fires with its listed properties.
 - [ ] [Semantic criterion 1: e.g. Domain logic is 100% deterministic and isolated from UI]
 - [ ] [Semantic criterion 2: e.g. Seam separation respected, no leak across boundaries]
 - [ ] [Behavioral / E2E criterion: e.g. Web UI renders correctly at every width in `VIEWPORT_BREAKPOINTS`]
