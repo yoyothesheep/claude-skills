@@ -267,7 +267,7 @@ All files needed to publish: post component, route page, blog index entry, sitem
 ## 6. `publish-checklist` — Pre-Publish Validation
 
 **File:** `publish-checklist/SKILL.md`
-**Config:** `CONFIG.example.md` → copy to `CONFIG.md`
+**Config:** per project, in `docs/publish-checklist/` — copy `CONFIG.example.md` to `CONFIG.md` and `site-checklist.example.md` to `site-checklist.md` there (committed with the project, not in the skill folder, since the skill is symlinked into several sites)
 
 ### Goal
 Validates any page before it goes live — SEO metadata, schema markup, accessibility, internal links, and a build check. Runs an automated validation script then does page-type-specific checks.
@@ -278,7 +278,7 @@ Validates any page before it goes live — SEO metadata, schema markup, accessib
 ### What it checks
 - **Phase 0** — runs your automated validation script, fixes all FAILs
 - **Phase 1 (shared)** — anchor links, image paths, title/description length, OG tags, JSON-LD schema type, AEO formatting, accessibility (aria-expanded, aria-hidden), mobile layout
-- **Phase 2 (page-type-specific)** — rules defined in your `site-checklist.md` for each page type (blog, career, industry, /now)
+- **Phase 2 (page-type-specific)** — rules in the project's `docs/publish-checklist/site-checklist.md` for each page type, including cross-references (indexes, data files, sitemap, specs, tests)
 
 ### Output
 PASS / FAIL / FIXED report per check.

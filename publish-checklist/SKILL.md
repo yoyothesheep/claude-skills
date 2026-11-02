@@ -1,20 +1,23 @@
 ---
 name: publish-checklist
-description: Pre-publish checklist for blog posts, career pages, industry pages, and /now articles. Run before publishing or updating to validate SEO, dates, sitemap, formatting, and build.
+description: Pre-publish checklist for site pages (blog posts, case studies, career/industry pages, /now articles). Run before publishing or updating a page to validate SEO, dates, sitemap, links, formatting, and build. Site-specific rules live in the project, not in this skill.
 ---
 
 # Publish Checklist
 
 Run before publishing or updating any page. Unless otherwise specified, fix failures immediately using Edit/Write tools before moving on. Report final results as PASS/FAIL/FIXED.
 
+This skill is generic and shared across sites. Everything site-specific (page types, files, scripts, trackers, data wiring) lives in the project's `docs/publish-checklist/`.
+
 ## Setup
 
-Read `.claude/skills/publish-checklist/CONFIG.md` and load:
-- `PUBLISH_SCRIPT` — the automated validation script command
-- `SITE_CHECKLIST_PATH` — path to the site-specific checklist instruction file
-- `TRACKER_AEO_CONTENT` — content tracker file (all published pages)
+Read `docs/publish-checklist/CONFIG.md` in the project root. If it is missing, stop and tell the user to create it from `CONFIG.example.md` and `site-checklist.example.md` in this skill's folder. Load:
+- `SITE_CHECKLIST_PATH` (required) — the site-specific checklist: page type detection, Phase 2 checks
+- `PUBLISH_SCRIPT` (optional) — automated validation command
+- `SITEMAP_PATH` (optional) — sitemap to verify
+- `TRACKER_AEO_CONTENT` (optional) — content tracker file
 
-Read the file at `SITE_CHECKLIST_PATH` — it defines page type detection, the automated script flags, and all Phase 2 page-type-specific checks.
+Read the file at `SITE_CHECKLIST_PATH` in full before doing anything else. Its checks are mandatory, in addition to the shared ones below.
 
 ---
 
@@ -22,7 +25,7 @@ Read the file at `SITE_CHECKLIST_PATH` — it defines page type detection, the a
 
 Detect the page type from the user's input using the rules in `SITE_CHECKLIST_PATH`.
 
-Run the automated script from `PUBLISH_SCRIPT` and fix all FAILs before continuing.
+If `PUBLISH_SCRIPT` is set, run it and fix all FAILs before continuing. Otherwise do the "Automated" items in the site checklist by hand.
 
 ---
 
@@ -36,36 +39,34 @@ Run the automated script from `PUBLISH_SCRIPT` and fix all FAILs before continui
 
 ### SEO & Metadata
 
-- [ ] Title matches `<h1>`; title <60 chars
+- [ ] Title matches `<h1>` (unless the site has a separate SEO title field); title <60 chars
 - [ ] Description: 1 sentence, distinct from homepage, <160 chars, specific (names a number, entity, or data point)
 - [ ] OG quality: action-oriented or curiosity-driven — would you click this in search results?
-- [ ] FAQ pairs are real questions (not statements) with concise, specific answers
+- [ ] FAQ pairs (if present) are real questions (not statements) with concise, specific answers
 - [ ] JSON-LD: correct schema type present for the page type (see `SITE_CHECKLIST_PATH` for type mapping)
 - [ ] AEO: first paragraph of each `<h2>` directly answers the implied question; headings match common queries
 
-### Accessibility & Mobile
+### Accessibility
 
 - [ ] `aria-expanded` on all expandable toggles
 - [ ] Decorative SVGs have `aria-hidden="true"`
-- [ ] Body prose uses responsive text sizing
-- [ ] Stat rows widen on mobile (never fixed half-width)
-- [ ] Charts/graphs use stacked vertical layout on mobile
 
 ---
 
 ## Phase 2: Page-Type Checks
 
-Run the section from `SITE_CHECKLIST_PATH` matching the detected page type.
+Run the section from `SITE_CHECKLIST_PATH` matching the detected page type. Include its cross-reference checks: places outside the page itself that must change or already link to it (sitemap, indexes, data files, other pages' links, specs, tests).
 
 ---
 
 ## Phase 3: Update Content Tracker
 
-After all checks pass, update `TRACKER_AEO_CONTENT`:
+Skip if `TRACKER_AEO_CONTENT` is not set.
 
-- If the page already has a row: update its Status to `Published YYYY-MM-DD` (today's date).
-- If no row exists: add one to the Content Status table with columns: `Title | Type | Status | Priority | Slug | Notes`. Set Type to `Blog`, `Career`, `Industry`, or `Now`. Set Priority to `—`. Leave Notes blank unless there's something actionable.
+After all checks pass, update the tracker: if the page has a row, set Status to `Published YYYY-MM-DD` (today); otherwise add a row using the columns and Type values defined in the site checklist. Only intervene manually if `PUBLISH_SCRIPT` handles tracker updates and reports it could not.
 
-The automated script (`publish_check.py`) handles this for pages already in the tracker with a Draft/Planned status. Only intervene manually if the script reports "no Draft/Planned row found."
+---
 
-**For blog posts only:** The script also creates `docs/tracker/citation_baselines/[slug]-baseline.md` with the Day 0/7/14 schedule pre-filled from the post's `faqQuestion`. After the script runs, open that file and fill in the Day 0 query results by running the listed queries in ChatGPT, Perplexity, Google AI Overview, and Gemini. Add 2 additional queries from the post's key claims before saving.
+## Phase 4: Report
+
+List every check as PASS / FAIL / FIXED. Name anything skipped and why.
