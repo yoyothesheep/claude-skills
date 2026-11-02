@@ -33,7 +33,7 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 1. **Read the current system**: `specs/README.md`, `specs/product/`, `specs/engineering/`, and the models, routes, or components the request touches.
 2. **Name the end goal, then the bet**:
    - **10-star experience**: what the product looks like if everything works. This sets direction; it is not scope. It goes into the spec under Deferred.
-   - **Core hypothesis**: the one belief that, if false, makes the product not worth building.
+   - **Core hypothesis**: the one belief that, if false, makes the product not worth building. Add what the user does today instead, and what that costs them; if that's cheap, say so.
    - **Biggest unlock**: the capability most other capabilities depend on.
    - **P0 journeys**: the end-to-end flow(s) needed to test the hypothesis. Keep them as few as possible.
 3. **Audit each requested capability**:
@@ -45,8 +45,14 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
    - *Good*: "Live cross-device sync needs a realtime channel and conflict handling. Refresh-on-open gives the same outcome for a list edited a few times a week. Recommend refresh-on-open in P1, realtime in P2."
    - *Bad*: "If you only had 48 hours, would you really need sync?"
 
+   For the P0 journey, also compare two whole ways to deliver it, not only cheaper versions of one (e.g. recipes come in by photo upload and vision parse, vs. syncing an existing photo album, vs. typing). Name the one you'd build first and why.
+
    If you recommend cutting or downgrading fewer than ~30% of the requested capabilities, state why the request is already minimal.
-5. **Present** the hypothesis, P0 journeys, proposed cuts and downgrades, and 3–5 grounded questions, each paired with a recommendation. **Stop and wait.**
+5. **Present** in this order, need-to-know only (the audit tables stay in your working notes). **Stop and wait.**
+   1. **Building**: one sentence.
+   2. **Stories and priorities**: the 10-star experience; the bet (hypothesis, what users do today instead, the riskiest piece); a table of user stories by tier P0 / P1 / P2 / Later.
+   3. **Features and priorities**: a table of feature, tier, and what gets built. A line naming what you cut that the user didn't ask for, and what replaced it.
+   4. **Questions**: 3–5 grounded questions, each with a recommendation.
 
 ---
 
@@ -76,7 +82,12 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
    - **Edge & Failure Cases**: cold start, invalid/boundary input, failure recovery.
 
    For multi-actor concurrency, offline state, or AI outputs, cross-check against `product-scenarios` dimensions.
-4. **Present** tiers, metrics, and flows. **Stop and confirm before writing the spec.**
+4. **Present** in this order, need-to-know only. **Stop and confirm before writing the spec.**
+   1. **Updated by the answers**: a few lines on what the user's answers changed.
+   2. **Priorities**: one table by tier.
+   3. **Success measure**: the hypothesis metric with its continue/rethink threshold, then one line of secondary signals and offline gates.
+   4. **Flows**: each flow in two to four lines (steps, key edge and failure cases); P1/P2 flows named only.
+   5. **Questions**: only what's still open, each with a recommendation.
 
 ---
 
