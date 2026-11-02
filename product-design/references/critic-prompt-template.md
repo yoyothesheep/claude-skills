@@ -16,7 +16,7 @@ quality bar — a moodboard, not a target. Don't suggest copying them. You have 
 code, notes, or earlier critiques; judge only what you see.
 
 Fixed constraints — don't propose changing these: {data model, missing fields, known bugs,
-the user's chosen direction}.
+the user's chosen direction, TASTE.md (loves, dislikes, brand palette)}.
 
 1. Name the aesthetic the design is going for in one line.
 2. Score each criterion 1–10 against how the references (or, without references, a top
