@@ -41,10 +41,10 @@
 ## Test Matrix (Automated & Manual E2E)
 
 ### A. Automated Test Scenarios (T1..Tn)
-*Deterministic, programmatic tests run via test runner / CI.*
-- **T1 [Scenario Name]** — [Given X, when Y, then Z. Exact behavior asserted]
-- **T2 [Edge Case / Failure Mode]** — [Given bad input or boundary condition, clean handling asserted]
-- **T3 [Data Invariant / Security Boundary]** — [Data scoping or invariant held]. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
+*Deterministic, programmatic tests run via test runner / CI (audited against 8 universal dimensions; see references/scenarios.md).*
+- **T1 [Happy Path]** — [Given X, when Y, then Z. Exact behavior asserted]
+- **T2 [Edge Case / Boundary / Dirty Payload]** — [Given bad input or boundary condition, clean handling asserted]
+- **T3 [Data Invariant / Security / Concurrency]** — [Data scoping, idempotency, or invariant held]. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
 
 *Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
 
@@ -52,7 +52,7 @@
 *Step-by-step user-verifiable walkthroughs: a human sanity pass over key flows (including ones the browser suite automates) plus anything automation can't judge.*
 - **M1 [Desktop Happy Path]** — **Steps**: 1. Navigate to `/...` 2. Click `...` 3. Verify `...`. **Expected**: [Exact visual/functional outcome].
 - **M2 [Responsive State]** — **Steps**: 1. At each width in `VIEWPORT_BREAKPOINTS` (CONFIG.md; else 375px) load `/...` 2. Tap `...`. **Expected**: [Layout matches each breakpoint tier, wide screens included; no horizontal overflow].
-- **M3 [Edge / Error Recovery State]** — **Steps**: 1. Trigger `...` with bad input. **Expected**: [Human-readable error state, clean recovery path].
+- **M3 [Edge / Error Recovery / Human Override]** — **Steps**: 1. Trigger `...` with bad input or cancel mid-flight. **Expected**: [Human-readable error state, clean recovery/undo path].
 
 ### C. Instrumentation
 *Events emitted through the analytics seam (`ANALYTICS_PLATFORM` in CONFIG.md). Journey units: one view + one primary-action event per capability; P0 journeys also emit their hypothesis-metric events. Reporting unit: list the dashboards/queries built instead.*

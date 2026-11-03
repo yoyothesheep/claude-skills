@@ -1,6 +1,6 @@
 # Test Mapping Guide: Translating Scenarios into Test Suites
 
-Every scenario identified by `product-scenarios` should map directly to an automated verification layer. Do not rely on manual testing for edge cases.
+Every scenario discovered during Phase 1 planning should map directly to an automated verification layer or manual E2E walkthrough. Do not rely on ad-hoc manual testing for edge cases.
 
 ---
 

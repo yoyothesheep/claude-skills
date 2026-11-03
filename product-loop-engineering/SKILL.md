@@ -129,16 +129,20 @@ or Schema Shift?"}
    - Ensure no unit is left as an unspecified placeholder.
    - Write the milestone roadmap and status tracker to `active/NN-<milestone>/plan.md` using `templates/PLAN_TEMPLATE.md`. Do **not** put it in `specs/`.
    - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
-3. **Formulate Dual Test Matrix for Every Unit**:
-   - Map product user flows ($F_1..F_m$) and edge cases directly into each unit's test scenarios:
-   - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions:
+3. **Formulate Dual Test Matrix via Scenario Discovery**:
+   - Map product user flows ($F_1..F_m$) into test scenarios by walking the **8 universal dimensions** (Actor/Auth, Flow Paths/Abandonment, Data Volumes/Zero State, Input Boundaries, AI Failures, Human Agency/Recovery, Network/Concurrency, Platform/A11y; see `references/scenarios.md`).
+   - **Scenario Clarification Gate (Ask the User First)**:
+     - If any edge case, boundary state, failure recovery path, or probabilistic behavior is ambiguous, underspecified, or has multiple valid UX interpretations:
+       **STOP before generating unit contracts.**
+       Ask the user for clarification with concrete options and trade-offs. Never guess or hallucinate product behavior during edge cases.
+   - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions covering deterministic logic, dirty payloads, schema repair, boundary inputs, and security invariants:
      - `- **T1 [Happy Path]** — ...`
      - `- **T2 [Edge Case / Malformed Input]** — ...`
      - `- **T3 [Boundary / Security / Invariant]** — ...`
-   - **Part B: Manual E2E Scenarios ($M_1..M_k$)**: Step-by-step user-verifiable browser/device walkthroughs:
+   - **Part B: Manual E2E Scenarios ($M_1..M_k$)**: Step-by-step user-verifiable browser/device walkthroughs covering key flows, visual states, and human recovery/override paths:
      - `- **M1 [Desktop Happy Path]** — Steps: 1. ... 2. ... Expected: ...`
      - `- **M2 [Mobile / Responsive State]** — Steps: 1. ... Expected: ...`
-     - `- **M3 [Error State & Recovery]** — Steps: 1. ... Expected: ...`
+     - `- **M3 [Error State & Recovery / Human Override]** — Steps: 1. ... Expected: ...`
    - **Part C: Instrumentation**: the analytics events the unit emits (name, trigger, properties). Journey units need a view and primary-action event per capability; P0 journeys also emit the hypothesis-metric events.
    - **Viewport coverage (UI units)**: follow the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
 4. **Validate Seam & Dependency Topology**:
@@ -289,3 +293,12 @@ Do not force the user to remember or type phase subcommands. Inspect `active/`, 
 1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs, and pause for approval to start building.
 2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
 3. **P0 Checkpoint**: after the last P0 unit, pause before any P1 work. Have the user run the P0 journeys hands-on, and confirm the hypothesis-metric events are arriving. Before real users, run the `product-launch-audit` skill. If what they learn changes priorities, update the spec and re-run `check_loop.py plan` before continuing.
+
+---
+
+## Detailed References
+
+* [Scenario Discovery & Clarification Guide](references/scenarios.md)
+* [Universal LLM & Probabilistic Failure Archetypes](references/llm-failure-archetypes.md)
+* [Scenario Matrix Template](references/matrix-template.md)
+* [Test Mapping & Mocking Guide](references/test-mapping-guide.md)

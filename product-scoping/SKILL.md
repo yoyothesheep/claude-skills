@@ -81,7 +81,7 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
    - **Expected End State**: user-visible outcome and persisted state.
    - **Edge & Failure Cases**: cold start, invalid/boundary input, failure recovery.
 
-   For multi-actor concurrency, offline state, or AI outputs, cross-check against `product-scenarios` dimensions.
+   For multi-actor concurrency, offline state, or AI outputs, cross-check against the 8 universal scenario dimensions (`product-loop-engineering/references/scenarios.md`).
 4. **Present** in this order, need-to-know only. **Stop and confirm before writing the spec.**
    1. **Updated by the answers**: a few lines on what the user's answers changed.
    2. **Priorities**: one table by tier.
