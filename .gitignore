@@ -4,3 +4,5 @@ drafts/
 .DS_Store
 **/CONFIG.md
 **/*.pdf
+__pycache__/
+*.pyc
