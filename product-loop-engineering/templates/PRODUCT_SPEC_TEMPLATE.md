@@ -10,27 +10,34 @@
 ## Core Hypothesis
 
 - **Hypothesis**: [The one belief that, if false, makes this not worth building]
-- **Hypothesis Metric**: [Metric] — continue if [≥ threshold]; rethink if below.
+- **High-Intent Signal**: [The commitment action proving real skin-in-the-game: payment, pre-order deposit, proprietary data upload, team invite, replacing an active tool. Avoid vanity signals like pageviews or clicks.]
+- **Hypothesis Metric**: [Metric anchored on high-intent signal] — continue if [≥ threshold]; rethink if below.
 - **P0 Journeys**: [F1, …]
 
-## Metrics
+## Metrics & Observability
 
-### 1. Usage & Adoption Metrics
-*Mostly supplied by the analytics platform; name the events.*
-- **Onboarding & Activation**: [Activation event, time to first value]
+### 1. Acquisition & Discovery (Google Analytics)
+*How users arrive at the product.*
+- **Traffic Channels & Campaigns**: [Target acquisition channels, campaign UTMs, referrer attribution]
+- **Landing Conversion**: [Landing-page-to-activation conversion rate]
+
+### 2. In-App Usage & Adoption (PostHog / Mixpanel)
+*In-app product behavior, event telemetry, and session replays.*
+- **Onboarding & Activation**: [Activation event, time to first value (TTFV)]
 - **Feature Usage**: [One view + one primary-action event per P0–P2 capability]
+- **Session Replay Observability**: [Key journeys and drop-off points where session replays are reviewed]
 - **Engagement & Retention**: [Active users, W1 and W4 cohort retention]
 
-### 2. Feature Success Metrics
+### 3. Feature Success Metrics
 *End-to-end funnel conversion showing each flow solved the user's problem.*
 - **[F1 funnel]**: [Start event → completion event conversion]
 
-### 3. Production Quality & Reliability Metrics
+### 4. Production Quality & Reliability Metrics
 *Live quality and health signals in production.*
 - **Output Quality**: [Implicit quality signals, e.g. user edit rate on generated output, empty/fallback rate]
 - **System Reliability**: [p50/p95 latency, timeout/error rate]
 
-### 4. Pre-Release QA & Offline Eval Metrics
+### 5. Pre-Release QA & Offline Eval Metrics
 *Offline gates verified before shipping.*
 - **Offline Eval**: [e.g. $\ge 90\%$ accuracy on golden fixtures; $0\%$ fabricated fields on negative fixtures]
 - **Deterministic Gates**: [e.g. $100\%$ pass rate on `T1..Tn` logic tests]

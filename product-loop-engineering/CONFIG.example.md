@@ -28,10 +28,11 @@ VIEWPORT_BREAKPOINTS: 1440, 1280, 991, 767, 479, 375
 # min-width/max-width media queries so wide-screen tiers aren't missed.
 PARITY_REFERENCE_URL: 
 
-# Analytics (events instrumented per unit; final reporting unit builds dashboards/queries here)
+# Analytics (in-app events & session replay via posthog or mixpanel; traffic acquisition via google-analytics)
 ANALYTICS_PLATFORM: posthog
 # How the agent reaches it: an MCP server name or an API base URL (keys stay in env, never here)
 ANALYTICS_ACCESS: mcp:posthog
+ACQUISITION_ANALYTICS: google-analytics
 
 # Invariants & Policy Flags
 REQUIRE_MAKER_VERIFIER_SEPARATION: true

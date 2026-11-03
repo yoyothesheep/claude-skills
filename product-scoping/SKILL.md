@@ -32,8 +32,10 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 
 1. **Read the current system**: `specs/README.md`, `specs/product/`, `specs/engineering/`, and the models, routes, or components the request touches.
 2. **Name the end goal, then the bet**:
-   - **10-star experience**: what the product looks like if everything works. This sets direction; it is not scope. It goes into the spec under Deferred.
-   - **Core hypothesis**: the one belief that, if false, makes the product not worth building. Add what the user does today instead, and what that costs them; if that's cheap, say so.
+   - **The users and stakeholders**: Who cares about this product, and who actually uses it? Those may be different audiences.
+   - **What success looks like**: What are our users' goals and how will we know if they have achieved their goals? 
+   - **10-star experience**: what the product looks like if everything works and the users have an amazing and memorable experience. This sets direction; it is not scope. It goes into the spec under Deferred.
+   - **Core hypothesis & commitment signal**: the one belief that, if false, makes the product not worth building. Add what the user does today instead, and what that costs them; if that's cheap, say so. Anchor this on a **high-intent commitment signal** (skin in the game: paying, deposit, proprietary data uploaded, team member invited, replacing an active tool) rather than vanity engagement (page views, casual clicks, polite feedback).
    - **Biggest unlock**: the capability most other capabilities depend on.
    - **P0 journeys**: the end-to-end flow(s) needed to test the hypothesis. Keep them as few as possible.
 3. **Audit each requested capability**:
@@ -69,10 +71,10 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
    | **Non-goal** | Explicitly excluded during scoping. |
 
    A downgraded capability names both mechanisms: *"P1: refresh on open; P2: realtime sync."*
-2. **Metrics**:
-   - **Hypothesis metric** (leads the spec): exactly one metric with a continue/rethink threshold. Everything else is secondary.
-   - **Usage & Adoption**: activation, time to first value, retention cohorts, and a usage event (view + primary action) for **every** P0–P2 capability. The analytics platform supplies the aggregates; the spec names the events.
-   - **Feature Success**: funnel conversion per flow.
+2. **Metrics & Observability**:
+   - **Hypothesis metric** (leads the spec): exactly one metric anchored on a high-intent commitment signal, with a continue/rethink threshold. Everything else is secondary. Avoid vanity metrics (page views, button clicks) as validation proof.
+   - **Acquisition & Attribution (Google Analytics)**: how users arrive at the product (acquisition channels, campaign UTMs, referrer) and landing-to-activation conversion.
+   - **In-App Usage & Funnels (PostHog / Mixpanel)**: activation, time to first value (TTFV), funnel conversion per flow, session replay on key journey drop-offs, and a usage event (view + primary action) for **every** P0–P2 capability.
    - **Production Quality & Reliability**: runtime health and implicit quality signals (user edit rate on generated output, empty/fallback rate, p95 latency, error rate).
    - **Pre-Release QA & Offline Eval**: offline gates checked before shipping (golden-dataset accuracy, negative fixtures, deterministic test pass rate).
 3. **Flows, numbered in priority order.** P0 flows come first, starting at F1. Every header carries its tier: `### F1 — <Name> [P0]`. Each flow has:

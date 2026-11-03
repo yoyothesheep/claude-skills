@@ -120,7 +120,7 @@ or Schema Shift?"}
 2. **Sequence and Decompose the Entire Milestone Upfront**:
    - Break the initiative into bounded Build Units ($01..N$) covering **every** P0–P2 flow, in this order:
      1. **Walking skeleton** (`infra`): app shell, data layer, one end-to-end round trip, test/lint running. Only what every journey needs.
-     1a. **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, rate limit on public and login endpoints, every data-touching route behind auth. Cheap now, painful to retrofit.
+     1a. **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, basic analytics and session replay initialized (PostHog/Mixpanel + Google Analytics for acquisition/attribution), rate limit on public and login endpoints, every data-touching route behind auth. Cheap now, painful to retrofit.
      2. **Load-bearing decisions** go in the skeleton even when the feature using them is P2: choices that are expensive to retrofit (data scoping key such as `owner_id`/`tenant_id`, ID scheme, sync model, auth seam as an interface). Record each as an ADR.
      3. **P0 journeys**, then **P1**, then **P2**. Feature-specific infrastructure (external API seam, eval harness, invite tables, scheduler) arrives just in time, as an `infra` unit right before the first journey that needs it.
      4. **Reporting** (last unit): dashboard, reports, or saved queries over the events instrumented by earlier units, built through the analytics platform's API or MCP.
