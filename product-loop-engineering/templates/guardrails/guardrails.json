@@ -6,7 +6,7 @@
   ],
   "protected_paths": [
     ".agent/guardrails.json", ".claude/settings.json", ".claude/hooks/**",
-    ".cursorignore", ".geminiignore", ".claude/agents/loop-verifier.md"
+    ".cursorignore", ".geminiignore", ".claude/agents/loop-*.md", ".codex/agents/loop_*.toml"
   ],
   "verifier_bash_allow": [],
   "append_only_paths": ["history/decisions/**", "history/milestones/**"],

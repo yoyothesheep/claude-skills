@@ -35,6 +35,20 @@ ANALYTICS_PLATFORM: posthog
 ANALYTICS_ACCESS: mcp:posthog
 ACQUISITION_ANALYTICS: google-analytics
 
+# Model routing. Each role runs at a tier; each tool maps tiers to its models.
+# Planning (Phases 1–2) and orchestration run in the main session: start it on the PLANNER_TIER model.
+# Phases 3–4 go to loop-maker, Phase 5 to loop-verifier, Phase 6 to loop-scribe (scripts/gen_guardrails.py
+# writes each with its model). Re-run gen_guardrails.py after changing any of these.
+PLANNER_TIER: top
+MAKER_TIER: mid
+MAKER_TIER_HIGH_RISK: top
+VERIFIER_TIER: mid
+VERIFIER_TIER_STRICT: top
+SCRIBE_TIER: small
+# Tier -> model. Claude Code aliases track the latest version. Blank CODEX_MODELS to skip .codex/agents/.
+CLAUDE_MODELS: top=opus, mid=sonnet, small=haiku
+CODEX_MODELS: top=gpt-6-astra, mid=gpt-6.1-sol, small=gpt-6-luna
+
 # Invariants & Policy Flags
 REQUIRE_MAKER_VERIFIER_SEPARATION: true
 AUTO_COMMIT: false

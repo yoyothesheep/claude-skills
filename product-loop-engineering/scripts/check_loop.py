@@ -576,7 +576,7 @@ def adapter_errors(cfg: dict) -> list[str]:
                  for e in settings.get("hooks", {}).get("PreToolUse", []) for h in e.get("hooks", []))
     if not hooked:
         errors.append("PreToolUse guard hook not registered in .claude/settings.json")
-    for f in (("hooks", "guard.py"), ("agents", "loop-verifier.md")):
+    for f in (("hooks", "guard.py"), *(("agents", f"loop-{r}.md") for r in ("maker", "maker-high", "verifier", "verifier-strict", "scribe"))):
         if not _repo(".claude", *f).is_file():
             errors.append(f".claude/{'/'.join(f)} missing (run scripts/gen_guardrails.py)")
     return errors

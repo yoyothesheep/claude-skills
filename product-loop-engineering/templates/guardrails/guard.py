@@ -99,7 +99,7 @@ def main() -> int:
     except (ValueError, OSError):
         return 0
     tool, args = event.get("tool_name", ""), event.get("tool_input") or {}
-    reason = check(cfg, tool, args) or (verifier_check(cfg, tool, args) if event.get("agent_type") == VERIFIER else None)
+    reason = check(cfg, tool, args) or (verifier_check(cfg, tool, args) if str(event.get("agent_type") or "").startswith(VERIFIER) else None)
     if reason:
         print(f"Blocked by guardrails: {reason}", file=sys.stderr)
         return 2

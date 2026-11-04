@@ -17,7 +17,7 @@ Two kinds, handled in different places:
    - The dev database login has no `DELETE`/`DROP`.
    - No production credentials in the agent's environment.
    - Run the agent in a sandbox or container where it can't reach what it doesn't need.
-   - The verifier is `.claude/agents/loop-verifier.md`: no write tools, Bash limited by the hook to read-only commands, `check_loop.py`, and `verifier_bash_allow` (CONFIG.md's test/lint commands; add a dev-server command by hand if M walkthroughs need one). `check_loop.py fingerprint` before and after catches anything that slips through.
+   - The verifiers are `.claude/agents/loop-verifier.md` and `loop-verifier-strict.md` (same rules, higher model tier for medium and high risk): no write tools, Bash limited by the hook to read-only commands, `check_loop.py`, and `verifier_bash_allow` (CONFIG.md's test/lint commands; add a dev-server command by hand if M walkthroughs need one). `check_loop.py fingerprint` before and after catches anything that slips through.
 
 **Lock only what git can't undo.** Git rolls back edits to tracked files, so those get checks, not locks: commits and pushes are allowed, edits to `history/` and the design system are flagged by `check_loop.py` rather than blocked. Commits follow `AUTO_COMMIT` in `CONFIG.md`. What git can't undo gets a lock:
 

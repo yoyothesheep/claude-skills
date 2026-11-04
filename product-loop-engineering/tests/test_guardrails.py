@@ -102,6 +102,59 @@ class HookTests(RepoCase):
 
 
 
+class RoleAgentTests(RepoCase):
+    def regen(self, config):
+        (self.root / "CONFIG.md").write_text(config)
+        return run([GEN], self.root)
+
+    def test_default_claude_agents_carry_tier_models(self):
+        agents = self.root / ".claude/agents"
+        expected = {"loop-maker": "sonnet", "loop-maker-high": "opus", "loop-verifier": "sonnet",
+                    "loop-verifier-strict": "opus", "loop-scribe": "haiku"}
+        for name, model in expected.items():
+            with self.subTest(name=name):
+                text = (agents / f"{name}.md").read_text()
+                self.assertIn(f"name: {name}\n", text)
+                self.assertIn(f"model: {model}\n", text)
+        self.assertIn("disallowedTools: Write, Edit", (agents / "loop-verifier-strict.md").read_text())
+        self.assertNotIn("disallowedTools", (agents / "loop-maker.md").read_text())
+        self.assertFalse((self.root / ".codex").exists())
+
+    def test_config_overrides_tiers_and_models(self):
+        self.regen("MAKER_TIER: top\nCLAUDE_MODELS: top=claude-x, mid=claude-y, small=claude-z\n")
+        self.assertIn("model: claude-x\n", (self.root / ".claude/agents/loop-maker.md").read_text())
+        self.assertIn("model: claude-z\n", (self.root / ".claude/agents/loop-scribe.md").read_text())
+
+    def test_unknown_tier_inherits_and_warns(self):
+        r = self.regen("SCRIBE_TIER: tiny\n")
+        self.assertNotIn("model:", (self.root / ".claude/agents/loop-scribe.md").read_text())
+        self.assertIn("loop-scribe: tier 'tiny'", r.stderr)
+
+    def test_codex_agents_written_when_models_set(self):
+        import tomllib
+        self.regen("CODEX_MODELS: top=gpt-top, mid=gpt-mid, small=gpt-small\n")
+        for name, model, effort in [("loop_maker", "gpt-mid", "medium"), ("loop_verifier_strict", "gpt-top", "high"),
+                                    ("loop_scribe", "gpt-small", "low")]:
+            with self.subTest(name=name):
+                data = tomllib.loads((self.root / f".codex/agents/{name}.toml").read_text())
+                self.assertEqual((data["name"], data["model"], data["model_reasoning_effort"]), (name, model, effort))
+                self.assertTrue(data["description"] and data["developer_instructions"].strip())
+
+    def test_agents_md_lists_roles(self):
+        self.regen("CODEX_MODELS: top=gpt-top, mid=gpt-mid, small=gpt-small\n")
+        text = (self.root / "AGENTS.md").read_text()
+        self.assertIn("roles:start", text)
+        self.assertIn("| `loop-maker` | 3–4 | mid | sonnet | gpt-mid |", text)
+        self.assertIn("| planner (main session) | 0–2, orchestration | top | opus | gpt-top |", text)
+
+    def test_role_agents_are_protected_and_required(self):
+        self.assertEqual(self.hook("Edit", file_path=".claude/agents/loop-maker.md").returncode, 2)
+        (self.root / ".claude/agents/loop-scribe.md").unlink()
+        code, out = self.guardrails()
+        self.assertNotEqual(code, 0)
+        self.assertTrue(any("loop-scribe.md missing" in e for e in out["errors"]), out)
+
+
 class VerifierTests(RepoCase):
     def as_verifier(self, tool, **tool_input):
         event = {"tool_name": tool, "tool_input": tool_input, "agent_type": "loop-verifier"}
@@ -137,6 +190,10 @@ class VerifierTests(RepoCase):
         ]:
             with self.subTest(tool=tool, args=args):
                 self.assertEqual(self.as_verifier(tool, **args), 0)
+
+    def test_strict_verifier_is_read_only_too(self):
+        event = {"tool_name": "Edit", "tool_input": {"file_path": "src/app.py"}, "agent_type": "loop-verifier-strict"}
+        self.assertEqual(run([self.root / ".claude/hooks/guard.py"], self.root, stdin=json.dumps(event)).returncode, 2)
 
     def test_maker_is_unaffected(self):
         self.assertEqual(self.hook("Edit", file_path="src/app.py").returncode, 0)

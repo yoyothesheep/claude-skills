@@ -64,6 +64,18 @@ An end-to-end engineering operating system for building maintainable, high-integ
 7. **Enforced Guardrails, Not Prompts**:
    A prompt is a keep-out sign; a guardrail is a lock the environment enforces. Lock only what git can't undo; everything git can roll back gets a check instead. Phase 0 installs the baseline locks (secret reads denied, guardrail config protected, commands that destroy uncommitted work or act outside the repo blocked, a dev login that can't delete) and the privacy gates every commit passes (no secret files tracked or un-ignored, no user-data files outside `tests/fixtures/`, no secrets, card numbers or SSNs in changed files, synthetic test data only), generated from one agent-neutral file, `.agent/guardrails.json`, by `scripts/gen_guardrails.py`. Every unit carries a **Risk** level (low / medium / high, from blast radius and reversibility; unsure means higher) and a **Guardrails ADR**: low risk cites the baseline ADR, medium and high write their own, as does any design-system change. The higher the risk, the more locks, the stricter the verifier. Runtime locks for AI features inside the app are built by the unit that adds them and audited at launch by `product-launch-audit`. Full detail: [Guardrails](references/guardrails.md).
 
+8. **Roles at Model Tiers, Not Model Names**:
+   Each phase runs as a role at a tier (top, mid, small); `CONFIG.md` maps tiers to each tool's models, and `scripts/gen_guardrails.py` writes one subagent per role with its model.
+
+   | Role | Phases | Tier | Gets |
+   | :--- | :--- | :--- | :--- |
+   | Planner / orchestrator (main session) | 0–2, then spawns the rest and relays `BLOCKED:` questions to the user | top | Everything |
+   | `loop-maker` (`loop-maker-high` for high risk) | 3–4 | mid (high risk: top) | Contract path only |
+   | `loop-verifier` (`loop-verifier-strict` for medium and high risk) | 5 | mid (medium/high: top) | Contract path, diff, `check_loop.py` JSON |
+   | `loop-scribe` | 6 | small | Contract path, verdict table, diff |
+
+   Planning errors compound across every unit, so planning gets the top tier; the build spends the most tokens, so it gets mid. Never put the verifier below mid: a weak verifier approves what it's shown. Tests are never written at the small tier. Name roles in prompts and docs, never models. If the main session runs below `PLANNER_TIER`, say so before Phase 1. Codex agents use underscores (`loop_maker`).
+
 ---
 
 ## Setup + the 6-Phase Engineering Loop
@@ -196,6 +208,8 @@ or Schema Shift?"}
 
 **Goal**: Write deterministic tests mapping 1:1 to the unit's pre-documented $T_1..T_n$ matrix before touching production logic.
 
+**Who runs Phases 3–4**: spawn a fresh `loop-maker` (`loop-maker-high` for a high-risk unit). Its prompt gets the unit contract path and nothing else from planning. If it returns `BLOCKED:`, put the question to the user, record the answer in the contract, and spawn a new maker.
+
 1. **Scaffold Test Suite**:
    - Place in `tests/<subsystem>/` or configured test directory.
    - Name test functions with matching test tokens (e.g. `test_t1_happy_path`, `test_t2_honeypot_trap`).
@@ -236,10 +250,10 @@ or Schema Shift?"}
 > **Independence Invariant**: The maker agent never signs off on its own work. A separate verification pass audits code, test assertions, manual E2E reproducibility, and observed behavior against the unit spec without rationalization.
 
 **How to run it independently**:
-- Run `check_loop.py fingerprint`, then spawn a fresh `loop-verifier` subagent (generated in Phase 0). Its prompt gets only: the unit contract path, `git diff` of the unit's changes, the `check_loop.py` JSON, and the verifier steps below. Never pass the maker's reasoning, summaries, or "known issues" notes.
+- Run `check_loop.py fingerprint`, then spawn a fresh `loop-verifier` subagent (`loop-verifier-strict` for medium and high risk; both generated in Phase 0). Its prompt gets only: the unit contract path, `git diff` of the unit's changes, the `check_loop.py` JSON, and the verifier steps below. Never pass the maker's reasoning, summaries, or "known issues" notes.
 - The verifier reads and runs; it can't edit. It has no write tools, and the guard hook limits its Bash to read-only commands, `check_loop.py`, and `verifier_bash_allow`. When it returns, run `check_loop.py fingerprint` again: a different hash voids the verdict, so re-run with a new verifier. It returns the verdict table plus a findings list (file:line, expected vs. observed). Each finding quotes the code line it rests on and carries a certainty from 1 to 10. Findings at 7+ block a PASS (5+ for high-risk units); 4–6 go under **Unverified** (listed, non-blocking); below 4 are dropped.
-- On FAIL, the maker fixes the findings, and a **new** verifier subagent re-runs the full gate. Don't reuse the old one or narrow its scope to the fixes. After 3 fix → re-verify cycles, stop and ask the user.
-- If no subagent tool exists, stop and ask the user to run verification in a separate session with the same inputs and the same fingerprint check. Don't verify inline.
+- On FAIL, a new maker gets the contract path plus the findings and fixes them, and a **new** verifier subagent re-runs the full gate. Don't reuse the old one or narrow its scope to the fixes. After 3 fix → re-verify cycles, stop and ask the user.
+- If no subagent tool exists, stop and ask the user to run verification in a separate session on the verifier tier's model, with the same inputs and the same fingerprint check. Don't verify inline. The same fallback applies to every role: a fresh session on that role's model, given only that role's inputs.
 
 1. **Mechanical CI Gate (Deterministic)**:
    Run the verification runner:
@@ -293,6 +307,8 @@ or Schema Shift?"}
 
 **Goal**: Synchronize living specifications with current production reality and prepare clean diffs for human review.
 
+**Who runs it**: spawn `loop-scribe` with the contract path, the verdict table, and the diff. The orchestrator reviews its file list before the checkpoint.
+
 1. **Sync Living Specs & Compound Learnings** (mandatory; a unit is not complete until this is done):
    - Create or update every spec listed under the unit's **Living Specs Affected**, plus any other area the unit actually changed: `specs/engineering/<subsystem>.md` (use `templates/LIVING_SPEC_TEMPLATE.md`) and, if requirements changed, `specs/product/` (use `templates/PRODUCT_SPEC_TEMPLATE.md`).
    - Document shipped behavior from the code, not from the unit contract. Where the contract and the code differ, the spec follows the code and lists the difference under **Known Gaps**.
@@ -318,7 +334,7 @@ Do not force the user to remember or type phase subcommands. Inspect `active/`, 
 0. **Setup Checkpoint (Phase 0)**: if `check_loop.py guardrails` fails, run Phase 0 and pause for the human-only steps.
 1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs (one per medium or high risk unit), and pause for approval to start building.
    **High-risk units** pause again before building: present the design and the locks, and get approval first.
-2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
+2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, each through its role (tenet 8), then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
 3. **P0 Checkpoint**: after the last P0 unit, pause before any P1 work. Have the user run the P0 journeys hands-on, and confirm the hypothesis-metric events are arriving. Before real users, run the `product-launch-audit` skill. If what they learn changes priorities, update the spec and re-run `check_loop.py plan` before continuing.
 
 ---

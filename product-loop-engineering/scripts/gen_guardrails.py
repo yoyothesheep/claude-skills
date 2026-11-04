@@ -7,10 +7,12 @@ Safe to re-run: it merges into existing files and never removes your own setting
 Outputs:
 - .claude/settings.json      permission deny rules + PreToolUse hook (merged)
 - .claude/hooks/guard.py     the hook (copied from templates/guardrails/)
-- .claude/agents/loop-verifier.md   read-only Phase 5 verifier; CONFIG.md test/lint commands go to `verifier_bash_allow`
+- .claude/agents/loop-*.md   role subagents (maker, verifier, scribe), each with the model for its tier from CONFIG.md;
+                             the verifiers are read-only and CONFIG.md test/lint commands go to `verifier_bash_allow`
+- .codex/agents/loop_*.toml  the same roles for Codex, when CONFIG.md sets CODEX_MODELS
 - .gitignore                 secret and private-data paths (managed block)
 - .cursorignore, .geminiignore   secret paths (managed block)
-- AGENTS.md                  plain-language rules for agents without hooks (managed block)
+- AGENTS.md                  plain-language rules for agents without hooks, and the model roles (managed blocks)
 - .git/hooks/pre-commit      with --git-hook: runs `check_loop.py guardrails` for any agent
 
 Usage:
@@ -30,6 +32,17 @@ from pathlib import Path
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates" / "guardrails"
 HOOK_COMMAND = 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py"'
 HOOK_MATCHER = "Bash|Read|Edit|Write|MultiEdit|NotebookEdit"
+
+# (agent name, template, CONFIG.md key for its tier, default tier, description suffix)
+ROLES = [
+    ("loop-maker", "loop-maker.md", "MAKER_TIER", "mid", " Low- and medium-risk units."),
+    ("loop-maker-high", "loop-maker.md", "MAKER_TIER_HIGH_RISK", "top", " High-risk units."),
+    ("loop-verifier", "loop-verifier.md", "VERIFIER_TIER", "mid", " Low-risk units."),
+    ("loop-verifier-strict", "loop-verifier.md", "VERIFIER_TIER_STRICT", "top", " Medium- and high-risk units."),
+    ("loop-scribe", "loop-scribe.md", "SCRIBE_TIER", "small", ""),
+]
+DEFAULT_CLAUDE_MODELS = "top=opus, mid=sonnet, small=haiku"
+CODEX_EFFORT = {"top": "high", "mid": "medium", "small": "low"}
 
 
 def rule_path(glob: str) -> str:
@@ -66,18 +79,96 @@ def gen_claude(root: Path, cfg: dict) -> None:
     hook.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(TEMPLATES / "guard.py", hook)
     hook.chmod(hook.stat().st_mode | stat.S_IXUSR)
-    agent = root / ".claude" / "agents" / "loop-verifier.md"
-    agent.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(TEMPLATES / "loop-verifier.md", agent)
+
+
+def read_config(root: Path) -> dict[str, str]:
+    """`KEY: value` lines from the repo's CONFIG.md (root first, then the skill folder)."""
+    for path in (root / "CONFIG.md", *(root / b / "skills" / "product-loop-engineering" / "CONFIG.md" for b in (".agent", ".claude"))):
+        if path.is_file():
+            pairs = re.findall(r"^([A-Z][A-Z0-9_]*):[ \t]*(.*)$", path.read_text(encoding="utf-8"), re.MULTILINE)
+            return {k: v.strip() for k, v in pairs}
+    return {}
 
 
 def config_commands(root: Path) -> list[str]:
     """TEST/LINT/FORMAT commands from the repo's CONFIG.md, which the verifier may run."""
-    for path in (root / "CONFIG.md", *(root / b / "skills" / "product-loop-engineering" / "CONFIG.md" for b in (".agent", ".claude"))):
-        if path.is_file():
-            found = re.findall(r"^(?:TEST|LINT|FORMAT)_COMMAND:[ \t]*(\S.*)$", path.read_text(encoding="utf-8"), re.MULTILINE)
-            return [c.strip() for c in found]
-    return []
+    conf = read_config(root)
+    return [conf[k] for k in ("TEST_COMMAND", "LINT_COMMAND", "FORMAT_COMMAND") if conf.get(k)]
+
+
+def parse_models(spec: str) -> dict[str, str]:
+    """`top=opus, mid=sonnet, small=haiku` -> {"top": "opus", ...}."""
+    pairs = (item.split("=", 1) for item in spec.split(",") if "=" in item)
+    return {k.strip(): v.strip() for k, v in pairs if k.strip() and v.strip()}
+
+
+def split_template(name: str) -> tuple[dict[str, str], str]:
+    _, front, body = (TEMPLATES / name).read_text(encoding="utf-8").split("---\n", 2)
+    meta = dict(line.split(": ", 1) for line in front.strip().splitlines())
+    return meta, body.strip()
+
+
+def role_tiers(conf: dict[str, str]) -> list[tuple[str, str, str, dict[str, str], str]]:
+    """(name, tier, description, frontmatter, body) for every role, tiers from CONFIG.md."""
+    out = []
+    for name, template, key, default, note in ROLES:
+        meta, body = split_template(template)
+        meta["name"] = name
+        meta["description"] = meta["description"] + note
+        out.append((name, conf.get(key) or default, meta["description"], meta, body))
+    return out
+
+
+def toml_multiline(text: str) -> str:
+    return '"""\n' + text.replace("\\", "\\\\").replace('"""', '\\"""') + '\n"""'
+
+
+def gen_agents(root: Path, conf: dict[str, str]) -> list[str]:
+    """Role subagents for Claude Code, and for Codex when CODEX_MODELS is set. Returns warnings."""
+    warnings = []
+    claude = parse_models(conf.get("CLAUDE_MODELS") or DEFAULT_CLAUDE_MODELS)
+    codex = parse_models(conf.get("CODEX_MODELS", ""))
+    for name, tier, desc, meta, body in role_tiers(conf):
+        for harness, models in (("CLAUDE_MODELS", claude), ("CODEX_MODELS", codex)):
+            if models and tier not in models:
+                warnings.append(f"{name}: tier '{tier}' not in {harness}; the agent inherits the session model")
+        lines = ["---", *(f"{k}: {v}" for k, v in meta.items())]
+        if tier in claude:
+            lines.append(f"model: {claude[tier]}")
+        path = root / ".claude" / "agents" / f"{name}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join([*lines, "---", "", body, ""]), encoding="utf-8")
+        if codex:
+            toml = [f"name = {json.dumps(name.replace('-', '_'), ensure_ascii=False)}",
+                    f"description = {json.dumps(desc, ensure_ascii=False)}"]
+            if tier in codex:
+                toml += [f"model = {json.dumps(codex[tier])}", f"model_reasoning_effort = {json.dumps(CODEX_EFFORT.get(tier, 'medium'))}"]
+            toml.append(f"developer_instructions = {toml_multiline(body)}")
+            path = root / ".codex" / "agents" / f"{name.replace('-', '_')}.toml"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("\n".join(toml) + "\n", encoding="utf-8")
+    return warnings
+
+
+def gen_roles_md(root: Path, conf: dict[str, str]) -> None:
+    claude = parse_models(conf.get("CLAUDE_MODELS") or DEFAULT_CLAUDE_MODELS)
+    codex = parse_models(conf.get("CODEX_MODELS", ""))
+    planner = conf.get("PLANNER_TIER") or "top"
+    phases = {"loop-maker": "3–4", "loop-maker-high": "3–4 (high risk)", "loop-verifier": "5 (low risk)",
+              "loop-verifier-strict": "5 (medium/high risk)", "loop-scribe": "6"}
+    model = lambda m, t: m.get(t, "session model")
+    lines = [
+        "## Model roles (product-loop-engineering)",
+        "",
+        "Roles map to tiers in `CONFIG.md`; tiers map to each tool's models. Where a tool can't route a role to its model, run that phase in a fresh session on the listed model.",
+        "",
+        "| Role | Phases | Tier | Claude Code | Codex |",
+        "|:---|:---|:---|:---|:---|",
+        f"| planner (main session) | 0–2, orchestration | {planner} | {model(claude, planner)} | {model(codex, planner)} |",
+    ]
+    for name, tier, *_ in role_tiers(conf):
+        lines.append(f"| `{name}` | {phases[name]} | {tier} | {model(claude, tier)} | {model(codex, tier)} |")
+    write_block(root / "AGENTS.md", "\n".join(lines), "<!-- roles:start -->", "<!-- roles:end -->")
 
 
 def gen_ignore_files(root: Path, cfg: dict) -> None:
@@ -146,11 +237,17 @@ def main(argv: list[str]) -> int:
     if new:
         allow.extend(new)
         cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+    conf = read_config(root)
     gen_claude(root, cfg)
+    warnings = gen_agents(root, conf)
     gen_ignore_files(root, cfg)
     gen_gitignore(root, cfg)
     gen_agents_md(root, cfg)
-    print("wrote .claude/settings.json, .claude/hooks/guard.py, .claude/agents/loop-verifier.md, .gitignore, .cursorignore, .geminiignore, AGENTS.md")
+    gen_roles_md(root, conf)
+    codex = ", .codex/agents/loop_*.toml" if conf.get("CODEX_MODELS") else ""
+    print(f"wrote .claude/settings.json, .claude/hooks/guard.py, .claude/agents/loop-*.md{codex}, .gitignore, .cursorignore, .geminiignore, AGENTS.md")
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
     if "--git-hook" in argv:
         print(gen_git_hook(root))
     print("Next: write the baseline guardrails ADR (templates/GUARDRAILS_ADR_TEMPLATE.md) and cite it from the skeleton unit.")
