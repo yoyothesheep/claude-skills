@@ -40,10 +40,3 @@ REQUIRE_MAKER_VERIFIER_SEPARATION: true
 AUTO_COMMIT: false
 DETERMINISTIC_LOGIC_ISOLATED: true
 
-# Domain-specific AI behaviors to test (optional; see references/scenarios.md)
-# DOMAIN_AI_SCENARIOS:
-#   - id: multi_asset_grouping
-#     description: "Associating multiple input assets into a single cohesive entity"
-#   - id: multi_entity_extraction
-#     description: "Extracting multiple distinct entities from a single input asset"
-

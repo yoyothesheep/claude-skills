@@ -40,15 +40,32 @@
 
 ---
 
+## Scenario Coverage
+
+*Consider every dimension from `references/scenarios.md`; test only where it pays. A row needs either the T/M tokens covering it or a one-line reason it's skipped. "Doesn't apply" and "low value for this unit" are both valid. Don't write a test just to fill a row. Low-risk units usually cover 2–4 dimensions. Level choice: `references/test-mapping-guide.md`.*
+
+| Dimension | Covered by | Skipped (why) |
+|:---|:---|:---|
+| Actor & Access | [T3, M1] | |
+| Flow Paths & Intent | | |
+| Data Volumes & State | | |
+| Input & Payload Boundaries | | |
+| AI & Probabilistic Modes | — | [e.g. No model calls in this unit] |
+| Human Agency & Override | | |
+| Network & Concurrency | — | [e.g. Read-only view, nothing to double-submit] |
+| Platform, Viewport & A11y | | |
+
+---
+
 ## Test Matrix (Automated & Manual E2E)
 
 ### A. Automated Test Scenarios (T1..Tn)
-*Deterministic, programmatic tests run via test runner / CI (audited against 8 universal dimensions; see references/scenarios.md).*
-- **T1 [Happy Path]** — [Given X, when Y, then Z. Exact behavior asserted]
-- **T2 [Edge Case / Boundary / Dirty Payload]** — [Given bad input or boundary condition, clean handling asserted]
-- **T3 [Guardrail]** — *(medium and high risk)* [Each lock holds: the blocked action stays blocked, e.g. an unapproved recipient is rejected, a delete with the dev login fails]
-- **T4 [Abuse]** — *(high risk)* [Injection in a document does nothing, wrong-tenant access denied, replayed request rejected]
-- **T5 [Data Invariant / Security / Concurrency]** — [Data scoping, idempotency, or invariant held]. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
+*Deterministic, programmatic tests run via test runner / CI. Each line names its level `(unit | integration | browser | eval)` and what breaks if it's wrong.*
+- **T1 [Happy Path] (unit)** — [Given X, when Y, then Z. Exact behavior asserted]. *Fails if broken: [user-visible consequence, e.g. saved plan silently lost]*
+- **T2 [Edge Case / Boundary / Dirty Payload] (unit)** — [Given bad input or boundary condition, clean handling asserted]. *Fails if broken: [...]*
+- **T3 [Guardrail] (integration)** — *(medium and high risk)* [Each lock holds: the blocked action stays blocked, e.g. an unapproved recipient is rejected, a delete with the dev login fails]
+- **T4 [Abuse] (integration)** — *(high risk)* [Injection in a document does nothing, wrong-tenant access denied, replayed request rejected]
+- **T5 [Data Invariant / Security / Concurrency] (integration)** — [Data scoping, idempotency, or invariant held]. *Fails if broken: [e.g. duplicate records]*. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
 
 *Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
 
@@ -56,7 +73,7 @@
 *Step-by-step user-verifiable walkthroughs: a human sanity pass over key flows (including ones the browser suite automates) plus anything automation can't judge.*
 - **M1 [Desktop Happy Path]** — **Steps**: 1. Navigate to `/...` 2. Click `...` 3. Verify `...`. **Expected**: [Exact visual/functional outcome].
 - **M2 [Responsive State]** — **Steps**: 1. At each width in `VIEWPORT_BREAKPOINTS` (CONFIG.md; else 375px) load `/...` 2. Tap `...`. **Expected**: [Layout matches each breakpoint tier, wide screens included; no horizontal overflow].
-- **M3 [Edge / Error Recovery / Human Override]** — **Steps**: 1. Trigger `...` with bad input or cancel mid-flight. **Expected**: [Human-readable error state, clean recovery/undo path].
+- **M3 [Edge / Error Recovery / Human Override]** — **Steps**: 1. Trigger `...` with bad input or cancel mid-flight. **Expected**: [Human-readable error state]. **Recovery**: [How the user gets back on track: retry, undo, edit, or resume].
 
 ### C. Instrumentation
 *Events emitted through the analytics seam (`ANALYTICS_PLATFORM` in CONFIG.md). Journey units: one view + one primary-action event per capability; P0 journeys also emit their hypothesis-metric events. Reporting unit: list the dashboards/queries built instead.*

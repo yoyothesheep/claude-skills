@@ -49,11 +49,9 @@ When planning build units and formulating test matrices in Phase 1, evaluate eac
    - Actionable error feedback (what went wrong and what the user can do now).
 
 7. **Network & Concurrency**:
-   - Fast connection (nominal).
-   - High latency / slow 3G (optimistic UI or loading feedback).
-   - Flaky / offline transition mid-submission (queue/retry vs. prompt).
-   - Double-submits (debouncing, idempotency keys).
-   - Race conditions (out-of-order API responses).
+   - Double-submits (double tap or retry creates one record, not two: debounce or idempotency key).
+   - Failed request (user sees an error and can retry; nothing fails silently).
+   - Add latency, offline, or race-condition handling only when the product spec requires it.
 
 8. **Platform, Viewport & Accessibility**:
    - Viewport breakpoints (`VIEWPORT_BREAKPOINTS` in `CONFIG.md`).
@@ -78,12 +76,5 @@ Do not guess or assume product behavior. Ask the user concrete, structured quest
 
 ## 3. Mapping Scenarios to the Dual Test Matrix
 
-Every discovered scenario maps directly to the unit spec's test matrix:
-
-- **Automated Tests ($T_1..T_n$)**: Programmatic CI checks.
-  - Deterministic business logic, schema repair, boundary checks, input sanitation, database scoping, injectable mock AI failures.
-- **Manual E2E Walkthroughs ($M_1..M_k$)**: User-verifiable steps.
-  - Real human recovery flows, undo/reversibility, responsive breakpoint checks, visual empty states, loading indicators.
-
-See [Test Mapping Guide](test-mapping-guide.md) for test level selection and mocking patterns, and [Scenario Matrix Template](matrix-template.md) for full matrix specifications.
+Whether each scenario becomes an automated test (T), a manual walkthrough (M), or both, and at which level, is covered in [Test Levels & Mocking Guide](test-mapping-guide.md). Record the result in the unit's Scenario Coverage section.
 

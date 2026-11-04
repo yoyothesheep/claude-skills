@@ -150,11 +150,10 @@ or Schema Shift?"}
    - Write the milestone roadmap and status tracker to `active/NN-<milestone>/plan.md` using `templates/PLAN_TEMPLATE.md`. Do **not** put it in `specs/`.
    - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
 3. **Formulate Dual Test Matrix via Scenario Discovery**:
-   - Map product user flows ($F_1..F_m$) into test scenarios by walking the **8 universal dimensions** (Actor/Auth, Flow Paths/Abandonment, Data Volumes/Zero State, Input Boundaries, AI Failures, Human Agency/Recovery, Network/Concurrency, Platform/A11y; see `references/scenarios.md`).
-   - **Scenario Clarification Gate (Ask the User First)**:
-     - If any edge case, boundary state, failure recovery path, or probabilistic behavior is ambiguous, underspecified, or has multiple valid UX interpretations:
-       **STOP before generating unit contracts.**
-       Ask the user for clarification with concrete options and trade-offs. Never guess or hallucinate product behavior during edge cases.
+   - **Read `references/scenarios.md` before writing any T or M scenario.** Walk each flow ($F_1..F_m$) across its 8 dimensions: Actor/Auth, Flow Paths/Abandonment, Data Volumes/Zero State, Input Boundaries, AI Failures, Human Agency/Recovery, Network/Concurrency, Platform/A11y.
+   - **Read `references/test-mapping-guide.md` to place each scenario**: automated (T) or manual (M), and which test level (unit, integration, browser, eval).
+   - Fill the unit's **Scenario Coverage** table: each dimension lists the T/M tokens covering it, or a one-line reason it's skipped (doesn't apply, or low value for this unit). Consider every dimension; don't test every one.
+   - **Scenario Clarification Gate**: if expected behavior for any scenario is ambiguous or has several valid UX readings, **STOP before generating unit contracts** and ask the user (protocol: `references/scenarios.md` §2). Never guess product behavior.
    - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions covering deterministic logic, dirty payloads, schema repair, boundary inputs, and security invariants. Medium and high risk add a `[Guardrail]` scenario per lock (the blocked action stays blocked); high risk adds an `[Abuse]` scenario (injection, wrong-tenant access, replay):
      - `- **T1 [Happy Path]** — ...`
      - `- **T2 [Edge Case / Malformed Input]** — ...`
@@ -201,7 +200,7 @@ or Schema Shift?"}
    - Place in `tests/<subsystem>/` or configured test directory.
    - Name test functions with matching test tokens (e.g. `test_t1_happy_path`, `test_t2_honeypot_trap`).
 2. **Injectable & Deterministic I/O**:
-   - Mock external networks, third-party APIs (e.g. Resend, Stripe), system clocks, or AI model calls.
+   - Mock external networks, third-party APIs (e.g. Resend, Stripe), system clocks, or AI model calls. Patterns: `references/test-mapping-guide.md` §3.
    - Tests must run fast, offline, and deterministically.
    - The configured `TEST_COMMAND` runs every suite (unit + browser), so the gate in Phase 5 sees both.
 3. **Verify Red State**:
@@ -329,5 +328,4 @@ Do not force the user to remember or type phase subcommands. Inspect `active/`, 
 * [Guardrails: locks, not prompts](references/guardrails.md)
 * [Scenario Discovery & Clarification Guide](references/scenarios.md)
 * [Universal LLM & Probabilistic Failure Archetypes](references/llm-failure-archetypes.md)
-* [Scenario Matrix Template](references/matrix-template.md)
-* [Test Mapping & Mocking Guide](references/test-mapping-guide.md)
+* [Test Levels & Mocking Guide](references/test-mapping-guide.md)

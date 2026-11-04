@@ -1,14 +1,22 @@
-# Test Mapping Guide: Translating Scenarios into Test Suites
+# Test Levels & Mocking Guide
 
-Every scenario discovered during Phase 1 planning should map directly to an automated verification layer or manual E2E walkthrough. Do not rely on ad-hoc manual testing for edge cases.
+Every scenario found in Phase 1 (see [scenarios.md](scenarios.md)) gets a home: an automated test at the right level, a manual walkthrough, or both. Record the choice in the unit's Scenario Coverage table and on each T line. Don't leave edge cases to ad-hoc manual testing.
 
 ---
 
-## 1. The Verification Pyramid for Scenario Mapping
+## 0. Automated (T) vs Manual (M)
+
+- **Automated ($T_1..T_n$)**: anything a program can assert deterministically. Business logic, boundary inputs, schema repair, data scoping, injected AI failures, and browser behavior (focus, keyboard, JS state, overflow, accessible names).
+- **Manual ($M_1..M_k$)**: what needs human judgment. Visual feel, empty-state clarity, recovery and undo flows end to end, third-party pages, a sanity pass at each breakpoint.
+- **Both**: key happy paths and recovery paths. The browser suite proves they work; the walkthrough proves they feel right.
+
+---
+
+## 1. The Verification Pyramid
 
 ```
       ▲
-     / \     E2E / Browser Tests (Playwright / Cypress)
+     / \     Browser Tests (Playwright / Cypress)
     /   \    - Happy paths, visual states, auth redirects, cancellation
    /─────\
   /       \   Integration / Pipeline Tests
@@ -19,20 +27,22 @@ Every scenario discovered during Phase 1 planning should map directly to an auto
 ─────────────────
 ```
 
+Push each scenario as low as it can be proven. Go up a level only for behavior that doesn't exist below it.
+
 ---
 
 ## 2. Test Level Selection Matrix
 
-| Scenario Category | Primary Test Layer | Tooling / Pattern |
-|:---|:---|:---|
-| **Actor & Auth** | E2E + Unit route guards | Playwright session mocking, route middleware unit tests |
-| **Flow Paths & UI State** | E2E Browser | Playwright component / flow specs, DOM assertions |
-| **Data Volumes & Scale** | Integration / DB | Parametrized DB fixtures, pagination load tests |
-| **Input Boundaries** | Unit Tests | Fuzzing, boundary edge value parametrization |
-| **Generic LLM Failures** | Unit with Mock Client | Injectable mock client returning canned malformed/truncated responses |
-| **Domain AI Accuracy** | Offline AI Evals | Frozen dataset of input fixtures run against extraction scoring functions |
-| **Human Override & Fix** | E2E Browser | Interactive UI tests verifying override persistence |
-| **Network & Concurrency** | Integration | Mock slow responses, network abort simulation, concurrent requests |
+| Dimension | Primary Level | Tooling / Pattern | M walkthrough? |
+|:---|:---|:---|:---|
+| **Actor & Access** | Unit (route guards) + browser | Route middleware unit tests, browser session fixtures | Login redirect only |
+| **Flow Paths & Intent** | Browser | Flow specs, DOM assertions | Yes: happy path |
+| **Data Volumes & State** | Integration | Parametrized DB fixtures, pagination tests | Yes: empty state |
+| **Input & Payload Boundaries** | Unit | Boundary-value parametrization, fuzzing | No |
+| **AI & Probabilistic Modes** | Unit with mock client; evals for accuracy | Injectable client returning canned malformed/truncated responses; frozen fixture set with scoring | Only for review/override UI |
+| **Human Agency & Override** | Browser | Interactive tests verifying override persists and undo restores | Yes: recovery |
+| **Network & Concurrency** | Integration | Repeated submit with same idempotency key; mocked failed response | No |
+| **Platform, Viewport & A11y** | Browser | Runs at each width in `VIEWPORT_BREAKPOINTS`, keyboard/focus tests, accessibility checker (e.g. axe) | Yes: M2 per breakpoint |
 
 ---
 
