@@ -2,11 +2,12 @@
 name: product-loop-engineering
 description: >-
   Disciplined spec-driven dev loop and engineering operating system. Structures all
-  software work into 6 strict phase gates: Milestone Planning with full upfront unit
+  software work into a one-time Setup (Phase 0: guardrails, CONFIG.md, dev/prod analytics
+  keys) and 6 strict phase gates: Milestone Planning with full upfront unit
   pre-documentation sequenced walking skeleton → P0 → P1 → P2 → analytics reporting
   (automated T1..Tn tests, manual E2E M1..Mk walkthroughs, and analytics instrumentation
   for every unit), Architectural Decision Records (ADRs), Test-First Scaffolding, Core
-  & Seam Implementation, Independent Maker/Verifier Gate, and Living Spec Finalization.
+  & Seam Implementation, Independent Maker/Verifier Gate, and Living Spec Finalization. Enforces guardrails as locks, not prompts, scaled by a per-unit risk level.
   Use when planning, developing, testing, refactoring, or verifying features and subsystems.
 ---
 
@@ -55,17 +56,23 @@ An end-to-end engineering operating system for building maintainable, high-integ
    - **History (`history/`)**:
      - **Decision Records (`history/decisions/NNN-*.md`)**: ADRs capturing *why* choices, pivots, and cuts occurred. Written here directly when the decision is made. Once accepted, never edited; a new ADR supersedes an old one.
      - **Completed Milestones (`history/milestones/NN-*/`)**: when every unit is done, move the whole `active/NN-*/` folder here. Contracts are then frozen.
-   - **Git Safety**: Never auto-commit without explicit user instruction. Leave diffs staged/uncommitted for human inspection.
+   - **Git Safety**: Git is version control, so commits and pushes are allowed and can be rolled back. Commits follow `AUTO_COMMIT` in `CONFIG.md`; when it is `false` (the default), leave diffs uncommitted for human inspection. Only what git can't undo is denied: force-push, `reset --hard`, `clean -f`, and secrets or user data entering a commit.
 
 6. **Instrumented by Default**:
-   Every journey unit ships the analytics events for what it builds: one view and one primary-action event per capability, plus the events behind the spec's hypothesis metric in the P0 journeys. The milestone's last unit turns those events into a dashboard, reports, or saved queries against the analytics platform's API or MCP (`ANALYTICS_PLATFORM` in `CONFIG.md`).
+   Every journey unit ships the analytics events for what it builds: one view and one primary-action event per capability, plus the events behind the spec's hypothesis metric in the P0 journeys. The milestone's last unit turns those events into a dashboard, reports, or saved queries against the analytics platform's API or MCP (`ANALYTICS_PLATFORM` in `CONFIG.md`). Dev and prod send to separate analytics projects with separate keys, so test traffic never pollutes real metrics; the accounts and keys come from a human in Phase 0.
+
+7. **Enforced Guardrails, Not Prompts**:
+   A prompt is a keep-out sign; a guardrail is a lock the environment enforces. Lock only what git can't undo; everything git can roll back gets a check instead. Phase 0 installs the baseline locks (secret reads denied, guardrail config protected, commands that destroy uncommitted work or act outside the repo blocked, a dev login that can't delete) and the privacy gates every commit passes (no secret files tracked or un-ignored, no user-data files outside `tests/fixtures/`, no secrets, card numbers or SSNs in changed files, synthetic test data only), generated from one agent-neutral file, `.agent/guardrails.json`, by `scripts/gen_guardrails.py`. Every unit carries a **Risk** level (low / medium / high, from blast radius and reversibility; unsure means higher) and a **Guardrails ADR**: low risk cites the baseline ADR, medium and high write their own, as does any design-system change. The higher the risk, the more locks, the stricter the verifier. Runtime locks for AI features inside the app are built by the unit that adds them and audited at launch by `product-launch-audit`. Full detail: [Guardrails](references/guardrails.md).
 
 ---
 
-## The 6-Phase Engineering Loop
+## Setup + the 6-Phase Engineering Loop
 
 ```mermaid
 flowchart TD
+    P0["Phase 0: Setup (once per repo)
+• CONFIG.md, guardrails, baseline ADR
+• Human: credentials, dev/prod analytics keys"] --> P1
     subgraph StageA["Stage A: Upfront Architecture & Specification"]
         P1["Phase 1: Milestone Plan & Full Unit Decomposition
 • Verify CONFIG.md stack & ingest F1..Fm flows
@@ -109,6 +116,19 @@ or Schema Shift?"}
 
 ---
 
+### Phase 0: Setup & Safeguards (once per repo)
+
+**Goal**: Locks and accounts exist before any unit is planned. Skip when `check_loop.py guardrails` already returns `"ok": true`.
+
+1. **Config**: copy `CONFIG.example.md` to the repo root as `CONFIG.md` (not into the skill folder, which may be a symlink shared across repos) and set the commands, paths, breakpoints, and analytics fields for this stack.
+2. **Guardrails** (a human runs it; the generated files are protected from the agent): `scripts/gen_guardrails.py --init --git-hook` generates `.agent/guardrails.json` plus each agent's config (Claude deny rules and PreToolUse hook, ignore files, an `AGENTS.md` block, a pre-commit check). Set `adr_required_paths` to where this repo's design system lives. The agent drafts the **baseline guardrails ADR** (`templates/GUARDRAILS_ADR_TEMPLATE.md`). Details: [Guardrails](references/guardrails.md).
+3. **Human-only steps**: stop and ask for these, with exact instructions. Never work around a missing one.
+   - A dev database login without `DELETE`/`DROP`; no production credentials in the agent's environment.
+   - Analytics accounts: separate **dev** and **prod** projects in `ANALYTICS_PLATFORM` (plus a prod `ACQUISITION_ANALYTICS` property), each with its own key. Dev key in the local `.env`, prod key in the host's secret settings. The agent never reads either; code picks the key by environment.
+4. **Check**: `check_loop.py guardrails` returns `"ok": true`. Phase 1 doesn't start until it does.
+
+---
+
 ### Phase 1: Milestone Planning & Full Unit Pre-Documentation
 
 **Goal**: Iron out architectural seams, edge cases, and dependencies by pre-documenting all build units across the entire milestone *before* touching code.
@@ -120,12 +140,12 @@ or Schema Shift?"}
 2. **Sequence and Decompose the Entire Milestone Upfront**:
    - Break the initiative into bounded Build Units ($01..N$) covering **every** P0–P2 flow, in this order:
      1. **Walking skeleton** (`infra`): app shell, data layer, one end-to-end round trip, test/lint running. Only what every journey needs.
-     1a. **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, basic analytics and session replay initialized (PostHog/Mixpanel + Google Analytics for acquisition/attribution), rate limit on public and login endpoints, every data-touching route behind auth. Cheap now, painful to retrofit.
+        **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, analytics and session replay initialized with the Phase 0 keys (dev key locally, prod key only in production), rate limit on public and login endpoints, every data-touching route behind auth, and it cites the baseline guardrails ADR. Cheap now, painful to retrofit.
      2. **Load-bearing decisions** go in the skeleton even when the feature using them is P2: choices that are expensive to retrofit (data scoping key such as `owner_id`/`tenant_id`, ID scheme, sync model, auth seam as an interface). Record each as an ADR.
      3. **P0 journeys**, then **P1**, then **P2**. Feature-specific infrastructure (external API seam, eval harness, invite tables, scheduler) arrives just in time, as an `infra` unit right before the first journey that needs it.
      4. **Reporting** (last unit): dashboard, reports, or saved queries over the events instrumented by earlier units, built through the analytics platform's API or MCP.
    - **Testable after every unit**: each unit leaves the app runnable and states what a human can try once it ships. Infra units prove themselves through the skeleton's round trip or a runnable harness, never "nothing visible yet."
-   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`, with `Type`, `Serves` (flows), and `Tier` filled in.
+   - Create a dedicated unit spec for **every single unit** upfront using `templates/UNIT_TEMPLATE.md` under `active/NN-<milestone>/units/NN-<slug>.md`, with `Type`, `Serves` (flows), `Tier`, `Risk` and `Guardrails ADR` filled in. **Risk** is low, medium or high from the unit's worst case and whether it can be undone (unsure: take the higher level); low risk cites the baseline ADR, medium and high write their own, as does any design-system change.
    - Ensure no unit is left as an unspecified placeholder.
    - Write the milestone roadmap and status tracker to `active/NN-<milestone>/plan.md` using `templates/PLAN_TEMPLATE.md`. Do **not** put it in `specs/`.
    - In each unit contract, fill **Living Specs Affected**: which `specs/product/` and `specs/engineering/` files the unit will create or update once it ships.
@@ -135,7 +155,7 @@ or Schema Shift?"}
      - If any edge case, boundary state, failure recovery path, or probabilistic behavior is ambiguous, underspecified, or has multiple valid UX interpretations:
        **STOP before generating unit contracts.**
        Ask the user for clarification with concrete options and trade-offs. Never guess or hallucinate product behavior during edge cases.
-   - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions covering deterministic logic, dirty payloads, schema repair, boundary inputs, and security invariants:
+   - **Part A: Automated Test Scenarios ($T_1..T_n$)**: Programmatic CI assertions covering deterministic logic, dirty payloads, schema repair, boundary inputs, and security invariants. Medium and high risk add a `[Guardrail]` scenario per lock (the blocked action stays blocked); high risk adds an `[Abuse]` scenario (injection, wrong-tenant access, replay):
      - `- **T1 [Happy Path]** — ...`
      - `- **T2 [Edge Case / Malformed Input]** — ...`
      - `- **T3 [Boundary / Security / Invariant]** — ...`
@@ -150,9 +170,9 @@ or Schema Shift?"}
    - Resolve schema, API, or contract conflicts before any code is written.
    - Run the plan validator and fix every error before asking for approval:
      ```bash
-     python .agent/skills/product-loop-engineering/scripts/check_loop.py plan
+     python .claude/skills/product-loop-engineering/scripts/check_loop.py plan
      ```
-     It fails when a unit lacks a contract, tiers run out of order, a spec flow has no unit, reporting isn't last, or a contract is missing its type, testable outcome, M scenarios, or (journey units) instrumentation events.
+     It fails when a unit lacks a contract, tiers run out of order, a spec flow has no unit, reporting isn't last, or a contract is missing its type, testable outcome, M scenarios, (journey units) instrumentation events, a valid Risk, or a Guardrails ADR that exists (medium and high risk need their own ADR plus `[Guardrail]` T scenarios; high also `[Abuse]`).
 
 ---
 
@@ -161,7 +181,7 @@ or Schema Shift?"}
 **Goal**: Lock in non-obvious technical choices, migrations, API selections, or structural cuts in immutable ADRs.
 
 1. **Trigger Conditions**:
-   - Framework or runtime selections, schema migrations, third-party API provider choices, security boundaries, or deliberate cuts of planned scope.
+   - Framework or runtime selections, schema migrations, third-party API provider choices, security boundaries, deliberate cuts of planned scope, and guardrails: the baseline in the skeleton, one ADR per medium or high risk unit, any loosening of a lock or lowering of a risk level (a new ADR that supersedes the old one), and design-system changes (tokens, type, color, spacing, global styles, shared components) at any risk level. UI copy needs none.
 2. **Align First, Then Draft the ADR**:
    - Present the options, user/technical tradeoffs, and recommended choice to the user before locking in a major decision.
    - Once aligned, write `templates/ADR_TEMPLATE.md` under `history/decisions/NNN-<slug>.md`.
@@ -217,21 +237,22 @@ or Schema Shift?"}
 > **Independence Invariant**: The maker agent never signs off on its own work. A separate verification pass audits code, test assertions, manual E2E reproducibility, and observed behavior against the unit spec without rationalization.
 
 **How to run it independently**:
-- Spawn a fresh verifier subagent (Agent/Task tool). Its prompt gets only: the unit contract path, `git diff` of the unit's changes, the `check_loop.py` JSON, and the verifier steps below. Never pass the maker's reasoning, summaries, or "known issues" notes.
-- The verifier reads and runs; it does not edit code or tests. It returns the verdict table plus a findings list (file:line, expected vs. observed). Each finding quotes the code line it rests on and carries a certainty from 1 to 10. Findings at 7+ block a PASS; 4–6 go under **Unverified** (listed, non-blocking); below 4 are dropped.
+- Run `check_loop.py fingerprint`, then spawn a fresh `loop-verifier` subagent (generated in Phase 0). Its prompt gets only: the unit contract path, `git diff` of the unit's changes, the `check_loop.py` JSON, and the verifier steps below. Never pass the maker's reasoning, summaries, or "known issues" notes.
+- The verifier reads and runs; it can't edit. It has no write tools, and the guard hook limits its Bash to read-only commands, `check_loop.py`, and `verifier_bash_allow`. When it returns, run `check_loop.py fingerprint` again: a different hash voids the verdict, so re-run with a new verifier. It returns the verdict table plus a findings list (file:line, expected vs. observed). Each finding quotes the code line it rests on and carries a certainty from 1 to 10. Findings at 7+ block a PASS (5+ for high-risk units); 4–6 go under **Unverified** (listed, non-blocking); below 4 are dropped.
 - On FAIL, the maker fixes the findings, and a **new** verifier subagent re-runs the full gate. Don't reuse the old one or narrow its scope to the fixes. After 3 fix → re-verify cycles, stop and ask the user.
-- If no subagent tool exists, stop and ask the user to run verification in a separate session with the same inputs. Don't verify inline.
+- If no subagent tool exists, stop and ask the user to run verification in a separate session with the same inputs and the same fingerprint check. Don't verify inline.
 
 1. **Mechanical CI Gate (Deterministic)**:
    Run the verification runner:
    ```bash
-   python .agent/skills/product-loop-engineering/scripts/check_loop.py NN
+   python .claude/skills/product-loop-engineering/scripts/check_loop.py NN
    ```
    Inspect emitted JSON facts:
    - Test suite exit code & summary.
    - Linter & formatter exit codes.
    - Full mapping of $T_1..T_n$ test tokens (zero missing test tokens permitted).
    - `hygiene`: likely hardcoded secrets in changed files (fails the gate) and route files that mention no auth (heuristic: the verifier reads each and confirms or dismisses it with file:line).
+   - `guardrails`: config present, adapters wired, no protected or append-only path edited, a new ADR for any guardrail-config or design-system change, and the privacy gates (fails the gate; `privacy_warnings` lists real-looking emails and phones for the verifier to confirm or dismiss with file:line).
    - `diff`: changed source files, and test files that lost assertions or gained skips, sleeps, or timeouts.
 2. **Manual E2E Walkthrough Audit (Verification)**:
    - Step through each documented manual scenario ($M_1..M_k$).
@@ -247,7 +268,10 @@ or Schema Shift?"}
    - For each file in `diff.test_files_to_justify`, every removed or loosened assertion must trace to a line in the unit contract that changed. A test edited to fit the code, with no contract change behind it, is a finding.
    - **Scope creep**: any hunk in `diff.source_files` that no contract line asks for (a bug fix riding along in a test-only change counts).
    - **Missing requirement**: any contract line with no code or test behind it.
-6. **Structured Verdict Table**:
+6. **Guardrails Audit (Judgment)**:
+   - Read the unit's **Risk** and Guardrails ADR. Confirm each lock for that level exists, and that its `[Guardrail]` / `[Abuse]` tests assert the block (status code, error, or no side effect), not just that the code path runs.
+   - Diff-review any change to guardrail config or protected paths against the ADR that justifies it. High risk: confirm the work ran without real credentials.
+7. **Structured Verdict Table**:
    Emit a clean sign-off table:
    ```markdown
    ### Unit NN — <Unit Name> Verification Verdict
@@ -259,6 +283,7 @@ or Schema Shift?"}
    | Seam & Architecture Invariants | PASS | Logic isolated in core; scoping verified |
    | Instrumentation | PASS | All listed events fire with expected properties |
    | Semantic Acceptance Criteria | PASS | All bullet criteria verified |
+   | Guardrails (risk: low/medium/high) | PASS | Locks for this level present; negative tests pass; config unchanged or ADR'd |
    | Test Edits & Scope Drift | PASS | Every test edit traced to the contract; no unrequested changes |
    | **OVERALL VERDICT** | **PASS** | **Ready for living spec sync** |
    ```
@@ -279,10 +304,11 @@ or Schema Shift?"}
    - Mark acceptance criteria checkboxes complete in `active/NN-*/units/NN-*.md`.
    - Update the unit's status row in `active/NN-*/plan.md`.
    - Document any manual testing notes or observations.
-   - If next pre-documented unit exists, queue it for Phase 3. If this was the last unit, move `active/NN-*/` to `history/milestones/NN-*/`.
+   - If next pre-documented unit exists, queue it for Phase 3.
+   - **Last unit done: clean up `active/`.** `git mv active/NN-*/ history/milestones/NN-*/` in the same pass, and repoint any links to it. `active/` holds only unfinished work; `check_loop.py plan` fails on a plan whose units are all done.
 3. **Clean Review State**:
    - Present a concise summary of user impact, modified files, test results, and exact manual E2E test steps for the user.
-   - Leave diffs uncommitted for human review. Never auto-commit.
+   - Leave diffs uncommitted for human review unless `AUTO_COMMIT` is `true` in `CONFIG.md`.
 
 ---
 
@@ -290,7 +316,9 @@ or Schema Shift?"}
 
 Do not force the user to remember or type phase subcommands. Inspect `active/`, `specs/`, and `tests/` to determine where work stands and advance naturally:
 
-1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs, and pause for approval to start building.
+0. **Setup Checkpoint (Phase 0)**: if `check_loop.py guardrails` fails, run Phase 0 and pause for the human-only steps.
+1. **Upfront Planning Checkpoint (Phases 1–2)**: Align with the user on any architectural tradeoffs first, generate `active/NN-<milestone>/plan.md` + all unit contracts (`01..N`) + any ADRs (one per medium or high risk unit), and pause for approval to start building.
+   **High-risk units** pause again before building: present the design and the locks, and get approval first.
 2. **Per-Unit Execution Checkpoint (Phases 3–6)**: For the current incomplete unit in `active/NN-*/plan.md`, run **Phase 3 (Test-First) $\to$ Phase 4 (Build & Simplify) $\to$ Phase 5 (Independent Verify) $\to$ Phase 6 (Spec Sync)** in one cohesive sequence, then pause to present the verdict table, manual E2E walkthrough steps, and uncommitted diff before advancing to the next unit.
 3. **P0 Checkpoint**: after the last P0 unit, pause before any P1 work. Have the user run the P0 journeys hands-on, and confirm the hypothesis-metric events are arriving. Before real users, run the `product-launch-audit` skill. If what they learn changes priorities, update the spec and re-run `check_loop.py plan` before continuing.
 
@@ -298,6 +326,7 @@ Do not force the user to remember or type phase subcommands. Inspect `active/`, 
 
 ## Detailed References
 
+* [Guardrails: locks, not prompts](references/guardrails.md)
 * [Scenario Discovery & Clarification Guide](references/scenarios.md)
 * [Universal LLM & Probabilistic Failure Archetypes](references/llm-failure-archetypes.md)
 * [Scenario Matrix Template](references/matrix-template.md)

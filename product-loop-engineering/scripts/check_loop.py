@@ -9,25 +9,30 @@ Features:
 - Discovers unit contracts in active/*/units/ or history/milestones/*/units/
 - Parses enumerated test IDs (T1..Tn, T1.1..Tn.m) and acceptance criteria
 - Validates test collection mapping against test files in tests/
-- Validates contract structure (Type/Serves/Tier, testable outcome, M scenarios, instrumentation)
+- Validates contract structure (Type/Serves/Tier, Risk + Guardrails ADR, testable outcome, M scenarios, instrumentation, guardrail T scenarios for medium/high risk)
 - Executes configured test suite and linters (supporting CONFIG.md overrides)
 - `plan` mode validates active/*/plan.md: every unit pre-documented, tiers ordered
   skeleton → P0 → P1 → P2 → reporting, every product-spec flow tier-tagged, ordered
   (F1 is P0, tiers non-decreasing), and served by a journey unit
 - Reports `diff`: changed files, plus test files that lost assertions or gained skips/sleeps/timeouts, so the verifier can tie each to a contract line
 - Reports `hygiene` on changed source files: likely hardcoded secrets (fail the gate) and route files that mention no auth (heuristic, for the verifier to review)
+- Reports `guardrails`: .agent/guardrails.json present, Claude adapter wired, no protected or append-only path edited, a new ADR for any guardrail-config or design-system change, and privacy gates (no tracked or un-ignored secret files, no user-data files outside fixtures, no secrets, card numbers or SSNs in changed files; real-looking emails and phones as warnings; gitleaks if installed)
 - Emits structured JSON summary
 
 Usage:
     python check_loop.py NN            # e.g. python check_loop.py 01
     python check_loop.py <path-to-spec> # e.g. python check_loop.py active/01-rebuild/units/01-scaffold.md
     python check_loop.py plan [NN]     # validate milestone plan(s) in active/
+    python check_loop.py guardrails    # guardrail facts only (pre-commit hook / CI, any agent)
+    python check_loop.py fingerprint   # working-tree hash; compare before/after the verifier
     python check_loop.py NN --base REF # diff against REF instead of HEAD (default: uncommitted work)
 """
 
 from __future__ import annotations
 
+import fnmatch
 import glob
+import hashlib
 import json
 import os
 import re
@@ -55,10 +60,11 @@ def _repo(*parts: str) -> Path:
 
 def load_config() -> dict[str, str]:
     """Load configuration from CONFIG.md in skill paths or repo root."""
+    # Repo root first: a symlinked skill folder is shared across repos, so per-repo config can't live in it
     candidate_paths = [
+        _repo("CONFIG.md"),
         _repo(".agent", "skills", "product-loop-engineering", "CONFIG.md"),
         _repo(".claude", "skills", "product-loop-engineering", "CONFIG.md"),
-        _repo("CONFIG.md"),
     ]
     cfg = {}
     for p in candidate_paths:
@@ -169,12 +175,19 @@ def parse_spec(spec_path: Path) -> dict:
 
 
 UNIT_TYPES = ("infra", "journey", "reporting")
+RISK_LEVELS = ("low", "medium", "high")
 TIER_RANK = {"P0": 0, "P1": 1, "P2": 2}
+DONE_STATUSES = {"done", "complete", "completed", "shipped"}
 
 
 def contract_field(text: str, name: str) -> str:
     m = re.search(rf"\*\*{name}\*\*:\s*(.+)", text)
     return m.group(1).strip() if m else ""
+
+
+def adr_exists(number: str) -> bool:
+    decisions = CONFIG.get("DECISIONS_DIR", "history/decisions")
+    return bool(glob.glob(str(_repo(decisions, f"{int(number):03d}-*.md"))))
 
 
 def check_contract(text: str) -> dict:
@@ -189,6 +202,18 @@ def check_contract(text: str) -> dict:
         errors.append("Missing `**Serves**:` (flow ids or `all`)")
     if tier not in (*TIER_RANK, "—", "-"):
         errors.append("`**Tier**:` must be P0, P1, P2, or — (reporting)")
+    risk = contract_field(text, "Risk").lower()
+    if risk not in RISK_LEVELS:
+        errors.append("`**Risk**:` must be low, medium, or high")
+    adr_ref = re.search(r"ADR-(\d+)", contract_field(text, "Guardrails ADR"))
+    if not adr_ref:
+        errors.append("Missing `**Guardrails ADR**:` (ADR-NNN; low risk may cite the baseline ADR)")
+    elif not adr_exists(adr_ref.group(1)):
+        errors.append(f"ADR-{adr_ref.group(1)} not found in {CONFIG.get('DECISIONS_DIR', 'history/decisions')}/")
+    if risk in ("medium", "high") and not re.search(r"\*\*T\d+(?:\.\d+)?\s*\[Guardrail", text):
+        errors.append(f"{risk}-risk unit needs a `[Guardrail]` T scenario proving each lock holds")
+    if risk == "high" and not re.search(r"\*\*T\d+(?:\.\d+)?\s*\[Abuse", text):
+        errors.append("high-risk unit needs an `[Abuse]` T scenario (injection, wrong-tenant access, replay)")
     testable = contract_field(text, "Testable after this unit")
     if not testable or testable.startswith("["):
         errors.append("Missing `**Testable after this unit**:` outcome")
@@ -199,7 +224,10 @@ def check_contract(text: str) -> dict:
         events = re.findall(r"^\s*-\s+`[^`\[\]]+`", section.group(1), re.MULTILINE) if section else []
         if not events:
             errors.append("Journey unit lists no Instrumentation events")
-    return {"type": unit_type, "serves": serves, "tier": tier, "errors": errors, "ok": not errors}
+    return {
+        "type": unit_type, "serves": serves, "tier": tier, "risk": risk,
+        "guardrails_adr": f"ADR-{adr_ref.group(1)}" if adr_ref else "", "errors": errors, "ok": not errors,
+    }
 
 
 def parse_plan_rows(text: str) -> list[dict]:
@@ -236,20 +264,28 @@ def check_plan(plan_path: Path) -> dict:
     units: list[dict] = []
     if not rows:
         errors.append("No Build Sequence table rows (expected columns # | Unit | Type | Serves | Tier | Status)")
+    elif all(r.get("status", "").strip("*` ").lower() in DONE_STATUSES for r in rows):
+        errors.append("Every unit is done: move this milestone folder to history/milestones/")
 
     for row in rows:
         num = row["#"]
         matches = sorted(plan_path.parent.glob(f"units/{num}-*.md"))
-        unit = {"unit": num, "type": row["type"].lower(), "serves": row["serves"], "tier": row["tier"], "contract": None}
+        unit = {"unit": num, "type": row["type"].lower(), "serves": row["serves"], "tier": row["tier"], "contract": None, "risk": "", "guardrails_adr": ""}
         if not matches:
             errors.append(f"Unit {num} has no pre-documented contract in units/")
         else:
             contract = check_contract(matches[0].read_text(encoding="utf-8"))
             unit["contract"] = str(matches[0].relative_to(REPO)) if matches[0].is_relative_to(REPO) else str(matches[0])
             errors.extend(f"Unit {num}: {e}" for e in contract["errors"])
+            unit["risk"], unit["guardrails_adr"] = contract["risk"], contract["guardrails_adr"]
             if contract["type"] != unit["type"] or contract["tier"] != unit["tier"]:
                 errors.append(f"Unit {num}: plan row and contract disagree on Type/Tier")
         units.append(unit)
+
+    baseline = units[0]["guardrails_adr"] if units else ""
+    for u in units[1:]:
+        if u["risk"] in ("medium", "high") and baseline and u["guardrails_adr"] == baseline:
+            errors.append(f"Unit {u['unit']}: {u['risk']}-risk unit needs its own guardrails ADR, not the baseline {baseline}")
 
     reporting = [i for i, u in enumerate(units) if u["type"] == "reporting"]
     if not reporting:
@@ -365,9 +401,10 @@ def test_mapping(target: str, test_ids: list[str], test_files: list[str]) -> dic
         result["collect_exit"] = 0
 
     for tid in test_ids:
-        # e.g. T1 -> t1, T2.1 -> t2[._]?1
-        num = tid[1:].replace(".", r"[._]?")
-        pattern = rf"(?<![a-z0-9])t{num}(?![0-9])"
+        # T3.2 -> t3.2 / t3_2, never t32. T3 skips t3.2 / t3_2 only when the spec has T3.x sub-tokens.
+        num = tid[1:].replace(".", "[._]")
+        has_subs = any(t.startswith(tid + ".") for t in test_ids)
+        pattern = rf"(?<![a-z0-9])t{num}(?![0-9]{'|[._][0-9]' if has_subs else ''})"
         if re.search(pattern, lowered):
             result["mapped"].append(tid)
         else:
@@ -502,6 +539,169 @@ def hygiene_facts(source_files: list[str]) -> dict:
     return {"secrets": secrets, "routes_without_auth": routes_without_auth, "ok": not secrets}
 
 
+def match_glob(path: str, globs: list[str]) -> bool:
+    return any(fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(os.path.basename(path), pat)
+               for g in globs for pat in {g, g[3:] if g.startswith("**/") else g})
+
+
+def changes_with_status(base: str) -> list[tuple[str, str]]:
+    """(status, path) for tracked changes against `base`, plus untracked files as additions."""
+    items: list[tuple[str, str]] = []
+    code, out = run_cmd(["git", "diff", base, "--name-status"])
+    for line in (out.splitlines() if code == 0 else []):
+        parts = line.split("\t")
+        if parts[0][:1] == "R" and len(parts) == 3:
+            items += [("D", parts[1]), ("A", parts[2])]
+        elif len(parts) >= 2:
+            items.append((parts[0][:1], parts[-1]))
+    _, untracked = run_cmd(["git", "ls-files", "--others", "--exclude-standard"])
+    return items + [("A", f) for f in untracked.splitlines() if f.strip()]
+
+
+def adapter_errors(cfg: dict) -> list[str]:
+    """The Claude Code adapter must carry the neutral config; skipped when the repo has no .claude/."""
+    if not _repo(".claude").is_dir():
+        return []
+    settings_path = _repo(".claude", "settings.json")
+    if not settings_path.is_file():
+        return [".claude/settings.json missing (run scripts/gen_guardrails.py)"]
+    try:
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    except ValueError:
+        return [".claude/settings.json is not valid JSON"]
+    deny = settings.get("permissions", {}).get("deny", [])
+    errors = [f"No Read deny rule for secret path {g}" for g in cfg.get("secret_paths", [])
+              if not any(d.startswith("Read(") and g in d for d in deny)]
+    hooked = any("hooks/guard.py" in h.get("command", "")
+                 for e in settings.get("hooks", {}).get("PreToolUse", []) for h in e.get("hooks", []))
+    if not hooked:
+        errors.append("PreToolUse guard hook not registered in .claude/settings.json")
+    for f in (("hooks", "guard.py"), ("agents", "loop-verifier.md")):
+        if not _repo(".claude", *f).is_file():
+            errors.append(f".claude/{'/'.join(f)} missing (run scripts/gen_guardrails.py)")
+    return errors
+
+
+TEST_CARDS = {"4242424242424242", "4111111111111111", "4000056655665556", "5555555555554444", "378282246310005", "6011111111111117"}
+FAKE_SSNS = {"123-45-6789", "078-05-1120"}
+CARD_RE = re.compile(r"\b(?:\d[ -]?){12,18}\d\b")
+CARD_PREFIX_RE = re.compile(r"^(?:4|5[1-5]|2[2-7]|3[47]|6011|65)")
+SSN_RE = re.compile(r"\b(?!000|666|9\d\d)\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b")
+EMAIL_RE = re.compile(r"\b[\w.+-]+@([\w-]+(?:\.[\w-]+)+)\b")
+PHONE_RE = re.compile(r"(?<![\w.])(?:\+?1[ .-]?)?\(?[2-9]\d{2}\)?[ .-]\d{3}[ .-]\d{4}\b")
+FAKE_EMAIL_DOMAINS = re.compile(r"(?i)(^|\.)(example\.(com|org|net)|test|invalid|localhost|users\.noreply\.github\.com|anthropic\.com)$")
+BINARY_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".zip", ".gz", ".woff", ".woff2", ".ttf", ".mp4", ".lockb")
+LOCKFILES_RE = re.compile(r"(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|uv\.lock|poetry\.lock)$")
+
+
+def luhn(digits: str) -> bool:
+    total = 0
+    for i, d in enumerate(reversed(digits)):
+        n = int(d) * (2 if i % 2 else 1)
+        total += n - 9 if n > 9 else n
+    return total % 10 == 0
+
+
+def glob_sample(g: str) -> str:
+    """A concrete path a glob matches, so `git check-ignore` can test whether the glob is ignored."""
+    return re.sub(r"\*+", "x", g[3:] if g.startswith("**/") else g)
+
+
+def gitleaks_hits() -> list[str] | None:
+    """Staged leaks via gitleaks if installed (None when unavailable or it errors)."""
+    if not shutil.which("gitleaks"):
+        return None
+    for cmd in (["gitleaks", "git", "--pre-commit", "--staged", "--no-banner", "--redact", "--exit-code", "3"],
+                ["gitleaks", "protect", "--staged", "--no-banner", "--redact", "--exit-code", "3"]):
+        code, out = run_cmd(cmd)
+        if code == 0:
+            return []
+        if code == 3:
+            return [ln.strip() for ln in out.splitlines() if ln.strip().startswith(("File:", "RuleID:"))][:20] or ["gitleaks found leaks"]
+    return None
+
+
+def privacy_facts(cfg: dict, changes: list[tuple[str, str]]) -> dict:
+    """Secrets and user data must not reach git: run on every commit, whatever agent wrote the change."""
+    errors, warnings = [], []
+    secret_globs = cfg.get("secret_paths", [])
+    _, tracked = run_cmd(["git", "ls-files"])
+    errors += [f"Secret file tracked by git: {f}" for f in tracked.splitlines() if match_glob(f, secret_globs)
+               and not TEMPLATE_ENV_RE.search(f)]
+    for g in secret_globs:
+        if run_cmd(["git", "check-ignore", "-q", "--no-index", glob_sample(g)])[0] != 0:
+            errors.append(f"Secret path {g} is not in .gitignore (run scripts/gen_guardrails.py)")
+
+    live = [p for s, p in changes if s != "D" and _repo(p).is_file()]
+    allow = cfg.get("private_data_allow", [])
+    errors += [f"User-data file in the commit: {p} (allowed only under {', '.join(allow) or 'nowhere'})"
+               for p in live if match_glob(p, cfg.get("private_data_paths", [])) and not match_glob(p, allow)]
+
+    for p in live:
+        if p.endswith(BINARY_EXTS) or LOCKFILES_RE.search(p) or TEMPLATE_ENV_RE.search(p) or _repo(p).stat().st_size > 2_000_000:
+            continue
+        for n, line in enumerate(_repo(p).read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            if len(line) > 400:
+                continue
+            if not SECRET_IGNORE.search(line) and any(r.search(line) for r in SECRET_RES):
+                errors.append(f"Likely secret: {p}:{n}")
+            for m in CARD_RE.finditer(line):
+                digits = re.sub(r"\D", "", m.group(0))
+                if 13 <= len(digits) <= 19 and CARD_PREFIX_RE.match(digits) and luhn(digits) and digits not in TEST_CARDS and len(set(digits)) > 2:
+                    errors.append(f"Likely card number: {p}:{n}")
+            errors += [f"Likely SSN: {p}:{n}" for m in SSN_RE.finditer(line) if m.group(0) not in FAKE_SSNS]
+            warnings += [f"Real-looking email: {p}:{n}" for m in EMAIL_RE.finditer(line) if not FAKE_EMAIL_DOMAINS.search(m.group(1))]
+            if PHONE_RE.search(line) and "555" not in line:
+                warnings.append(f"Real-looking phone number: {p}:{n}")
+
+    gl = gitleaks_hits()
+    if gl:
+        errors += [f"gitleaks: {h}" for h in gl]
+    return {"errors": errors, "warnings": warnings[:50], "gitleaks": "not installed" if gl is None else "ran"}
+
+
+def guardrail_facts(base: str) -> dict:
+    """Enforced locks exist, weren't edited around, and any config change carries a new ADR."""
+    cfg_path = _repo(".agent", "guardrails.json")
+    if not cfg_path.is_file():
+        return {"config_present": False, "ok": False,
+                "errors": [".agent/guardrails.json missing (run scripts/gen_guardrails.py --init)"]}
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except ValueError:
+        return {"config_present": True, "ok": False, "errors": [".agent/guardrails.json is not valid JSON"]}
+
+    decisions = CONFIG.get("DECISIONS_DIR", "history/decisions").strip("/") + "/"
+    changes = changes_with_status(base)
+    protected = sorted({p for _, p in changes if match_glob(p, cfg.get("protected_paths", []))})
+    edited_frozen = sorted({p for s, p in changes if s != "A" and match_glob(p, cfg.get("append_only_paths", []))})
+    new_adrs = sorted({p for s, p in changes if s == "A" and p.startswith(decisions)})
+    design = sorted({p for _, p in changes if match_glob(p, cfg.get("adr_required_paths", []))})
+
+    privacy = privacy_facts(cfg, changes)
+    errors = adapter_errors(cfg) + privacy["errors"]
+    errors += [f"Append-only path edited or deleted: {p}" for p in edited_frozen]
+    if protected and not new_adrs:
+        errors.append("Guardrail config changed with no new ADR in " + decisions)
+    if design and not new_adrs:
+        errors.append("Design-system files changed with no new ADR in " + decisions)
+    return {"config_present": True, "protected_changed": protected, "append_only_violations": edited_frozen,
+            "adr_required_changed": design, "privacy_warnings": privacy["warnings"], "gitleaks": privacy["gitleaks"],
+            "new_adrs": new_adrs, "errors": errors, "ok": not errors}
+
+
+def worktree_fingerprint() -> str:
+    """Hash of HEAD + uncommitted + untracked files. Taken before and after the verifier: any change voids its verdict."""
+    h = hashlib.sha256()
+    for cmd in (["git", "rev-parse", "HEAD"], ["git", "diff", "HEAD", "--binary"]):
+        h.update(run_cmd(cmd)[1].encode())
+    _, untracked = run_cmd(["git", "ls-files", "--others", "--exclude-standard"])
+    for f in sorted(untracked.splitlines()):
+        if _repo(f).is_file():
+            h.update(f.encode() + _repo(f).read_bytes())
+    return h.hexdigest()[:16]
+
+
 def main(argv: list[str]) -> int:
     base = "HEAD"
     if "--base" in argv:
@@ -511,6 +711,13 @@ def main(argv: list[str]) -> int:
     target = argv[1] if len(argv) > 1 else "all"
     if target == "plan":
         return main_plan(argv)
+    if target == "fingerprint":
+        print(json.dumps({"fingerprint": worktree_fingerprint()}))
+        return 0
+    if target == "guardrails":
+        facts = guardrail_facts(base)
+        print(json.dumps(facts, indent=2))
+        return 0 if facts["ok"] else 1
     spec_path = find_spec_path(target) if target != "all" else None
 
     spec_data = parse_spec(spec_path) if spec_path else {"test_ids": [], "criteria": [], "spec_file": None}
@@ -522,10 +729,12 @@ def main(argv: list[str]) -> int:
 
     diff = diff_facts(base)
     hygiene = hygiene_facts(diff["source_files"])
+    guardrails = guardrail_facts(base)
 
     mechanical_ok = (
         test_res["passed"]
         and hygiene["ok"]
+        and guardrails["ok"]
         and linter_res["check"]["passed"]
         and linter_res["format"]["passed"]
         and (not mapping["missing"] if spec_data["test_ids"] else True)
@@ -544,6 +753,7 @@ def main(argv: list[str]) -> int:
         },
         "diff": diff,
         "hygiene": hygiene,
+        "guardrails": guardrails,
         "mechanical_ok": mechanical_ok,
     }
 

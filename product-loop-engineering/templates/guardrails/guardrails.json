@@ -1,0 +1,32 @@
+{
+  "_comment": "Single source of truth for agent guardrails. Copied to .agent/guardrails.json; scripts/gen_guardrails.py generates each agent's config from it. Edit here, regenerate, and record any change in an ADR.",
+  "secret_paths": [
+    ".env", ".env.local", ".env.development", ".env.production", ".env.*.local",
+    "**/*.pem", "**/*.key", "secrets/**"
+  ],
+  "protected_paths": [
+    ".agent/guardrails.json", ".claude/settings.json", ".claude/hooks/**",
+    ".cursorignore", ".geminiignore", ".claude/agents/loop-verifier.md"
+  ],
+  "verifier_bash_allow": [],
+  "append_only_paths": ["history/decisions/**", "history/milestones/**"],
+  "adr_required_paths": [
+    "**/design-system/**", "**/tokens/**", "**/theme.*", "tailwind.config.*",
+    "**/styles/globals.css", "**/styles/tokens.css", "src/components/ui/**"
+  ],
+  "private_data_paths": [
+    "**/*.db", "**/*.sqlite", "**/*.sqlite3", "**/*.dump", "**/*.bak",
+    "**/backups/**", "**/exports/**", "**/*.csv", "**/*.log"
+  ],
+  "private_data_allow": ["tests/fixtures/**"],
+  "denied_bash_prefixes": ["rm -rf", "git push --force", "git reset --hard", "git clean -f"],
+  "denied_bash_patterns": [
+    "\\brm\\s+-[a-zA-Z]*(?:rf|fr)\\b",
+    "\\bgit\\s+push\\b.*(?:\\s-f\\b|--force)",
+    "\\bgit\\s+reset\\s+--hard\\b",
+    "\\bgit\\s+clean\\s+-[a-zA-Z]*f",
+    "\\bDROP\\s+(?:TABLE|DATABASE|SCHEMA)\\b",
+    "\\bTRUNCATE\\s+TABLE\\b",
+    "\\bcurl\\b[^|]*\\|\\s*(?:sh|bash)\\b"
+  ]
+}

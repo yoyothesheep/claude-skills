@@ -1,4 +1,4 @@
-# Loop Engineering Skill Configuration
+# product-loop-engineering configuration
 
 # Directory paths (relative to repository root)
 ACTIVE_DIR: active
@@ -28,7 +28,8 @@ VIEWPORT_BREAKPOINTS: 1440, 1280, 991, 767, 479, 375
 # min-width/max-width media queries so wide-screen tiers aren't missed.
 PARITY_REFERENCE_URL: 
 
-# Analytics (in-app events & session replay via posthog or mixpanel; traffic acquisition via google-analytics)
+# Analytics (in-app events & session replay via posthog or mixpanel; traffic acquisition via google-analytics).
+# Separate dev and prod projects, each with its own key in env; a human creates them in Phase 0.
 ANALYTICS_PLATFORM: posthog
 # How the agent reaches it: an MCP server name or an API base URL (keys stay in env, never here)
 ANALYTICS_ACCESS: mcp:posthog
@@ -46,6 +47,3 @@ DETERMINISTIC_LOGIC_ISOLATED: true
 #   - id: multi_entity_extraction
 #     description: "Extracting multiple distinct entities from a single input asset"
 
-# Test cases & Workshop reference
-TEST_CASES: tests/TEST_CASES.md
-WORKSHOP_URL: https://luma.com/22i8vgcm
