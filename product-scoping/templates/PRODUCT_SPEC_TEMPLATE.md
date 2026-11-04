@@ -2,6 +2,14 @@
 
 *Lives in `specs/product/`. What the product does for its users today and why. No internal implementation detail; that belongs in `specs/engineering/`.*
 
+**Status**: [Draft | Final]
+
+## Open Questions
+
+*Scoping only. Each with a recommendation. Empty when Final.*
+1. [Question] — **Recommend**: [default and why]
+
+
 ## Users & Goals
 
 - **Who**: [Primary user role/audience and context in which they arrive]
