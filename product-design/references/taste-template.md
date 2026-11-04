@@ -1,6 +1,6 @@
 # TASTE.md — <project>
 
-The user's taste, kept across Define rounds. Goes into every Define brief and the critic's
+The user's taste, kept across Stage 2 (Refine) rounds. Goes into every Refine brief and the critic's
 fixed-constraints slot. Write look and feel, never what a screen or element *is*.
 
 ## References

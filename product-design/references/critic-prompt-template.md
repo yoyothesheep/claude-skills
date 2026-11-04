@@ -1,4 +1,4 @@
-# Design-critic subagent template (Define stage)
+# Design-critic subagent template (Stage 2 · Refine)
 
 The agent that built a design can't judge it objectively — it reviews its own decisions. The
 critic sees only the result: one of our designs, plus reference images as a baseline.
