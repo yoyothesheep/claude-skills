@@ -18,6 +18,11 @@ Each stage includes the rows of the stages before it. `Script` = covered by `aud
 | | Database access controls (RLS or equivalent) on every table | [rls] |
 | | No user data in local storage that belongs in the database | judgment |
 | | No customer data sent to third-party AI tools | [ai_data_handling] |
+| | *If the app calls a model:* tools are least-privilege (nothing the feature doesn't need, no delete or send it doesn't use) | [ai_tool_review] |
+| | *If the app calls a model:* every tool argument is schema-validated against an allowlist | [ai_validation] |
+| | *If the app calls a model:* irreversible actions (send, delete, pay, publish) need approval bound to the exact action | manual |
+| | *If the app calls a model:* PII redacted before the model call | manual |
+| | *If the app calls a model:* retrieved and uploaded text is labeled untrusted, and no feature combines private data + untrusted content + a way to send data out | judgment |
 | Observability & cost | Error tracker installed (e.g. Sentry) | [error_tracker] |
 | | Analytics shows where users drop off | judgment |
 | | Monthly cost known; spend cap on the model provider | [monthly_cost] |

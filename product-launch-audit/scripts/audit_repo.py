@@ -41,6 +41,11 @@ AUTH_RE = re.compile(
     r"(?i)auth|session|getUser|currentUser|clerk|jwt|verify_token|Depends\(|login_required|requireUser|bearer|middleware"
 )
 
+AI_SDKS = ("openai", "anthropic", "@ai-sdk", "langchain", "llama-index", "llama_index", "google-generativeai", "@google/genai", "litellm", "mistralai", "cohere")
+TOOL_USE_RE = re.compile(r"(?i)\btools\s*[=:]|tool_use|tool_calls|function_call|@tool\b|mcp\.tool|server\.tool\(|createTool\(")
+POWER_RE = re.compile(r"(?i)\b(?:delete|drop|truncate|rmtree|unlink|send_?mail|send_?email|sendmessage|exec|subprocess|os\.system|charge|refund|transfer|publish)\b")
+VALIDATION_LIBS = ("pydantic", "zod", "jsonschema", "ajv", "valibot", "yup", "marshmallow")
+
 DEP_FILES = ("package.json", "requirements.txt", "pyproject.toml", "Pipfile", "go.mod", "Gemfile")
 ERROR_TRACKERS = ("sentry", "bugsnag", "rollbar", "honeybadger", "datadog", "logrocket", "highlight.run")
 RATE_LIMITERS = ("express-rate-limit", "rate-limiter-flexible", "@upstash/ratelimit", "slowapi", "flask-limiter", "django-ratelimit", "fastapi-limiter", "rate_limit", "ratelimit")
@@ -174,6 +179,27 @@ def main(argv: list[str]) -> int:
         checks.append(check("security", "lockfile", "pass" if lock else "warn", f"Lockfile: {lock[0]}" if lock else "No lockfile; installs are not reproducible"))
         checks.append(check("security", "dependency_audit", "manual", "Run `npm audit` / `pip-audit` and review what the AI pulled in."))
     checks.append(check("security", "ai_data_handling", "manual", "What customer data reaches third-party AI tools?"))
+
+    # Pillar 3 (continued): runtime locks, only when the app calls a model
+    deps = " ".join(read(root / d).lower() for d in DEP_FILES)
+    if any(sdk in deps for sdk in AI_SDKS):
+        powerful = []
+        for p in files:
+            if p.suffix in (".py", ".ts", ".tsx", ".js", ".jsx", ".mjs"):
+                text = read(p)
+                if TOOL_USE_RE.search(text) and POWER_RE.search(text):
+                    powerful.append(rel(p))
+        checks.append(check("security", "ai_tool_review", "warn" if powerful else "pass",
+                            "Heuristic: these files define model tools and mention a delete, send, exec, charge or publish capability. Confirm each tool is needed and least-privilege." if powerful
+                            else "No model tool definition found with a powerful capability", files=powerful[:30]))
+        has_validation = [v for v in VALIDATION_LIBS if v in deps]
+        checks.append(check("security", "ai_validation", "pass" if has_validation else "warn",
+                            f"Schema library present: {', '.join(has_validation)}. Confirm tool arguments go through it." if has_validation
+                            else "No schema validation library; tool arguments may be passed through unchecked"))
+        for cid, q in (("ai_approval", "Do irreversible actions (send, delete, pay, publish) need approval bound to the exact action?"),
+                       ("ai_pii_redaction", "Is PII redacted before the model call?"),
+                       ("ai_untrusted_text", "Is retrieved or uploaded text labeled untrusted? Does any feature combine private data, untrusted content and a way to send data out?")):
+            checks.append(check("security", cid, "manual", q))
 
     # Pillars 4 and 3: observability, cost, rate limits
     dep_text = " ".join(read(root / d).lower() for d in DEP_FILES)

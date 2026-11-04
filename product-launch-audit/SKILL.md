@@ -57,3 +57,4 @@ Rules:
 - Any 🔴 in Security & data is a launch blocker. Say so first.
 - Report only. Do not fix anything unless the user asks.
 - Evaluation of AI output quality is out of scope here.
+- AI runtime locks (least-privilege tools, argument validation, approval on irreversible actions, PII redaction, untrusted text) apply only when the app calls a model. Their dev-time counterpart, locks on the agent that builds the app, lives in `product-loop-engineering`.
