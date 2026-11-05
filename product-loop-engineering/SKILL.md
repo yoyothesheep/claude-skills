@@ -152,7 +152,8 @@ or Schema Shift?"}
 2. **Sequence and Decompose the Entire Milestone Upfront**:
    - Break the initiative into bounded Build Units ($01..N$) covering **every** P0–P2 flow, in this order:
      1. **Walking skeleton** (`infra`): app shell, data layer, one end-to-end round trip, test/lint running. Only what every journey needs.
-        **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, analytics and session replay initialized with the Phase 0 keys (dev key locally, prod key only in production), rate limit on public and login endpoints, every data-touching route behind auth, and it cites the baseline guardrails ADR. Cheap now, painful to retrofit.
+        **Launch-hygiene basics go in the skeleton**: real git repo with a remote, secrets only in env (`.env` gitignored), error tracker installed, analytics and session replay initialized with the Phase 0 keys (dev key locally, prod key only in production), the **analytics test kit** (below), rate limit on public and login endpoints, every data-touching route behind auth, and it cites the baseline guardrails ADR. Cheap now, painful to retrofit.
+        **Analytics test kit (skeleton)**: an event catalogue at `ANALYTICS_CATALOGUE` (every event name with its required properties and types; `track()` raises on unknown events or properties in dev/test and drops them in prod); a fake sink with an `assert_tracked(event, **props)` helper; a browser fixture that intercepts the analytics platform's endpoints and decodes what the page sends; a test that every contract's Instrumentation events match the catalogue both ways; and a test that every catalogue event is asserted by at least one test. Third-party browser libraries are vendored (pinned copy served by the app) so browser tests run them with endpoints intercepted; blocking all network hides "library never initialised" bugs.
      2. **Load-bearing decisions** go in the skeleton even when the feature using them is P2: choices that are expensive to retrofit (data scoping key such as `owner_id`/`tenant_id`, ID scheme, sync model, auth seam as an interface). Record each as an ADR.
      3. **P0 journeys**, then **P1**, then **P2**. Feature-specific infrastructure (external API seam, eval harness, invite tables, scheduler) arrives just in time, as an `infra` unit right before the first journey that needs it.
      4. **Reporting** (last unit): dashboard, reports, or saved queries over the events instrumented by earlier units, built through the analytics platform's API or MCP.
@@ -174,7 +175,7 @@ or Schema Shift?"}
      - `- **M1 [Desktop Happy Path]** — Steps: 1. ... 2. ... Expected: ...`
      - `- **M2 [Mobile / Responsive State]** — Steps: 1. ... Expected: ...`
      - `- **M3 [Error State & Recovery / Human Override]** — Steps: 1. ... Expected: ...`
-   - **Part C: Instrumentation**: the analytics events the unit emits (name, trigger, properties). Journey units need a view and primary-action event per capability; P0 journeys also emit the hypothesis-metric events.
+   - **Part C: Instrumentation**: the analytics events the unit emits (name, trigger, properties). Journey units need a view and primary-action event per capability; P0 journeys also emit the hypothesis-metric events. Every journey unit also has an `[Instrumentation]` T scenario: drive the unit's flows and assert each listed event and its properties through the fake sink (server) and the intercepted analytics requests (browser). New events go into the catalogue in the same unit.
    - **Viewport coverage (UI units)**: follow the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
 4. **Validate Seam & Dependency Topology**:
    - Check data flow between units: Does Unit 02 rely on a schema or seam that Unit 01 fails to output?
@@ -183,7 +184,7 @@ or Schema Shift?"}
      ```bash
      python .claude/skills/product-loop-engineering/scripts/check_loop.py plan
      ```
-     It fails when a unit lacks a contract, tiers run out of order, a spec flow has no unit, reporting isn't last, or a contract is missing its type, testable outcome, M scenarios, (journey units) instrumentation events, a valid Risk, or a Guardrails ADR that exists (medium and high risk need their own ADR plus `[Guardrail]` T scenarios; high also `[Abuse]`).
+     It fails when a unit lacks a contract, tiers run out of order, a spec flow has no unit, reporting isn't last, or a contract is missing its type, testable outcome, M scenarios, (journey units) instrumentation events and an `[Instrumentation]` T scenario, a valid Risk, or a Guardrails ADR that exists (medium and high risk need their own ADR plus `[Guardrail]` T scenarios; high also `[Abuse]`).
 
 ---
 
@@ -232,7 +233,7 @@ or Schema Shift?"}
 2. **Thin Web/API/CLI Adapters Second**:
    - Wire route handlers, controllers, templates, and CLI endpoints.
    - Enforce multitenancy and scoping at the data access seam.
-   - Emit every event in the unit's **Instrumentation** section through one analytics seam (a single `track()` wrapper), so tests can assert events with a fake sink and no vendor SDK call is scattered through UI code.
+   - Emit every event in the unit's **Instrumentation** section through one analytics seam (a single `track()` wrapper), so tests can assert events with a fake sink and no vendor SDK call is scattered through UI code. Add each new event to the catalogue (`ANALYTICS_CATALOGUE`) with its properties.
 3. **Root-Cause Before Fix**:
    - When a test fails unexpectedly during implementation, read the full failure output and trace the root cause in the data flow before editing code—never guess or apply shotgun fixes, and never weaken a spec-mandated test assertion just to make it pass.
 4. **Simplify & Clean Code Baseline**:
@@ -271,7 +272,7 @@ or Schema Shift?"}
    - Step through each documented manual scenario ($M_1..M_k$).
    - Verify that UI components, responsive breakpoints, error recovery states, and navigation routes function as specified.
    - Apply the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
-   - Trigger each event in the **Instrumentation** section and confirm it arrives with the listed properties (analytics debug/live view via its API or MCP, or the fake sink in tests).
+   - The `[Instrumentation]` T scenario covers events in tests (fake sink + intercepted browser requests). **Live arrival is also required** when `ANALYTICS_ACCESS` names an MCP or API and a dev key is set: the orchestrator triggers the unit's events against the **dev** project (tagged with a run id), then queries the platform through `ANALYTICS_ACCESS` and confirms each arrived with its listed properties. Record the result in the verdict; it is never part of the offline test command.
 3. **Test Fidelity Audit (Judgment)**:
    - Verify assertions are substantive, not tautological or hollow.
    - Check that error branches explicitly assert status codes, error types, and error messages.
@@ -294,7 +295,7 @@ or Schema Shift?"}
    | Manual E2E Tests (M1..Mk) | PASS | All browser walkthroughs verified |
    | CI & Linter Gates | PASS | Tests green; 0 lint/format warnings |
    | Seam & Architecture Invariants | PASS | Logic isolated in core; scoping verified |
-   | Instrumentation | PASS | All listed events fire with expected properties |
+   | Instrumentation | PASS | `[Instrumentation]` T passes; catalogue in sync; live arrival confirmed in the dev project |
    | Semantic Acceptance Criteria | PASS | All bullet criteria verified |
    | Guardrails (risk: low/medium/high) | PASS | Locks for this level present; negative tests pass; config unchanged or ADR'd |
    | Test Edits & Scope Drift | PASS | Every test edit traced to the contract; no unrequested changes |

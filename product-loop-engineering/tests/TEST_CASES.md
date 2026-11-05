@@ -18,7 +18,7 @@ Use these scenarios to verify that `product-loop-engineering` advances naturally
 4. **Generates Complete Upfront Unit Contracts:** Once aligned, writes `history/decisions/001-*.md` (if needed), `active/01-reading-list/plan.md` (from `PLAN_TEMPLATE.md`), and all unit contracts (`active/01-reading-list/units/01..N-*.md`) with:
    - **Sequence:** Unit 01 = walking skeleton (`infra`, serves `all`, includes the load-bearing data scoping key); next units serve F1 [P0]; then P1/P2 flows; last unit = `reporting` (dashboard/queries over instrumented events).
    - Every flow mapped into explicit **Automated Tests ($T_1..T_n$)**, **Manual E2E Scenarios ($M_1..M_k$)**, and a **Testable after this unit** outcome.
-   - Every journey unit lists **Instrumentation** events (view + primary action per capability; hypothesis-metric events in the P0 unit).
+   - Every journey unit lists **Instrumentation** events (view + primary action per capability; hypothesis-metric events in the P0 unit) and has an `[Instrumentation]` T scenario asserting them.
    - Zero placeholder units; `check_loop.py plan` returns `"ok": true`.
 5. **Pauses at Checkpoint 1** for user approval before writing production code.
 
@@ -85,6 +85,7 @@ python .claude/skills/product-loop-engineering/scripts/check_loop.py 01
 - No `reporting` row, or one that isn't last → `No reporting unit` / `Reporting unit(s) must come last`.
 - No journey unit serving `F3` → `F3 [P2] is not served by any journey unit`.
 - A journey contract without Instrumentation events → `Journey unit lists no Instrumentation events`.
+- A journey contract without an `[Instrumentation]` T scenario → `Journey unit needs an `[Instrumentation]` T scenario asserting its events`.
 - A spec flow header without `[P#]` → `Spec flow F2 has no [P0|P1|P2] tier tag`.
 - Spec flows out of tier order, or F1 not P0 → `Spec flows must be ordered P0 → P1 → P2` / `Spec flow F1 must be P0`.
 

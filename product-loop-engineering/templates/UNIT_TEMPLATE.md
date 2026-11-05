@@ -67,6 +67,8 @@
 - **T4 [Abuse] (integration)** — *(high risk)* [Injection in a document does nothing, wrong-tenant access denied, replayed request rejected]
 - **T5 [Data Invariant / Security / Concurrency] (integration)** — [Data scoping, idempotency, or invariant held]. *Fails if broken: [e.g. duplicate records]*. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
 
+- **T6 [Instrumentation] (integration + browser)** — *(journey units)* Drive each flow in this unit; assert every event in section C fires with its listed properties via the fake sink's `assert_tracked` (server) and the intercepted analytics requests (browser). New events added to the catalogue. *Fails if broken: the metrics this unit feeds are silently empty.*
+
 *Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
 
 ### B. Manual E2E Scenarios (M1..Mk)

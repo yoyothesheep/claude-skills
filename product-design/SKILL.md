@@ -17,13 +17,12 @@ description: >-
 
 LLMs pick the most probable option at every design decision, so unguided output converges on
 the average: gradient hero, text-left/graphic-right, three feature cards. Asking for
-"something unique" doesn't help — the request is processed by the same machinery that
-produces the average. Variance has to be **imposed from outside** and judged by **something
+"something unique" doesn't help. Variance has to be **imposed from outside** and judged by **something
 that didn't build it**.
 
 ## Usage
 
-Not one-shot. Four numbered stages, each ending at a checkpoint where the user decides. Chain
+Four numbered stages, each ending at a checkpoint where the user decides. Chain
 only if the user says so (`auto-advance`). Re-invoking on an already-polished design is normal.
 
 | Stage | What happens | What the user does | Exit when |
@@ -33,10 +32,11 @@ only if the user says so (`auto-advance`). Re-invoking on an already-polished de
 | **2 · Refine** | Rounds: critic scores the pick → builder applies fixes + user notes | Reacts to each round: notes, then accept / another round / back to Explore | **The user accepts.** The score is a guide, not the exit |
 | **3 · Polish & hand off** | Three subtraction passes, then spec sync | Approves each pass; rewrites the copy | All three passes approved, copy has a human pass, spec's UI section updated |
 
-Always say "Stage N · Name" — never a bare stage name. Folders match: `mocks/1-explore/`,
+Start every message with "Stage N · Name" (plus "· round R" in Stage 2), progress updates
+while builders or the critic run included — never a bare stage name. Folders match: `mocks/1-explore/`,
 `mocks/2-refine/`, `mocks/3-polish/`.
 
-**At the start of each stage**, one line on what it will ask of the user ("Stage 2: I'll show
+**At the start of each stage**, also add one line on what it will ask of the user ("Stage 2: I'll show
 a round, then ask for notes — point at things on the screen") and the settings in effect.
 Don't silently pick and proceed.
 
@@ -52,7 +52,8 @@ Next: 1. Another round [default] · 2. Accept → Stage 3 Polish · 3. Back to S
 ```
 
 The user can also jump at any time in plain words: "skip to polish", "back to explore",
-"one more round", "stop here". List these once, in the first status block.
+"one more round", "stop here". List these once, in the first status block. When the user jumps or stops early, still send
+the status block, naming what was skipped (e.g. `Stage 3 · Polish — skipped by user`).
 
 ### DESIGN-LOG.md — where the work stands
 
@@ -272,6 +273,8 @@ subtraction. Apply passes one at a time, screenshot after each, stop for confirm
 spec is synced. Close with a handoff summary: final screenshot, the direction in one line,
 file paths, what changed in the spec, and what's still open for the user (copy lines not yet
 rewritten, real photos still missing). Next step: `product-loop-engineering`.
+If the user locks the design early or skips stages, still sync the spec and close with this
+handoff summary.
 
 ## Re-entering on an existing design
 
@@ -301,6 +304,8 @@ Real existing content still beats generated content.
 - Stage 2: before/after, score and the user's notes; stops after every critic pass.
 - Stage 3: one pass at a time, stops after each; ends with the handoff summary.
 - Every stop ends with the status block; DESIGN-LOG.md updated at every stop.
+- Every message starts with the stage label, progress updates included; an early exit still
+  ends with the status block and the handoff summary.
 - A real screenshot, inline, at every point above.
 - No invented features, fields, or data — ever, including in mockups.
 - Nothing auto-advances without `auto-advance: true`.

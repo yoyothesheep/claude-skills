@@ -30,10 +30,12 @@ PARITY_REFERENCE_URL:
 
 # Analytics (in-app events & session replay via posthog or mixpanel; traffic acquisition via google-analytics).
 # Separate dev and prod projects, each with its own key in env; a human creates them in Phase 0.
-ANALYTICS_PLATFORM: posthog
+ANALYTICS_PLATFORM: mixpanel
 # How the agent reaches it: an MCP server name or an API base URL (keys stay in env, never here)
-ANALYTICS_ACCESS: mcp:posthog
+ANALYTICS_ACCESS: mcp:mixpanel
 ACQUISITION_ANALYTICS: google-analytics
+# The event catalogue the skeleton creates: every event name with its required properties (see SKILL.md, Analytics test kit).
+ANALYTICS_CATALOGUE: app/analytics_events.py
 
 # Model routing. Each role runs at a tier; each tool maps tiers to its models.
 # Planning (Phases 1–2) and orchestration run in the main session: start it on the PLANNER_TIER model.

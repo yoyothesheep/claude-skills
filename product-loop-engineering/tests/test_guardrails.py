@@ -328,6 +328,7 @@ def contract(risk="low", adr="ADR-001", extra=""):
 - **Guardrails ADR**: {adr}
 **Testable after this unit**: a human can do the thing
 - **T1 [Happy Path]** — works
+- **T2 [Instrumentation]** — events asserted
 {extra}
 - **M1 [Desktop Happy Path]** — Steps: 1. go Expected: ok
 ### C. Instrumentation
@@ -362,11 +363,15 @@ class ContractTests(RepoCase):
 
     def test_medium_needs_guardrail_test_and_high_needs_abuse(self):
         self.assertTrue(any("[Guardrail]" in e for e in self.check(contract("medium"))["errors"]))
-        guardrail = "- **T2 [Guardrail]** — blocked stays blocked"
+        guardrail = "- **T3 [Guardrail]** — blocked stays blocked"
         self.assertEqual(self.check(contract("medium", extra=guardrail))["errors"], [])
         self.assertTrue(any("[Abuse]" in e for e in self.check(contract("high", extra=guardrail))["errors"]))
-        both = guardrail + "\n- **T3 [Abuse]** — injection does nothing"
+        both = guardrail + "\n- **T4 [Abuse]** — injection does nothing"
         self.assertEqual(self.check(contract("high", extra=both))["errors"], [])
+
+    def test_journey_needs_instrumentation_scenario(self):
+        text = contract().replace("- **T2 [Instrumentation]** — events asserted\n", "")
+        self.assertTrue(any("[Instrumentation]" in e for e in self.check(text)["errors"]))
 
 
 if __name__ == "__main__":

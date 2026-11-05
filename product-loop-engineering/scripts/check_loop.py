@@ -224,6 +224,8 @@ def check_contract(text: str) -> dict:
         events = re.findall(r"^\s*-\s+`[^`\[\]]+`", section.group(1), re.MULTILINE) if section else []
         if not events:
             errors.append("Journey unit lists no Instrumentation events")
+        if not re.search(r"\*\*T\d+(?:\.\d+)?\s*\[Instrumentation", text):
+            errors.append("Journey unit needs an `[Instrumentation]` T scenario asserting its events")
     return {
         "type": unit_type, "serves": serves, "tier": tier, "risk": risk,
         "guardrails_adr": f"ADR-{adr_ref.group(1)}" if adr_ref else "", "errors": errors, "ok": not errors,
