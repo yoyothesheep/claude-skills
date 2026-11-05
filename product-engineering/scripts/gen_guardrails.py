@@ -9,7 +9,10 @@ Outputs:
 - .claude/hooks/guard.py     the hook (copied from templates/guardrails/)
 - .claude/agents/loop-*.md   role subagents (maker, verifier, scribe), each with the model for its tier from CONFIG.md;
                              the verifiers are read-only and CONFIG.md test/lint commands go to `verifier_bash_allow`
+- .cursor/hooks.json         the same guard.py on preToolUse and beforeReadFile (merged)
+- .cursor/agents/loop-*.md   the roles for Cursor (`readonly: true` verifiers; models from CURSOR_MODELS, else inherit)
 - .codex/agents/loop_*.toml  the same roles for Codex, when CONFIG.md sets CODEX_MODELS
+- .codex/hooks.json          the same guard.py on PreToolUse (merged), when CONFIG.md sets CODEX_MODELS
 - .gitignore                 secret and private-data paths (managed block)
 - .cursorignore, .geminiignore   secret paths (managed block)
 - AGENTS.md                  plain-language rules for agents without hooks, and the model roles (managed blocks)
@@ -32,6 +35,11 @@ from pathlib import Path
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates" / "guardrails"
 HOOK_COMMAND = 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py"'
 HOOK_MATCHER = "Bash|Read|Edit|Write|MultiEdit|NotebookEdit"
+CURSOR_HOOK = {"command": "python3 .claude/hooks/guard.py"}  # Cursor runs project hooks from the repo root
+CURSOR_HOOKS = {"preToolUse": {**CURSOR_HOOK, "matcher": "Shell|Read|Write|Edit|Delete|StrReplace"}, "beforeReadFile": CURSOR_HOOK}
+CODEX_HOOK = {"matcher": "Bash|apply_patch|Edit|Write",
+              "hooks": [{"type": "command", "command": 'python3 "$(git rev-parse --show-toplevel)/.claude/hooks/guard.py"'}]}
+ADAPTER_PATHS = (".cursor/hooks.json", ".cursor/agents/loop-*.md", ".codex/hooks.json")
 
 # (agent name, template, CONFIG.md key for its tier, default tier, description suffix)
 ROLES = [
@@ -81,6 +89,35 @@ def gen_claude(root: Path, cfg: dict) -> None:
     hook.chmod(hook.stat().st_mode | stat.S_IXUSR)
 
 
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+
+def save_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def gen_cursor_hooks(root: Path) -> None:
+    path = root / ".cursor" / "hooks.json"
+    data = load_json(path)
+    data.setdefault("version", 1)
+    for event, entry in CURSOR_HOOKS.items():
+        entries = data.setdefault("hooks", {}).setdefault(event, [])
+        if not any("hooks/guard.py" in e.get("command", "") for e in entries):
+            entries.append(dict(entry))
+    save_json(path, data)
+
+
+def gen_codex_hooks(root: Path) -> None:
+    path = root / ".codex" / "hooks.json"
+    data = load_json(path)
+    pre = data.setdefault("hooks", {}).setdefault("PreToolUse", [])
+    if not any("hooks/guard.py" in h.get("command", "") for e in pre for h in e.get("hooks", [])):
+        pre.append(json.loads(json.dumps(CODEX_HOOK)))
+    save_json(path, data)
+
+
 def read_config(root: Path) -> dict[str, str]:
     """`KEY: value` lines from the repo's CONFIG.md (root first, then the skill folder)."""
     for path in (root / "CONFIG.md", *(root / b / "skills" / "product-engineering" / "CONFIG.md" for b in (".agent", ".claude"))):
@@ -124,12 +161,13 @@ def toml_multiline(text: str) -> str:
 
 
 def gen_agents(root: Path, conf: dict[str, str]) -> list[str]:
-    """Role subagents for Claude Code, and for Codex when CODEX_MODELS is set. Returns warnings."""
+    """Role subagents for Claude Code and Cursor, and for Codex when CODEX_MODELS is set. Returns warnings."""
     warnings = []
     claude = parse_models(conf.get("CLAUDE_MODELS") or DEFAULT_CLAUDE_MODELS)
+    cursor = parse_models(conf.get("CURSOR_MODELS", ""))
     codex = parse_models(conf.get("CODEX_MODELS", ""))
     for name, tier, desc, meta, body in role_tiers(conf):
-        for harness, models in (("CLAUDE_MODELS", claude), ("CODEX_MODELS", codex)):
+        for harness, models in (("CLAUDE_MODELS", claude), ("CURSOR_MODELS", cursor), ("CODEX_MODELS", codex)):
             if models and tier not in models:
                 warnings.append(f"{name}: tier '{tier}' not in {harness}; the agent inherits the session model")
         lines = ["---", *(f"{k}: {v}" for k, v in meta.items())]
@@ -138,6 +176,13 @@ def gen_agents(root: Path, conf: dict[str, str]) -> list[str]:
         path = root / ".claude" / "agents" / f"{name}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join([*lines, "---", "", body, ""]), encoding="utf-8")
+        # Cursor prefers .cursor/agents/ over .claude/agents/; it has no disallowedTools, only readonly.
+        front = {"name": name, "description": desc, "model": cursor.get(tier, "inherit")}
+        if meta.get("readonly") == "true":
+            front["readonly"] = "true"
+        path = root / ".cursor" / "agents" / f"{name}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(["---", *(f"{k}: {v}" for k, v in front.items()), "---", "", body, ""]), encoding="utf-8")
         if codex:
             toml = [f"name = {json.dumps(name.replace('-', '_'), ensure_ascii=False)}",
                     f"description = {json.dumps(desc, ensure_ascii=False)}"]
@@ -152,6 +197,7 @@ def gen_agents(root: Path, conf: dict[str, str]) -> list[str]:
 
 def gen_roles_md(root: Path, conf: dict[str, str]) -> None:
     claude = parse_models(conf.get("CLAUDE_MODELS") or DEFAULT_CLAUDE_MODELS)
+    cursor = parse_models(conf.get("CURSOR_MODELS", ""))
     codex = parse_models(conf.get("CODEX_MODELS", ""))
     planner = conf.get("PLANNER_TIER") or "top"
     phases = {"loop-maker": "3–4", "loop-maker-high": "3–4 (high risk)", "loop-verifier": "5 (low risk)",
@@ -162,12 +208,14 @@ def gen_roles_md(root: Path, conf: dict[str, str]) -> None:
         "",
         "Roles map to tiers in `CONFIG.md`; tiers map to each tool's models. Where a tool can't route a role to its model, run that phase in a fresh session on the listed model.",
         "",
-        "| Role | Phases | Tier | Claude Code | Codex |",
-        "|:---|:---|:---|:---|:---|",
-        f"| planner (main session) | 0–2, orchestration | {planner} | {model(claude, planner)} | {model(codex, planner)} |",
+        "| Role | Phases | Tier | Claude Code | Cursor | Codex |",
+        "|:---|:---|:---|:---|:---|:---|",
+        f"| planner (main session) | 0–2, orchestration | {planner} | {model(claude, planner)} | {model(cursor, planner)} | {model(codex, planner)} |",
     ]
     for name, tier, *_ in role_tiers(conf):
-        lines.append(f"| `{name}` | {phases[name]} | {tier} | {model(claude, tier)} | {model(codex, tier)} |")
+        lines.append(f"| `{name}` | {phases[name]} | {tier} | {model(claude, tier)} | {model(cursor, tier)} | {model(codex, tier)} |")
+    if codex:
+        lines += ["", "Codex can't make one subagent read-only: subagents inherit the parent's sandbox. For medium- and high-risk units, run Phase 5 in a fresh `codex --sandbox read-only` session given only the verifier's inputs."]
     write_block(root / "AGENTS.md", "\n".join(lines), "<!-- roles:start -->", "<!-- roles:end -->")
 
 
@@ -240,12 +288,18 @@ def main(argv: list[str]) -> int:
     conf = read_config(root)
     gen_claude(root, cfg)
     warnings = gen_agents(root, conf)
+    gen_cursor_hooks(root)
+    if conf.get("CODEX_MODELS"):
+        gen_codex_hooks(root)
     gen_ignore_files(root, cfg)
     gen_gitignore(root, cfg)
     gen_agents_md(root, cfg)
     gen_roles_md(root, conf)
-    codex = ", .codex/agents/loop_*.toml" if conf.get("CODEX_MODELS") else ""
-    print(f"wrote .claude/settings.json, .claude/hooks/guard.py, .claude/agents/loop-*.md{codex}, .gitignore, .cursorignore, .geminiignore, AGENTS.md")
+    codex = ", .codex/agents/loop_*.toml, .codex/hooks.json" if conf.get("CODEX_MODELS") else ""
+    print(f"wrote .claude/settings.json, .claude/hooks/guard.py, .claude/agents/loop-*.md, .cursor/hooks.json, .cursor/agents/loop-*.md{codex}, .gitignore, .cursorignore, .geminiignore, AGENTS.md")
+    unprotected = [p for p in ADAPTER_PATHS if p not in cfg.get("protected_paths", [])]
+    if unprotected:
+        warnings.append("protected_paths lacks " + ", ".join(unprotected) + "; add them to .agent/guardrails.json by hand (with an ADR) so the agent can't edit its own Cursor/Codex hooks")
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
     if "--git-hook" in argv:

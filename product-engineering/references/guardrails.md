@@ -17,7 +17,11 @@ Two kinds, handled in different places:
    - The dev database login has no `DELETE`/`DROP`.
    - No production credentials in the agent's environment.
    - Run the agent in a sandbox or container where it can't reach what it doesn't need.
-   - The verifiers are `.claude/agents/loop-verifier.md` and `loop-verifier-strict.md` (same rules, higher model tier for medium and high risk): no write tools, Bash limited by the hook to read-only commands, `check_loop.py`, and `verifier_bash_allow` (CONFIG.md's test/lint commands; add a dev-server command by hand if M walkthroughs need one). `check_loop.py fingerprint` before and after catches anything that slips through.
+   - The verifiers are `loop-verifier` and `loop-verifier-strict` (same rules, higher model tier for medium and high risk). How read-only they are depends on the tool:
+     - **Claude Code** (`.claude/agents/`): no write tools, Bash limited by the hook to read-only commands, `check_loop.py`, and `verifier_bash_allow` (CONFIG.md's test/lint commands; add a dev-server command by hand if M walkthroughs need one).
+     - **Cursor** (`.cursor/agents/`, which Cursor prefers over `.claude/agents/`): `readonly: true`, which blocks file edits and state-changing shell commands. The `.claude/` copies carry `readonly: true` too, so Cursor's fallback is locked as well.
+     - **Codex** (`.codex/agents/`): no per-agent lock; a subagent inherits the parent session's sandbox. Low risk: run it as a subagent and rely on the fingerprint. Medium and high risk: run Phase 5 in a fresh `codex --sandbox read-only` session given only the verifier's inputs. If the test command must write (caches, temp databases), use `--sandbox workspace-write` and rely on the fingerprint.
+     - Everywhere: `check_loop.py fingerprint` before and after catches anything that slips through.
 
 **Lock only what git can't undo.** Git rolls back edits to tracked files, so those get checks, not locks: commits and pushes are allowed, edits to `history/` and the design system are flagged by `check_loop.py` rather than blocked. Commits follow `AUTO_COMMIT` in `CONFIG.md`. What git can't undo gets a lock:
 
@@ -39,9 +43,13 @@ Two kinds, handled in different places:
 | Credentials, sandbox | Any agent | Outside the agent entirely. Strongest. |
 | `check_loop.py guardrails` in pre-commit and CI | Any agent | Fails on protected or frozen edits and on config changes without a new ADR. `--git-hook` installs it. |
 | `.claude/settings.json` deny rules + `guard.py` PreToolUse hook | Claude Code | Generated. The hook blocks with exit code 2. |
-| `.cursorignore`, `.geminiignore`, `AGENTS.md` block | Cursor, Gemini, others | Generated. Secret paths and plain-language rules. Best-effort. |
+| `.cursor/hooks.json`: the same `guard.py` on `preToolUse` and `beforeReadFile` | Cursor | Generated. Exit code 2 plus a `deny` answer blocks; an allowed call answers `{"permission": "allow"}`, since Cursor blocks a permission hook whose output isn't valid JSON. `beforeReadFile` also covers files attached with `@`. Project hooks run only in a trusted workspace. |
+| `.codex/hooks.json`: the same `guard.py` on `PreToolUse` (`Bash`, `apply_patch`) | Codex | Generated when `CODEX_MODELS` is set. File edits arrive as patch text; the hook checks every `Add`/`Update`/`Delete`/`Move to` path in it. Trust the hook once with `/hooks`; Codex skips new or changed hooks until you do. Codex fails open when a hook errors or times out, so treat this layer as a guardrail, not a boundary. Still set the session's sandbox by hand (workspace-write, approval on request). |
+| `.cursorignore`, `.geminiignore`, `AGENTS.md` block | Gemini, others (and Cursor indexing) | Generated. Secret paths and plain-language rules. Best-effort. |
 
-Not generated: a Codex CLI config. I couldn't verify its current keys. Set its sandbox and approval mode by hand (workspace-write sandbox, approval on request) and rely on the first two layers.
+`guard.py` finds the repo from its own location (`.claude/hooks/`), not from the environment, so all three tools enforce the same `.agent/guardrails.json`. `check_loop.py guardrails` fails when `.cursor/` or `.codex/` exists without its hook registered, or when a Cursor verifier lost `readonly: true`.
+
+Repos set up before these adapters existed: add `.cursor/hooks.json`, `.cursor/agents/loop-*.md` and `.codex/hooks.json` to `protected_paths` by hand (with an ADR), then re-run `gen_guardrails.py`. It warns until you do.
 
 ## Privacy gates (every commit)
 

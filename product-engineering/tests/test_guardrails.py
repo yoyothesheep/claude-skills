@@ -144,8 +144,8 @@ class RoleAgentTests(RepoCase):
         self.regen("CODEX_MODELS: top=gpt-top, mid=gpt-mid, small=gpt-small\n")
         text = (self.root / "AGENTS.md").read_text()
         self.assertIn("roles:start", text)
-        self.assertIn("| `loop-maker` | 3–4 | mid | sonnet | gpt-mid |", text)
-        self.assertIn("| planner (main session) | 0–2, orchestration | top | opus | gpt-top |", text)
+        self.assertIn("| `loop-maker` | 3–4 | mid | sonnet | session model | gpt-mid |", text)
+        self.assertIn("| planner (main session) | 0–2, orchestration | top | opus | session model | gpt-top |", text)
 
     def test_role_agents_are_protected_and_required(self):
         self.assertEqual(self.hook("Edit", file_path=".claude/agents/loop-maker.md").returncode, 2)
@@ -204,6 +204,174 @@ class VerifierTests(RepoCase):
         self.assertEqual(fp(), before)
         (self.root / "README.md").write_text("changed\n")
         self.assertNotEqual(fp(), before)
+
+
+class CursorTests(RepoCase):
+    """Cursor runs the same guard.py through .cursor/hooks.json and reads role agents from .cursor/agents/."""
+
+    def cursor(self, event_name, **fields):
+        event = {"hook_event_name": event_name, "cursor_version": "2.5.0", "workspace_roots": [str(self.root)], **fields}
+        return run([self.root / ".claude/hooks/guard.py"], self.root, stdin=json.dumps(event))
+
+    def test_generator_registers_guard_for_tools_and_reads(self):
+        data = json.loads((self.root / ".cursor/hooks.json").read_text())
+        self.assertEqual(data["version"], 1)
+        for event in ("preToolUse", "beforeReadFile"):
+            with self.subTest(event=event):
+                self.assertEqual(sum("hooks/guard.py" in h["command"] for h in data["hooks"][event]), 1)
+        run([GEN], self.root)
+        self.assertEqual(json.loads((self.root / ".cursor/hooks.json").read_text()), data)
+
+    def test_keeps_existing_cursor_hooks(self):
+        path = self.root / ".cursor/hooks.json"
+        data = json.loads(path.read_text())
+        data["hooks"]["afterFileEdit"] = [{"command": "./fmt.sh"}]
+        path.write_text(json.dumps(data))
+        run([GEN], self.root)
+        self.assertEqual(json.loads(path.read_text())["hooks"]["afterFileEdit"], [{"command": "./fmt.sh"}])
+
+    def test_blocks(self):
+        for event, fields in [
+            ("beforeReadFile", {"file_path": str(self.root / ".env"), "content": "X=1"}),
+            ("preToolUse", {"tool_name": "Read", "tool_input": {"file_path": "app/keys/server.pem"}}),
+            ("preToolUse", {"tool_name": "Shell", "tool_input": {"command": "git push --force origin main"}}),
+            ("preToolUse", {"tool_name": "Shell", "tool_input": {"command": "cat .env"}}),
+            ("preToolUse", {"tool_name": "Write", "tool_input": {"file_path": ".claude/settings.json"}}),
+            ("preToolUse", {"tool_name": "Write", "tool_input": {"path": str(self.root / ".cursor/hooks.json")}}),
+            ("preToolUse", {"tool_name": "Delete", "tool_input": {"target_file": ".agent/guardrails.json"}}),
+        ]:
+            with self.subTest(event=event, fields=fields):
+                r = self.cursor(event, **fields)
+                self.assertEqual(r.returncode, 2)
+                self.assertEqual(json.loads(r.stdout)["permission"], "deny")
+
+    def test_allows_with_explicit_permission(self):
+        # Cursor blocks a permission hook whose output isn't valid JSON, so an allow must say so.
+        for event, fields in [
+            ("beforeReadFile", {"file_path": str(self.root / "README.md"), "content": "x"}),
+            ("preToolUse", {"tool_name": "Shell", "tool_input": {"command": "git status"}}),
+            ("preToolUse", {"tool_name": "Write", "tool_input": {"file_path": "src/app.py"}}),
+            ("preToolUse", {"tool_name": "Grep", "tool_input": {"pattern": "x"}}),
+        ]:
+            with self.subTest(event=event, fields=fields):
+                r = self.cursor(event, **fields)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertEqual(json.loads(r.stdout), {"permission": "allow"})
+
+    def test_role_agents_use_cursor_fields(self):
+        agents = self.root / ".cursor/agents"
+        for name in ("loop-verifier", "loop-verifier-strict"):
+            with self.subTest(name=name):
+                text = (agents / f"{name}.md").read_text()
+                self.assertIn("readonly: true\n", text)
+                self.assertIn("model: inherit\n", text)
+                self.assertNotIn("disallowedTools", text)
+        self.assertNotIn("readonly", (agents / "loop-maker.md").read_text())
+
+    def test_cursor_models_from_config(self):
+        (self.root / "CONFIG.md").write_text("CURSOR_MODELS: top=cur-top, mid=cur-mid, small=cur-small\n")
+        run([GEN], self.root)
+        self.assertIn("model: cur-top\n", (self.root / ".cursor/agents/loop-verifier-strict.md").read_text())
+        self.assertIn("model: cur-small\n", (self.root / ".cursor/agents/loop-scribe.md").read_text())
+        self.assertIn("| `loop-maker` | 3–4 | mid | sonnet | cur-mid | session model |", (self.root / "AGENTS.md").read_text())
+
+    def test_claude_verifier_is_read_only_for_cursor_fallback(self):
+        # Cursor also reads .claude/agents/; `readonly` keeps the verifier locked there too.
+        self.assertIn("readonly: true\n", (self.root / ".claude/agents/loop-verifier.md").read_text())
+
+    def test_cursor_adapter_is_protected(self):
+        for path in (".cursor/hooks.json", ".cursor/agents/loop-verifier.md"):
+            with self.subTest(path=path):
+                self.assertEqual(self.hook("Edit", file_path=path).returncode, 2)
+
+    def test_missing_cursor_hook_fails_check(self):
+        path = self.root / ".cursor/hooks.json"
+        data = json.loads(path.read_text())
+        data["hooks"].pop("beforeReadFile")
+        path.write_text(json.dumps(data))
+        code, facts = self.guardrails()
+        self.assertEqual(code, 1)
+        self.assertTrue(any("beforeReadFile" in e for e in facts["errors"]), facts)
+
+    def test_readonly_removed_fails_check(self):
+        path = self.root / ".cursor/agents/loop-verifier-strict.md"
+        path.write_text(path.read_text().replace("readonly: true\n", ""))
+        code, facts = self.guardrails()
+        self.assertEqual(code, 1)
+        self.assertTrue(any("loop-verifier-strict.md" in e and "readonly" in e for e in facts["errors"]), facts)
+
+
+class CodexTests(RepoCase):
+    CONFIG = "CODEX_MODELS: top=gpt-top, mid=gpt-mid, small=gpt-small\n"
+
+    def setUp(self):
+        super().setUp()
+        (self.root / "CONFIG.md").write_text(self.CONFIG)
+        run([GEN], self.root)
+
+    def codex(self, tool, agent_type=None, **tool_input):
+        event = {"hook_event_name": "PreToolUse", "session_id": "s", "cwd": str(self.root), "model": "gpt-mid",
+                 "tool_name": tool, "tool_input": tool_input}
+        if agent_type:
+            event["agent_type"] = agent_type
+        return run([self.root / ".claude/hooks/guard.py"], self.root, stdin=json.dumps(event)).returncode
+
+    def patch(self, *headers):
+        body = "\n".join(f"*** {h}\n@@\n-a\n+b" for h in headers)
+        return f"*** Begin Patch\n{body}\n*** End Patch\n"
+
+    def test_generator_registers_guard(self):
+        data = json.loads((self.root / ".codex/hooks.json").read_text())
+        entries = data["hooks"]["PreToolUse"]
+        self.assertEqual(len(entries), 1)
+        self.assertIn("apply_patch", entries[0]["matcher"])
+        self.assertIn("hooks/guard.py", entries[0]["hooks"][0]["command"])
+        run([GEN], self.root)
+        self.assertEqual(json.loads((self.root / ".codex/hooks.json").read_text()), data)
+
+    def test_no_codex_hooks_without_codex_models(self):
+        (self.root / "CONFIG.md").write_text("")
+        other = Path(tempfile.mkdtemp(dir=self._tmp.name))
+        git(other, "init", "-q")
+        run([GEN, "--init", "--root", other], self.root)
+        self.assertFalse((other / ".codex").exists())
+
+    def test_blocks_patches_to_protected_and_secret_paths(self):
+        for patch in [
+            self.patch("Update File: .claude/settings.json"),
+            self.patch("Update File: src/app.py", "Add File: .env"),
+            self.patch("Delete File: .codex/hooks.json"),
+            self.patch("Update File: src/app.py\n*** Move to: .claude/hooks/guard.py"),
+        ]:
+            with self.subTest(patch=patch):
+                self.assertEqual(self.codex("apply_patch", command=patch), 2)
+
+    def test_allows_ordinary_patches_and_commands(self):
+        self.assertEqual(self.codex("apply_patch", command=self.patch("Update File: src/app.py", "Add File: tests/test_x.py")), 0)
+        self.assertEqual(self.codex("Bash", command="git status"), 0)
+        self.assertEqual(self.codex("Bash", command="rm -rf build"), 2)
+
+    def test_verifier_agent_type_with_underscores_is_read_only(self):
+        self.assertEqual(self.codex("apply_patch", agent_type="loop_verifier_strict", command=self.patch("Update File: src/app.py")), 2)
+        self.assertEqual(self.codex("Bash", agent_type="loop_verifier", command="git diff"), 0)
+        self.assertEqual(self.codex("apply_patch", agent_type="loop_maker", command=self.patch("Update File: src/app.py")), 0)
+
+    def test_missing_codex_hook_fails_check(self):
+        (self.root / ".codex/hooks.json").write_text(json.dumps({"hooks": {}}))
+        code, facts = self.guardrails()
+        self.assertEqual(code, 1)
+        self.assertTrue(any(".codex/hooks.json" in e for e in facts["errors"]), facts)
+
+
+class HookRootTests(RepoCase):
+    def test_uses_its_own_repo_config_whatever_the_env(self):
+        # Cursor sets CLAUDE_PROJECT_DIR too, and Codex sets none; the hook trusts its own location.
+        import os
+        env = {**os.environ, "CLAUDE_PROJECT_DIR": tempfile.gettempdir()}
+        r = subprocess.run([sys.executable, self.root / ".claude/hooks/guard.py"], cwd=tempfile.gettempdir(), env=env,
+                           input=json.dumps({"tool_name": "Read", "tool_input": {"file_path": str(self.root / ".env")}}),
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2, r.stderr)
 
 
 class CheckLoopTests(RepoCase):

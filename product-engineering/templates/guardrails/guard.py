@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook for Claude Code. Enforces .agent/guardrails.json; exit 2 blocks the call.
+"""Pre-tool hook for Claude Code, Cursor and Codex. Enforces .agent/guardrails.json; exit 2 blocks the call.
 
-Installed to .claude/hooks/guard.py by scripts/gen_guardrails.py. Blocks only what git can't undo:
+Installed to .claude/hooks/guard.py by scripts/gen_guardrails.py and registered in .claude/settings.json,
+.cursor/hooks.json (preToolUse, beforeReadFile) and .codex/hooks.json (PreToolUse). Each harness's
+event is normalized to Claude Code's tool names first. Blocks only what git can't undo:
 secret reads (they reach the model provider), edits to the guardrails themselves, and commands that
 destroy uncommitted work or act outside the repo. Best-effort: a shell can dodge pattern checks,
 so the credentials and sandbox are the real boundary.
@@ -15,7 +17,13 @@ import shlex
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
+# The hook lives at <repo>/.claude/hooks/guard.py. Trust that over the environment: Cursor aliases
+# CLAUDE_PROJECT_DIR, Codex sets no project variable, and either may run from a subdirectory.
+_HOME = Path(__file__).resolve().parents[2]
+ROOT = _HOME if (_HOME / ".agent").is_dir() else Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
+CURSOR_TOOLS = {"Shell": "Bash", "Read": "Read", "Write": "Write", "Edit": "Edit", "Delete": "Write", "StrReplace": "Edit"}
+PATH_KEYS = ("file_path", "notebook_path", "path", "target_file", "filePath")
+PATCH_PATH = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$|^\*\*\* Move to: (.+)$", re.MULTILINE)
 WRITE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 WRITE_VERBS = re.compile(r"(?:^|[\s;&|])(?:rm|mv|truncate|tee|sed\s+-i\S*|chmod)\b|>>?")
 VERIFIER = "loop-verifier"
@@ -89,20 +97,55 @@ def check(cfg: dict, tool: str, args: dict) -> str | None:
     return None
 
 
+def path_arg(args: dict) -> str:
+    return next((str(args[k]) for k in PATH_KEYS if args.get(k)), "")
+
+
+def normalize(event: dict) -> list[tuple[str, dict]]:
+    """Each harness's event as Claude Code (tool, args) calls; a Codex patch becomes one Write per file."""
+    name, args = event.get("hook_event_name", ""), event.get("tool_input") or {}
+    if name == "beforeReadFile":
+        return [("Read", {"file_path": event.get("file_path", "")})]
+    if name == "preToolUse":
+        tool = CURSOR_TOOLS.get(event.get("tool_name", ""), "")
+        return [(tool, {"command": args.get("command", "")} if tool == "Bash" else {"file_path": path_arg(args)})] if tool else []
+    if event.get("tool_name") == "apply_patch":
+        patch = next((v for v in args.values() if isinstance(v, str) and "*** " in v), "")
+        base = Path(event.get("cwd") or ROOT)
+        return [("Write", {"file_path": str(base / (a or b).strip())}) for a, b in PATCH_PATH.findall(patch)] or [("Write", {})]
+    return [(event.get("tool_name", ""), {**args, "file_path": path_arg(args)} if path_arg(args) else args)]
+
+
+def is_verifier(event: dict) -> bool:
+    return str(event.get("agent_type") or "").replace("_", "-").startswith(VERIFIER)
+
+
+def decide(event: dict, cfg: dict) -> str | None:
+    for tool, args in normalize(event):
+        reason = check(cfg, tool, args) or (verifier_check(cfg, tool, args) if is_verifier(event) else None)
+        if reason:
+            return reason
+    return None
+
+
 def main() -> int:
     cfg_path = ROOT / ".agent" / "guardrails.json"
-    if not cfg_path.is_file():
-        return 0
     try:
         event = json.load(sys.stdin)
-        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except ValueError:
+        event = {}
+    cursor = "cursor_version" in event
+    try:
+        reason = decide(event, json.loads(cfg_path.read_text(encoding="utf-8"))) if cfg_path.is_file() else None
     except (ValueError, OSError):
-        return 0
-    tool, args = event.get("tool_name", ""), event.get("tool_input") or {}
-    reason = check(cfg, tool, args) or (verifier_check(cfg, tool, args) if str(event.get("agent_type") or "").startswith(VERIFIER) else None)
+        reason = None
     if reason:
         print(f"Blocked by guardrails: {reason}", file=sys.stderr)
+        if cursor:
+            print(json.dumps({"permission": "deny", "user_message": f"Blocked by guardrails: {reason}", "agent_message": f"Blocked by guardrails: {reason}"}))
         return 2
+    if cursor:  # Cursor treats empty output from a permission hook as invalid and blocks
+        print(json.dumps({"permission": "allow"}))
     return 0
 
 

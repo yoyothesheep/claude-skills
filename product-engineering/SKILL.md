@@ -73,6 +73,7 @@ Phases 3–6 repeat for each unit, in plan order.
 
    Planning errors compound across every unit, so planning gets the top tier; the build spends the most tokens, so it gets mid. Never put the verifier below mid: a weak verifier approves what it's shown. Tests are never written at the small tier. Name roles in prompts and docs, never models. If the main session runs below `PLANNER_TIER`, say so before Phase 1. Codex agents use underscores (`loop_maker`).
    - **No subagent tool?** Stop and ask the user to run that role in a fresh session on the role's model, given only that role's inputs. Never run a role inline, least of all verification.
+   - **On Codex**, a subagent can't be made read-only: medium- and high-risk verification runs in a fresh `codex --sandbox read-only` session instead ([Guardrails](references/guardrails.md#setup-once-by-a-human-in-phase-0)).
 
 9. **A change ships with its ripple.** When a written spec, contract, schema, rule or event changes, grep every name it renames or redefines across `specs/`, `active/` and `history/decisions/`, fix every hit in the same pass (accepted ADRs get a superseding ADR, not an edit), then re-run `check_loop.py plan`. Never hand the leftovers back as a question.
 

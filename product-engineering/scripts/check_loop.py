@@ -587,7 +587,40 @@ def adapter_errors(cfg: dict) -> list[str]:
     for f in (("hooks", "guard.py"), *(("agents", f"loop-{r}.md") for r in ("maker", "maker-high", "verifier", "verifier-strict", "scribe"))):
         if not _repo(".claude", *f).is_file():
             errors.append(f".claude/{'/'.join(f)} missing (run scripts/gen_guardrails.py)")
+    return errors + cursor_adapter_errors() + codex_adapter_errors()
+
+
+def _json_or_none(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def cursor_adapter_errors() -> list[str]:
+    """When the repo has .cursor/: guard.py on preToolUse and beforeReadFile, and read-only verifiers."""
+    if not _repo(".cursor").is_dir():
+        return []
+    hooks = (_json_or_none(_repo(".cursor", "hooks.json")) or {}).get("hooks", {})
+    errors = [f"Cursor guard hook not registered for {ev} in .cursor/hooks.json (run scripts/gen_guardrails.py)"
+              for ev in ("preToolUse", "beforeReadFile")
+              if not any("hooks/guard.py" in e.get("command", "") for e in hooks.get(ev, []))]
+    for name in ("loop-verifier", "loop-verifier-strict"):
+        path = _repo(".cursor", "agents", f"{name}.md")
+        front = path.read_text(encoding="utf-8").split("---")[1] if path.is_file() else ""
+        if not re.search(r"^readonly:\s*true\s*$", front, re.MULTILINE):
+            errors.append(f".cursor/agents/{name}.md missing or not readonly: true (run scripts/gen_guardrails.py)")
     return errors
+
+
+def codex_adapter_errors() -> list[str]:
+    """When the repo has .codex/: guard.py on PreToolUse."""
+    if not _repo(".codex").is_dir():
+        return []
+    pre = (_json_or_none(_repo(".codex", "hooks.json")) or {}).get("hooks", {}).get("PreToolUse", [])
+    if any("hooks/guard.py" in h.get("command", "") for e in pre for h in e.get("hooks", [])):
+        return []
+    return ["Codex guard hook not registered for PreToolUse in .codex/hooks.json (run scripts/gen_guardrails.py)"]
 
 
 TEST_CARDS = {"4242424242424242", "4111111111111111", "4000056655665556", "5555555555554444", "378282246310005", "6011111111111117"}

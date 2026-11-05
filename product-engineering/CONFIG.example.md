@@ -51,8 +51,10 @@ MAKER_TIER_HIGH_RISK: top
 VERIFIER_TIER: mid
 VERIFIER_TIER_STRICT: top
 SCRIBE_TIER: small
-# Tier -> model. Claude Code aliases track the latest version. Blank CODEX_MODELS to skip .codex/agents/.
+# Tier -> model. Claude Code aliases track the latest version. Blank CODEX_MODELS to skip .codex/agents/ and .codex/hooks.json.
+# CURSOR_MODELS takes model IDs from Cursor's model picker; blank means every role inherits the session model.
 CLAUDE_MODELS: top=opus, mid=sonnet, small=haiku
+CURSOR_MODELS:
 CODEX_MODELS: top=gpt-6-astra, mid=gpt-6.1-sol, small=gpt-6-luna
 
 # Invariants & Policy Flags
