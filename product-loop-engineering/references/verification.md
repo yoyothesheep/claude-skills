@@ -15,6 +15,7 @@ Run `python .claude/skills/product-loop-engineering/scripts/check_loop.py NN` an
 ## 2. Manual E2E walkthrough audit
 
 - Step through each M1..Mk scenario.
+- **Reachability**: a step a person can't perform once this unit ships (it needs a later unit, an account or key the human doesn't have, or a particular time of day without a dev override) is a finding at certainty 7+, not "pending human". "Pending human" is only for steps a person can do but you can't, such as a check on a real phone.
 - Confirm UI components, responsive breakpoints, error recovery states, and navigation work as specified.
 - Apply the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
 - Instrumentation: the `[Instrumentation]` T scenario covers events in tests. Include the orchestrator's live-arrival result when it applies ([Analytics](analytics.md)).

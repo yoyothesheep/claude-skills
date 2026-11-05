@@ -72,6 +72,17 @@ Design-system changes (tokens, type, color, spacing, global styles, shared compo
 
 `check_loop.py` enforces: any diff touching `adr_required_paths` carries a new ADR; the contract has a valid Risk and a Guardrails ADR that exists; medium and high have a `[Guardrail]` T scenario and their own ADR (not the baseline); high has an `[Abuse]` T scenario.
 
+## Dev-only sign-in bypass
+
+When the product has a sign-in gate, the skeleton ships a one-click way in for local development, so a person (and the orchestrator's screenshots and live checks) can reach every page from the first unit. It is a back door unless locked:
+
+1. The bypass route (e.g. `/dev/signin`) is registered only when `ENV=dev`; in every other environment it doesn't exist (404).
+2. The app refuses to start when the bypass flag is set with `ENV=prod`.
+3. The deploy config never sets the flag (a test parses it).
+4. It creates the same session real sign-in creates; the auth check on every other route is unchanged.
+
+Proof: `[Guardrail]` T scenarios for 1–3, and the skeleton's "every route needs auth" test still passes. The unit that adds it cites a guardrails ADR naming these locks (auth work is high risk).
+
 ## Runtime locks (AI features in the app)
 
 Built into the unit that adds the AI feature, proved by its `[Guardrail]` / `[Abuse]` tests, and checked at launch by `product-launch-audit`:
