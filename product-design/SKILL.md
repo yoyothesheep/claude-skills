@@ -100,7 +100,7 @@ PNG back and show it.
 Goal: everything the builders and critic need, gathered once. Skip any step already done
 (check DESIGN-LOG.md, TASTE.md, the spec).
 
-**1. Check `specs/product/` (works with `product-scoping` & `product-loop-engineering`):**
+**1. Check `specs/product/` (works with `product-scoping` & `product-engineering`):**
 Look in `specs/product/` for an existing product specification.
 - **If a product spec exists:** Read the target users/personas, goals, scoped features, and Key User Flows ($F_1..F_m$) so the mocks reflect the exact scoped screens and fields without inventing unrequested features.
 - **If no product spec exists:** Ask if the user wants to scope one first or jump straight into designing (do **not** require a spec if they want to design directly).
@@ -267,12 +267,12 @@ subtraction. Apply passes one at a time, screenshot after each, stop for confirm
 2. **AI-tells pass** — `references/ai-tells-checklist.md`. Try the alternative, show both.
 3. **Copy rewrite** — AI copy is placeholder, like Lorem ipsum. A human rewrites every line
    before shipping. Never auto-finalize copy.
-4. **Sync to Product Spec (`specs/product/`) & Handoff to `product-loop-engineering`** — Once a design is accepted (after Stage 2 or Stage 3), if a product spec exists in `specs/product/`, update its `## UI Design & Mocks` section with the chosen design direction, mock source path(s), and final screenshot path(s) so `product-loop-engineering` can build and verify UI units against them.
+4. **Sync to Product Spec (`specs/product/`) & Handoff to `product-engineering`** — Once a design is accepted (after Stage 2 or Stage 3), if a product spec exists in `specs/product/`, update its `## UI Design & Mocks` section with the chosen design direction, mock source path(s), and final screenshot path(s) so `product-engineering` can build and verify UI units against them.
 
 **Exit Stage 3** when all three passes are approved, the copy has had a human pass, and the
 spec is synced. Close with a handoff summary: final screenshot, the direction in one line,
 file paths, what changed in the spec, and what's still open for the user (copy lines not yet
-rewritten, real photos still missing). Next step: `product-loop-engineering`.
+rewritten, real photos still missing). Next step: `product-engineering`.
 If the user locks the design early or skips stages, still sync the spec and close with this
 handoff summary.
 

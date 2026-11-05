@@ -1,6 +1,6 @@
-# `product-loop-engineering` Eval Suite
+# `product-engineering` Eval Suite
 
-Use these scenarios to verify that `product-loop-engineering` advances naturally between checkpoints, asks about architectural tradeoffs before generating files, sequences units skeleton → P0 → P1 → P2 → reporting, maps `specs/product/` user flows ($F_1..F_m$) into unit test matrices ($T_1..T_n$ & $M_1..M_k$) and instrumentation, simplifies code automatically, and passes `scripts/check_loop.py`.
+Use these scenarios to verify that `product-engineering` advances naturally between checkpoints, asks about architectural tradeoffs before generating files, sequences units skeleton → P0 → P1 → P2 → reporting, maps `specs/product/` user flows ($F_1..F_m$) into unit test matrices ($T_1..T_n$ & $M_1..M_k$) and instrumentation, simplifies code automatically, and passes `scripts/check_loop.py`.
 
 ---
 
@@ -9,7 +9,7 @@ Use these scenarios to verify that `product-loop-engineering` advances naturally
 **Precondition:** `specs/product/reading-list.md` exists (from `product-scoping` Test Case 1) with flows `F1..F4`.
 
 **Prompt:**
-> "Let's plan and build this milestone using product-loop-engineering."
+> "Let's plan and build this milestone using product-engineering."
 
 **Expected Stage 1 Behavior (Pass Criteria):**
 1. **No subcommand memorization required:** Detects that no active milestone exists in `active/` and enters Phases 1–2 automatically.
@@ -38,7 +38,7 @@ Use these scenarios to verify that `product-loop-engineering` advances naturally
    - Automatically simplifies modified files (strips single-use wrapper classes, dead weight, and redundant comments) while keeping tests and linters green.
 3. **Phase 5 (Independent Maker/Verifier Gate):**
    - Spawns a fresh verifier subagent given only the contract, diff, and `check_loop.py` JSON; the verifier edits nothing.
-   - Runs `python .claude/skills/product-loop-engineering/scripts/check_loop.py 01` and verifies `"mechanical_ok": true` with `"missing": []`.
+   - Runs `python .claude/skills/product-engineering/scripts/check_loop.py 01` and verifies `"mechanical_ok": true` with `"missing": []`.
    - Audits test fidelity (substantive assertions, not `assert True`) and manual E2E scenarios ($M_1..M_k$).
    - Emits the structured PASS/FAIL verdict table.
 4. **Phase 6 (Living Spec Sync & Compounding):**
@@ -64,7 +64,7 @@ Use these scenarios to verify that `product-loop-engineering` advances naturally
 Run from repository root against any active unit `NN`:
 
 ```bash
-python .claude/skills/product-loop-engineering/scripts/check_loop.py 01
+python .claude/skills/product-engineering/scripts/check_loop.py 01
 ```
 
 **Expected JSON Output Invariants:**

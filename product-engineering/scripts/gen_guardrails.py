@@ -83,7 +83,7 @@ def gen_claude(root: Path, cfg: dict) -> None:
 
 def read_config(root: Path) -> dict[str, str]:
     """`KEY: value` lines from the repo's CONFIG.md (root first, then the skill folder)."""
-    for path in (root / "CONFIG.md", *(root / b / "skills" / "product-loop-engineering" / "CONFIG.md" for b in (".agent", ".claude"))):
+    for path in (root / "CONFIG.md", *(root / b / "skills" / "product-engineering" / "CONFIG.md" for b in (".agent", ".claude"))):
         if path.is_file():
             pairs = re.findall(r"^([A-Z][A-Z0-9_]*):[ \t]*(.*)$", path.read_text(encoding="utf-8"), re.MULTILINE)
             return {k: v.strip() for k, v in pairs}
@@ -158,7 +158,7 @@ def gen_roles_md(root: Path, conf: dict[str, str]) -> None:
               "loop-verifier-strict": "5 (medium/high risk)", "loop-scribe": "6"}
     model = lambda m, t: m.get(t, "session model")
     lines = [
-        "## Model roles (product-loop-engineering)",
+        "## Model roles (product-engineering)",
         "",
         "Roles map to tiers in `CONFIG.md`; tiers map to each tool's models. Where a tool can't route a role to its model, run that phase in a fresh session on the listed model.",
         "",
@@ -209,7 +209,7 @@ def gen_git_hook(root: Path) -> str:
     target = hooks / "pre-commit"
     if target.exists():
         return "skipped: .git/hooks/pre-commit already exists; add `check_loop.py guardrails` to it by hand"
-    checker = root / ".agent" / "skills" / "product-loop-engineering" / "scripts" / "check_loop.py"
+    checker = root / ".agent" / "skills" / "product-engineering" / "scripts" / "check_loop.py"
     checker = checker if checker.is_file() else Path(__file__).resolve().parent / "check_loop.py"
     target.write_text(f'#!/bin/sh\npython3 "{checker}" guardrails > /dev/null || {{ echo "Guardrail check failed; run: python3 {checker} guardrails"; exit 1; }}\n', encoding="utf-8")
     target.chmod(target.stat().st_mode | stat.S_IXUSR)

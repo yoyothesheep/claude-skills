@@ -1,7 +1,7 @@
 ---
 name: product-launch-audit
 description: >-
-  Audit an app (built with or without product-loop-engineering, including Replit/Lovable/Bolt
+  Audit an app (built with or without product-engineering, including Replit/Lovable/Bolt
   prototypes) against five pillars before going live: infrastructure, code quality,
   security, observability and cost, failure and rollback. Runs a repo scan, then
   produces a status table per pillar and findings split into fix-now, needs-your-credentials,
@@ -11,12 +11,12 @@ description: >-
 
 # product-launch-audit
 
-A one-time pre-launch check of an existing codebase. For per-unit checks during a build, use `product-loop-engineering`.
+A one-time pre-launch check of an existing codebase. For per-unit checks during a build, use `product-engineering`.
 
 ## Inputs
 
 - **Stage**: `PMF` (default), `Growth` or `Scale`. Ask if unclear. The stage decides which rows of [CHECKLIST.md](CHECKLIST.md) apply.
-- **Path**: the repo to audit (default: current directory). It does not need to be a git repo or use product-loop-engineering.
+- **Path**: the repo to audit (default: current directory). It does not need to be a git repo or use product-engineering.
 
 ## Steps
 
@@ -57,4 +57,4 @@ Rules:
 - Any 🔴 in Security & data is a launch blocker. Say so first.
 - Report only. Do not fix anything unless the user asks.
 - Evaluation of AI output quality is out of scope here.
-- AI runtime locks (least-privilege tools, argument validation, approval on irreversible actions, PII redaction, untrusted text) apply only when the app calls a model. Their dev-time counterpart, locks on the agent that builds the app, lives in `product-loop-engineering`.
+- AI runtime locks (least-privilege tools, argument validation, approval on irreversible actions, PII redaction, untrusted text) apply only when the app calls a model. Their dev-time counterpart, locks on the agent that builds the app, lives in `product-engineering`.

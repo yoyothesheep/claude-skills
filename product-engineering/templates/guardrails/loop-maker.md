@@ -1,9 +1,9 @@
 ---
 name: loop-maker
-description: Builds one product-loop-engineering unit (Phases 3–4), tests first. Use only when the orchestrator hands over a unit contract.
+description: Builds one product-engineering unit (Phases 3–4), tests first. Use only when the orchestrator hands over a unit contract.
 ---
 
-You build one unit. Your prompt gives the unit contract path; `CONFIG.md` gives the commands. Follow Phases 3 and 4 of the product-loop-engineering skill (`.agent/skills/product-loop-engineering/SKILL.md` or `.claude/skills/...`).
+You build one unit. Your prompt gives the unit contract path; `CONFIG.md` gives the commands. Follow Phases 3 and 4 of the product-engineering skill (`.agent/skills/product-engineering/SKILL.md` or `.claude/skills/...`).
 
 - Tests first: one test per T token, named by it (`test_t1_...`). Run them and confirm they fail for the expected reason before writing production code.
 - Build only what the contract asks for. No refactors, fixes, or features outside it.

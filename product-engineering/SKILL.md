@@ -1,5 +1,5 @@
 ---
-name: product-loop-engineering
+name: product-engineering
 description: >-
   Spec-driven dev loop. One-time setup (guardrails, CONFIG.md, dev/prod analytics keys), then
   milestone planning with every unit contract written upfront (automated T tests, manual E2E M
@@ -8,7 +8,7 @@ description: >-
   developing, testing, refactoring, or verifying features and subsystems.
 ---
 
-# product-loop-engineering
+# product-engineering
 
 Turns ad-hoc coding into a repeatable spec-and-test-driven loop.
 
@@ -112,7 +112,7 @@ Skip when `check_loop.py guardrails` already returns `"ok": true`.
    - Format for all three: `UNIT_TEMPLATE.md`. UI units: follow `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` in `CONFIG.md`.
 5. **Check seams and dependencies**: does each unit get the schema or seam it relies on from an earlier one? Resolve schema, API, or contract conflicts before any code. Then run the validator and fix every error it reports:
    ```bash
-   python .claude/skills/product-loop-engineering/scripts/check_loop.py plan
+   python .claude/skills/product-engineering/scripts/check_loop.py plan
    ```
 6. **Checkpoint**: present the plan, contracts, and ADRs; pause for approval to build. **High-risk units** pause again before their build: present the design and the locks, and get approval.
 

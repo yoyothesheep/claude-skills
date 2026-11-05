@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic verification runner for the `product-loop-engineering` skill.
+"""Deterministic verification runner for the `product-engineering` skill.
 
 Automates the mechanical, CI-grade checks for a build unit or subsystem and emits
 structured JSON evidence to stdout. The LLM verifier layer consumes this JSON to
@@ -63,8 +63,8 @@ def load_config() -> dict[str, str]:
     # Repo root first: a symlinked skill folder is shared across repos, so per-repo config can't live in it
     candidate_paths = [
         _repo("CONFIG.md"),
-        _repo(".agent", "skills", "product-loop-engineering", "CONFIG.md"),
-        _repo(".claude", "skills", "product-loop-engineering", "CONFIG.md"),
+        _repo(".agent", "skills", "product-engineering", "CONFIG.md"),
+        _repo(".claude", "skills", "product-engineering", "CONFIG.md"),
     ]
     cfg = {}
     for p in candidate_paths:

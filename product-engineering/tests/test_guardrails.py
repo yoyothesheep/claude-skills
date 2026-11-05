@@ -185,7 +185,7 @@ class VerifierTests(RepoCase):
         for tool, args in [
             ("Read", {"file_path": "src/app.py"}),
             ("Bash", {"command": "git diff HEAD --stat"}),
-            ("Bash", {"command": "python3 .agent/skills/product-loop-engineering/scripts/check_loop.py 01 2>&1 | tail -5"}),
+            ("Bash", {"command": "python3 .agent/skills/product-engineering/scripts/check_loop.py 01 2>&1 | tail -5"}),
             ("Bash", {"command": "npm run test:all 2>&1"}),
         ]:
             with self.subTest(tool=tool, args=args):

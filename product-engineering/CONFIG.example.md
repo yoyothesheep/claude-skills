@@ -1,4 +1,4 @@
-# product-loop-engineering configuration
+# product-engineering configuration
 
 # Directory paths (relative to repository root)
 ACTIVE_DIR: active

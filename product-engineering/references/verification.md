@@ -4,7 +4,7 @@ For the `loop-verifier` / `loop-verifier-strict` subagent. You get the unit cont
 
 ## 1. Mechanical CI gate (deterministic)
 
-Run `python .claude/skills/product-loop-engineering/scripts/check_loop.py NN` and inspect the JSON:
+Run `python .claude/skills/product-engineering/scripts/check_loop.py NN` and inspect the JSON:
 - Test suite exit code and summary.
 - Linter and formatter exit codes.
 - Full mapping of T1..Tn tokens to tests. Zero missing tokens.

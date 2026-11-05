@@ -12,7 +12,7 @@ description: >-
 
 # product-scoping
 
-Turns a product idea or feature request into `specs/product/<slug>.md`: a core hypothesis, prioritized scope, metrics, and priority-ordered user flows ($F_1..F_m$) that `product-loop-engineering` plans, builds, and tests against.
+Turns a product idea or feature request into `specs/product/<slug>.md`: a core hypothesis, prioritized scope, metrics, and priority-ordered user flows ($F_1..F_m$) that `product-engineering` plans, builds, and tests against.
 
 **Progression**: Stage 1 Ground & Challenge (draft spec written) → ⏸ → Stage 2 Prioritize, Metrics & Flows (spec updated) → ⏸ → Stage 3 Finalize Spec → optional `product-design` pass. Pause at each ⏸ for the user's decisions unless they explicitly ask to skip ahead; when skipping, still apply every rule below.
 
@@ -24,7 +24,7 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 2. **Grounded questions, no startup theater.** No *"if you had 48 hours…"* prompts. Ask about data sources, persistence, auth boundaries, external dependencies, and failure states.
 3. **Ruthless scoper.** The request is a wish list, not a scope. Every capability has to earn its tier, and the default answer to a complexity multiplier is "cheaper mechanism first." Cutting and downgrading what the user asked for is the job; inventing features they didn't ask for is not.
 4. **Priority by risk and unlock, never by setup order.** Rank by (a) the hypothesis that most needs validating and (b) what unlocks the most downstream value. Onboarding, accounts, and sharing take the tier of what they unlock, which is rarely first.
-5. **Flows are test foundations.** Every in-scope capability becomes a numbered flow with preconditions, steps, end state, and edge/failure cases. `product-loop-engineering` derives its automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from them.
+5. **Flows are test foundations.** Every in-scope capability becomes a numbered flow with preconditions, steps, end state, and edge/failure cases. `product-engineering` derives its automated ($T_1..T_n$) and manual E2E ($M_1..M_k$) tests from them.
 6. **The spec file is the working memory.** Write `specs/product/<slug>.md` (or `specs/product/README.md` for a small single-surface product) as a draft at the end of Stage 1, from `templates/PRODUCT_SPEC_TEMPLATE.md`, and update it every time the user answers. Start each stage by re-reading it instead of relying on earlier conversation. Chat carries short summaries and questions; the full detail lives in the file.
 
 ### Keeping the spec current
@@ -98,7 +98,7 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
    - **Expected End State**: user-visible outcome and persisted state.
    - **Edge & Failure Cases**: cold start, invalid/boundary input, failure recovery.
 
-   For multi-actor concurrency, offline state, or AI outputs, cross-check against the 8 universal scenario dimensions (`product-loop-engineering/references/scenarios.md`).
+   For multi-actor concurrency, offline state, or AI outputs, cross-check against the 8 universal scenario dimensions (`product-engineering/references/scenarios.md`).
 4. **Update the spec** (`Draft — Stage 2`): full Scope & Priorities, Metrics & Observability, every flow in full (P1/P2 flows included), and the remaining Open Questions.
 5. **Present** in this order, need-to-know only. Chat shows the short form; the spec holds the full flows. **Stop and confirm before finalizing.**
    1. **Updated by the answers**: a few lines on what the user's answers changed.
@@ -113,4 +113,4 @@ Turns a product idea or feature request into `specs/product/<slug>.md`: a core h
 
 1. Re-read the spec. Apply the last answers. Open Questions must be empty; any still open become a Known Gap, or take the recommended default written into the section it affects. No `*TBD*` left. Set the status to `Final`.
 2. Link the spec from `specs/README.md` if one exists.
-3. Hand off: for UI-facing products, offer `product-design` to render mocks from the spec's real copy and flows and embed the chosen ones in `## UI Design & Mocks`. Then `product-loop-engineering`.
+3. Hand off: for UI-facing products, offer `product-design` to render mocks from the spec's real copy and flows and embed the chosen ones in `## UI Design & Mocks`. Then `product-engineering`.
