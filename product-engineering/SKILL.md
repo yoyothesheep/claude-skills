@@ -30,9 +30,10 @@ Phases 3–6 repeat for each unit, in plan order.
 
 1. **Plan everything, build in priority order.** Pre-document every unit contract in the milestone before writing Unit 01 code (Phase 1), so early decisions don't box in later units. Build order: walking skeleton → P0 → P1 → P2 → analytics reporting. Each unit leaves the app runnable and testable.
 
-2. **Two test layers per unit.**
-   - **Automated (T1..Tn)**: deterministic CI tests, one per scenario token. Behavior that only exists in a browser (hover, focus, keyboard, JS-driven state, layout/overflow, accessible names) gets **automated browser tests** (Playwright or equivalent) named by the same tokens. Source-text assertions don't count as covering it.
-   - **Manual E2E (M1..Mk)**: step-by-step walkthroughs with exact user actions, expected visual changes, and error recovery. They cover what automation can't judge (visual feel, third-party pages) and act as a human sanity pass over key flows, even ones the browser suite already automates.
+2. **Four test tiers, automated first.** Full rules: [Test tiers](references/test-mapping-guide.md).
+   - **Unit, integration, end-to-end** (T tokens): run on every `TEST_COMMAND`, nothing leaves the machine. End-to-end means the real app in a real browser (Playwright or equivalent) with outside services stubbed; behavior that only exists in a browser (focus, keyboard, JS state, layout, accessible names) is covered here, never by source-text assertions. Every journey unit automates its happy path end to end.
+   - **Live**: real dev/sandbox services. **Free** live checks are automated T tests that run on every `TEST_COMMAND`, limited to `LIVE_ALLOWED_HOSTS`. **Paid** ones (LLM credits, SMS, paid APIs) and ones a program can't do (a real phone, a real inbox) are manual `[Live]` walkthroughs with a stated cost.
+   - **Manual walkthroughs (M1..Mk)**: exact user actions, expected look, error recovery. They cover what automation can't judge and act as a human sanity pass over key flows the end-to-end tests already automate.
 
 3. **Seams and determinism.** Domain logic lives in isolated core modules (`lib/`, domain packages, core models). Route handlers, API endpoints, and CLI tools are thin adapters. Multitenancy, permissions, and scoping are enforced at the data-access seam, so unscoped leaks are structurally impossible.
 
@@ -73,6 +74,8 @@ Phases 3–6 repeat for each unit, in plan order.
    Planning errors compound across every unit, so planning gets the top tier; the build spends the most tokens, so it gets mid. Never put the verifier below mid: a weak verifier approves what it's shown. Tests are never written at the small tier. Name roles in prompts and docs, never models. If the main session runs below `PLANNER_TIER`, say so before Phase 1. Codex agents use underscores (`loop_maker`).
    - **No subagent tool?** Stop and ask the user to run that role in a fresh session on the role's model, given only that role's inputs. Never run a role inline, least of all verification.
 
+9. **A change ships with its ripple.** When a written spec, contract, schema, rule or event changes, grep every name it renames or redefines across `specs/`, `active/` and `history/decisions/`, fix every hit in the same pass (accepted ADRs get a superseding ADR, not an edit), then re-run `check_loop.py plan`. Never hand the leftovers back as a question.
+
 ---
 
 ## Phase 0: Setup (once per repo)
@@ -84,6 +87,7 @@ Skip when `check_loop.py guardrails` already returns `"ok": true`.
 3. **Human-only steps**: stop and ask, with exact instructions. Never work around a missing one.
    - A dev database login without `DELETE`/`DROP`; no production credentials in the agent's environment.
    - Dev and prod analytics projects and keys ([Analytics](references/analytics.md#phase-0-accounts-and-keys-human-only)).
+   - For each free outside service the app uses: a dev/sandbox key, plus a **read-only, narrowly scoped dev credential** so free live tests can read back what arrived. Their hosts go in `LIVE_ALLOWED_HOSTS`. Paid services get a spend limit on their dev key and never go on that list ([Test tiers](references/test-mapping-guide.md#when-live-tests-run)).
 4. **Check**: `check_loop.py guardrails` returns `"ok": true`. Phase 1 doesn't start until it does.
 
 ---
@@ -103,11 +107,11 @@ Skip when `check_loop.py guardrails` already returns `"ok": true`.
 3. **Write every contract** with `templates/UNIT_TEMPLATE.md` at `active/NN-<milestone>/units/NN-<slug>.md`. No placeholders. Fill `Type`, `Serves` (flows), `Tier`, `Risk`, `Guardrails ADR`, and **Living Specs Affected** (which `specs/product/` and `specs/engineering/` files it will create or update). Write `active/NN-<milestone>/plan.md` with `templates/PLAN_TEMPLATE.md`.
 4. **Find the scenarios**
    - **Read `references/scenarios.md` before writing any T or M scenario.** Walk each flow across its 8 dimensions: Actor/Auth, Flow Paths/Abandonment, Data Volumes/Zero State, Input Boundaries, AI Failures, Human Agency/Recovery, Network/Concurrency, Platform/A11y.
-   - **Read `references/test-mapping-guide.md` to place each one**: T or M, and which level (unit, integration, browser, eval).
-   - Fill the **Scenario Coverage** table: each dimension lists its T/M tokens or a one-line reason it's skipped. Consider every dimension; don't test every one.
+   - **Read `references/test-mapping-guide.md` to place each one**: T or M, and which tier (unit, integration, end-to-end, live). Prefer automated; manual only for human judgment, paid calls, or what a program can't do.
+   - Fill the **Scenario Coverage** table: each dimension lists its T/M tokens or a one-line reason it's skipped, and **Tiers used** names any tier skipped and why. Consider every dimension; don't test every one.
    - **Clarification gate**: if expected behavior is ambiguous or has several valid UX readings, **stop before writing contracts** and ask the user (protocol: `references/scenarios.md` §2). Never guess product behavior.
-   - **Part A, T scenarios**: deterministic logic, dirty payloads, schema repair, boundary inputs, security invariants. Medium and high risk add a `[Guardrail]` scenario per lock (the blocked action stays blocked); high risk adds an `[Abuse]` scenario (injection, wrong-tenant access, replay).
-   - **Part B, M scenarios**: key flows, mobile/responsive states, error recovery and human override. Every step must be doable by a person once this unit ships; a step that needs a later unit, an account or key the human doesn't have yet, or a particular time of day moves to the unit that makes it doable (or uses a dev override). UI walkthroughs name their expected look: the mock frames for the screens they cover plus a short "what to look for" list.
+   - **Part A, T scenarios**: deterministic logic, dirty payloads, schema repair, boundary inputs, security invariants. Every journey unit has an end-to-end happy-path T (`(e2e)`). Every unit that calls a free outside service has a `[Live]` T (`(live)`). Medium and high risk add a `[Guardrail]` scenario per lock (the blocked action stays blocked); high risk adds an `[Abuse]` scenario (injection, wrong-tenant access, replay).
+   - **Part B, M scenarios**: key flows, mobile/responsive states, error recovery and human override. Every step must be doable by a person once this unit ships; a step that needs a later unit, an account or key the human doesn't have yet, or a particular time of day moves to the unit that makes it doable (or uses a dev override). UI walkthroughs name their expected look: the mock frames for the screens they cover plus a short "what to look for" list. Paid or non-automatable live checks are `[Live]` walkthroughs that state their cost per run and when they run.
    - **Part C, Instrumentation**: events plus an `[Instrumentation]` T scenario for every journey unit ([Analytics](references/analytics.md#unit-contracts-phase-1-part-c)).
    - Format for all three: `UNIT_TEMPLATE.md`. UI units: follow `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` in `CONFIG.md`.
 5. **Check seams and dependencies**: does each unit get the schema or seam it relies on from an earlier one? Resolve schema, API, or contract conflicts before any code. Then run the validator and fix every error it reports:
@@ -131,7 +135,7 @@ Spawn a fresh `loop-maker` (`loop-maker-high` for high risk) with the contract p
 
 **Phase 3, tests first**
 1. Tests go in `tests/<subsystem>/` or the configured test directory, named by token (`test_t1_happy_path`).
-2. Mock networks, third-party APIs (e.g. Resend, Stripe), clocks, and AI model calls (patterns: `references/test-mapping-guide.md` §3). Tests run fast, offline, and deterministically. `TEST_COMMAND` runs every suite (unit and browser), so Phase 5 sees both.
+2. Unit, integration and end-to-end tests stub networks, third-party APIs (e.g. Resend, Stripe), clocks, and AI model calls (patterns: `references/test-mapping-guide.md` §3); they run fast and deterministically. Free live tests reach only `LIVE_ALLOWED_HOSTS` and skip-and-report without a dev key. The test network lock blocks everything else, and paid keys are stripped from the test environment ([Guardrails](references/guardrails.md#test-network-lock)). `TEST_COMMAND` runs every automated tier, so Phase 5 sees them all.
 3. Run them and confirm they fail for the expected reasons.
 
 **Phase 4, build**
@@ -146,7 +150,7 @@ Spawn a fresh `loop-maker` (`loop-maker-high` for high risk) with the contract p
 
 1. Run `check_loop.py fingerprint`.
 2. Spawn a fresh `loop-verifier` (`loop-verifier-strict` for medium and high risk). Its prompt gets only: the contract path, the `git diff` of the unit's changes, the `check_loop.py` JSON, and a pointer to [verification steps](references/verification.md). Never pass the maker's reasoning, summaries, or "known issues" notes. The verifier has no write tools, and the guard hook limits its Bash to read-only commands, `check_loop.py`, and `verifier_bash_allow`.
-3. When `ANALYTICS_ACCESS` names an MCP or API and a dev key is set, run the live-arrival check yourself and give the verifier the result ([Analytics](references/analytics.md#verify-phase-5)).
+3. Free live tests run inside `TEST_COMMAND`. If a service has no read-only credential, do its **semi-automated** read-back yourself through `ANALYTICS_ACCESS` (or the service's MCP) and give the verifier the result, labelled as such ([Analytics](references/analytics.md#verify-phase-5)). Paid `[Live]` walkthroughs are not run here: they run at the Phase 6 checkpoint, by the user or with the user's OK for that run.
 4. When it returns, run `check_loop.py fingerprint` again. A different hash voids the verdict; re-run with a new verifier.
 5. It returns the verdict table plus findings with a certainty of 1–10. Findings at 7+ block a PASS (5+ for high risk); 4–6 are listed as **Unverified**; below 4 are dropped.
 6. **On FAIL**: a new maker gets the contract path plus the findings, then a **new** verifier re-runs the full gate. Don't reuse the old verifier or narrow its scope to the fixes. After 3 fix → re-verify cycles, stop and ask the user.
@@ -160,7 +164,8 @@ Spawn `loop-scribe` with the contract path, the verdict table, and the diff. Rev
 1. **Sync specs**: every file in **Living Specs Affected**, plus any other area the unit changed: `specs/engineering/<subsystem>.md` (`templates/LIVING_SPEC_TEMPLATE.md`) and, if requirements changed, `specs/product/` (`templates/PRODUCT_SPEC_TEMPLATE.md`). Document shipped behavior from the code, not the contract; where they differ, the spec follows the code and lists the difference under **Known Gaps**. Record non-obvious domain invariants in the engineering spec. Update `CONFIG.md` for tooling quirks, and `specs/README.md` when routes, modules, or env vars changed. Remove obsolete descriptions (no strikethroughs).
 2. **Update status**: tick acceptance criteria in the contract, update its row in `plan.md`, and note manual testing observations. **Last unit done**: `git mv active/NN-*/ history/milestones/NN-*/` in the same pass and repoint links to it (`check_loop.py plan` fails on a plan whose units are all done).
 3. **Reference screenshots (UI units)**: capture each page the unit's M steps cover at every `VIEWPORT_BREAKPOINTS` width (signed in through the dev bypass where needed) into `active/NN-*/units/NN-reference/`, and link them from the M step so the user has something to compare against.
-4. **Checkpoint**: present user impact, modified files, test results, the verdict table, and exact M steps for the user. Leave diffs uncommitted unless `AUTO_COMMIT` is `true`. Then queue the next unit for Phase 3.
+4. **Checkpoint**: present user impact, modified files, test results, the verdict table, and exact M steps for the user, including any paid `[Live]` walkthrough with its cost. Leave diffs uncommitted unless `AUTO_COMMIT` is `true`. Then queue the next unit for Phase 3.
+   - **End with the one decision the user must make now, or with nothing.** Don't append side items. Anything unresolved goes in the **Open Questions** section of the unit it blocks and is raised when that unit is next worked on.
 
 ---
 
@@ -170,7 +175,7 @@ Don't make the user type phase commands. Inspect `active/`, `specs/`, and `tests
 - `check_loop.py guardrails` fails → Phase 0; pause for the human-only steps.
 - No plan → Phases 1–2; pause for approval.
 - Incomplete unit in `plan.md` → Phases 3–6 for it in one sequence, each through its role; pause at the Phase 6 checkpoint.
-- **P0 checkpoint**: after the last P0 unit, pause before any P1 work. The user runs the P0 journeys hands-on and confirms the hypothesis-metric events are arriving. Before real users, run `product-launch-audit`. If what they learn changes priorities, update the spec and re-run `check_loop.py plan`.
+- **P0 checkpoint**: after the last P0 unit, pause before any P1 work. The user runs the P0 journeys hands-on and the paid `[Live]` walkthroughs shipped so far, and confirms the hypothesis-metric events are arriving. Before real users, run `product-launch-audit`. If what they learn changes priorities, update the spec and re-run `check_loop.py plan`.
 
 ---
 

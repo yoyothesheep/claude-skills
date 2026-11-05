@@ -72,6 +72,18 @@ Design-system changes (tokens, type, color, spacing, global styles, shared compo
 
 `check_loop.py` enforces: any diff touching `adr_required_paths` carries a new ADR; the contract has a valid Risk and a Guardrails ADR that exists; medium and high have a `[Guardrail]` T scenario and their own ADR (not the baseline); high has an `[Abuse]` T scenario.
 
+## Test network lock
+
+Tests must never spend money or touch production by accident. The skeleton installs this in the test setup (e.g. `conftest.py`):
+
+1. Outbound connections are blocked except to the local machine and the hosts in `LIVE_ALLOWED_HOSTS` (`CONFIG.md`).
+2. `LIVE_ALLOWED_HOSTS` holds free dev/sandbox services only (e.g. analytics ingestion and its query API). A paid host never goes on it.
+3. Paid-service keys (LLM, SMS, paid APIs) are removed from the test process's environment, so a paid call fails for lack of credentials even if the host were reachable.
+4. Only dev/sandbox keys are ever present; production keys never are.
+5. Free live tests tag their side effects with a run id.
+
+Proof: a `[Guardrail]` T in the skeleton — a connection to a host not on the list fails; a paid key is absent inside the test process; a free live test without its dev key is reported as skipped, not passed. Paid live checks are manual `[Live]` walkthroughs with a stated cost, run by the user or with the user's OK for that run, and each paid dev key carries a spend limit.
+
 ## Dev-only sign-in bypass
 
 When the product has a sign-in gate, the skeleton ships a one-click way in for local development, so a person (and the orchestrator's screenshots and live checks) can reach every page from the first unit. It is a back door unless locked:

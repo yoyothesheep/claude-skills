@@ -327,7 +327,7 @@ def contract(risk="low", adr="ADR-001", extra=""):
 - **Risk**: {risk}
 - **Guardrails ADR**: {adr}
 **Testable after this unit**: a human can do the thing
-- **T1 [Happy Path]** — works
+- **T1 [Happy Path] (e2e)** — works
 - **T2 [Instrumentation]** — events asserted
 {extra}
 - **M1 [Desktop Happy Path]** — Steps: 1. go Expected: ok
@@ -372,6 +372,20 @@ class ContractTests(RepoCase):
     def test_journey_needs_instrumentation_scenario(self):
         text = contract().replace("- **T2 [Instrumentation]** — events asserted\n", "")
         self.assertTrue(any("[Instrumentation]" in e for e in self.check(text)["errors"]))
+
+    def test_journey_needs_e2e_happy_path(self):
+        text = contract().replace("- **T1 [Happy Path] (e2e)** — works", "- **T1 [Happy Path] (unit)** — works")
+        self.assertTrue(any("(e2e)" in e for e in self.check(text)["errors"]))
+        combined = contract().replace("(e2e)", "(integration + e2e)")
+        self.assertEqual(self.check(combined)["errors"], [])
+
+    def test_live_walkthrough_needs_cost(self):
+        no_cost = "- **M2 [Live]** — **Steps**: 1. run the eval. **Expected**: scores"
+        self.assertTrue(any("Cost" in e for e in self.check(contract(extra=no_cost))["errors"]))
+        placeholder = "- **M2 [Live]** — **Cost**: [e.g. ~$0.30]. **Steps**: 1. run"
+        self.assertTrue(any("Cost" in e for e in self.check(contract(extra=placeholder))["errors"]))
+        priced = "- **M2 [Live]** — **Cost**: ~$0.30 per run (12 model calls). **Steps**: 1. run"
+        self.assertEqual(self.check(contract(extra=priced))["errors"], [])
 
 
 if __name__ == "__main__":

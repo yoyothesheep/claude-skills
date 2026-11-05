@@ -11,13 +11,13 @@ Every journey unit ships the analytics events for what it builds. The milestone'
 | 1 Plan, every journey unit | Contract section C lists events; an `[Instrumentation]` T scenario asserts them |
 | 3 Tests first | The `[Instrumentation]` test is written and fails |
 | 4 Build | Events go through one `track()` seam; new events join the catalogue |
-| 5 Verify | Offline test passes; live arrival confirmed in the dev project |
+| 5 Verify | `[Instrumentation]` (offline) and `[Live]` (arrival in the dev project) tests pass in `TEST_COMMAND` |
 | P0 checkpoint | Hypothesis-metric events confirmed arriving |
 | Last unit (reporting) | Dashboards, reports, saved queries |
 
 ## Phase 0: accounts and keys (human only)
 
-Separate **dev** and **prod** projects in `ANALYTICS_PLATFORM`, plus a prod `ACQUISITION_ANALYTICS` property, each with its own key. The dev key goes in the local `.env`, the prod key in the host's secret settings. The agent never reads either; code picks the key by environment. Stop and ask for these; never work around a missing one.
+Separate **dev** and **prod** projects in `ANALYTICS_PLATFORM`, plus a prod `ACQUISITION_ANALYTICS` property, each with its own key. The dev key goes in the local `.env`, the prod key in the host's secret settings. The agent never reads either; code picks the key by environment. Also a **read-only credential for the dev project** (e.g. a Mixpanel service account limited to the dev project, a PostHog personal key scoped to query) in `.env`, so the `[Live]` tests can read back what arrived. The analytics ingestion and query hosts go in `LIVE_ALLOWED_HOSTS`. Stop and ask for these; never work around a missing one.
 
 ## Skeleton unit
 
@@ -27,7 +27,8 @@ Separate **dev** and **prod** projects in `ANALYTICS_PLATFORM`, plus a prod `ACQ
   - a fake sink with an `assert_tracked(event, **props)` helper;
   - a browser fixture that intercepts the analytics platform's endpoints and decodes what the page sends;
   - a test that every contract's Instrumentation events match the catalogue both ways;
-  - a test that every catalogue event is asserted by at least one test.
+  - a test that every catalogue event is asserted by at least one test;
+  - a live helper: runs a flow with the analytics hosts allowed through, tags events with a run id, then polls the dev project through the read-only credential until each expected event arrives (or times out). Skips and reports without the dev key.
 - Third-party browser libraries are vendored (a pinned copy served by the app) so browser tests run them with endpoints intercepted. Blocking all network hides "library never initialised" bugs.
 
 ## Unit contracts (Phase 1, Part C)
@@ -35,6 +36,7 @@ Separate **dev** and **prod** projects in `ANALYTICS_PLATFORM`, plus a prod `ACQ
 - Section C lists the events the unit emits: name, trigger, properties.
 - Journey units: one view event and one primary-action event per capability. P0 journeys also emit the events behind the spec's hypothesis metric.
 - Every journey unit has an `[Instrumentation]` T scenario: drive the unit's flows and assert each listed event and its properties through the fake sink (server) and the intercepted analytics requests (browser). New events go into the catalogue in the same unit.
+- Every journey unit also has a `[Live]` T scenario (`(live)`): the same flow through the live helper, asserting each listed event arrived in the dev project with its properties.
 - The reporting unit lists the dashboards and queries it builds instead of events.
 - `check_loop.py plan` fails a journey unit with no events or no `[Instrumentation]` T scenario, and a plan whose last unit isn't reporting.
 
@@ -45,7 +47,8 @@ Emit every event through one analytics seam, a single `track()` wrapper, so test
 ## Verify (Phase 5)
 
 - **Offline**: the `[Instrumentation]` T scenario passes and the catalogue is in sync.
-- **Live arrival** is also required when `ANALYTICS_ACCESS` names an MCP or API and a dev key is set. The orchestrator triggers the unit's events against the **dev** project, tagged with a run id, then queries the platform through `ANALYTICS_ACCESS` and confirms each arrived with its listed properties. Record the result in the verdict. It is never part of the offline test command.
+- **Live**: the `[Live]` T passes inside `TEST_COMMAND` (analytics ingestion is free, so it runs every time). A skipped `[Live]` test blocks PASS unless the contract marks analytics as not set up yet.
+- **No read-only credential yet?** The read-back is semi-automated: the orchestrator queries the dev project through `ANALYTICS_ACCESS` for the run id and gives the verifier the result, labelled semi-automated in the verdict.
 
 ## P0 checkpoint and reporting
 

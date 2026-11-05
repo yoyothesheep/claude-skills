@@ -226,6 +226,12 @@ def check_contract(text: str) -> dict:
             errors.append("Journey unit lists no Instrumentation events")
         if not re.search(r"\*\*T\d+(?:\.\d+)?\s*\[Instrumentation", text):
             errors.append("Journey unit needs an `[Instrumentation]` T scenario asserting its events")
+        if not re.search(r"^\s*-\s+\*\*T\d+(?:\.\d+)?\s*\[[^\]]*\]\s*\([^)]*\be2e\b[^)]*\)", text, re.MULTILINE):
+            errors.append("Journey unit needs an end-to-end T scenario `(e2e)` automating its happy path")
+    for line in re.findall(r"^\s*-\s+\*\*M\d+\s*\[Live\b.*$", text, re.MULTILINE):
+        if not re.search(r"\*\*Cost\*\*:\s*[^\s\[]", line):
+            errors.append("`[Live]` M scenario must state its `**Cost**:` per run")
+            break
     return {
         "type": unit_type, "serves": serves, "tier": tier, "risk": risk,
         "guardrails_adr": f"ADR-{adr_ref.group(1)}" if adr_ref else "", "errors": errors, "ok": not errors,

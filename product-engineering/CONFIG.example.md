@@ -13,8 +13,12 @@ TESTS_DIR: tests
 LIVING_SPEC: specs/README.md
 WORKING_RULES: CLAUDE.md
 
-# Command configurations
+# Command configurations. TEST_COMMAND runs every automated tier: unit, integration, end-to-end, and
+# free live tests (they skip-and-report without their dev key). Paid live checks are manual [Live] walkthroughs.
 TEST_COMMAND: uv run pytest
+# Hosts free live tests may reach; every other outbound connection is blocked in tests. Free dev/sandbox
+# services only (analytics ingestion + its query API). Never a paid service (LLM, SMS, paid APIs).
+LIVE_ALLOWED_HOSTS: api.mixpanel.com, api-js.mixpanel.com, mixpanel.com
 LINT_COMMAND: uv run ruff check .
 FORMAT_COMMAND: uv run ruff format --check .
 

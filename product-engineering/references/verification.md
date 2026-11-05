@@ -5,7 +5,8 @@ For the `loop-verifier` / `loop-verifier-strict` subagent. You get the unit cont
 ## 1. Mechanical CI gate (deterministic)
 
 Run `python .claude/skills/product-engineering/scripts/check_loop.py NN` and inspect the JSON:
-- Test suite exit code and summary.
+- Test suite exit code and summary, across every automated tier (unit, integration, end-to-end, free live).
+- **Skipped free live tests**: any `skipped: no dev key` is a finding at certainty 7+, unless the contract marks that service as not set up yet.
 - Linter and formatter exit codes.
 - Full mapping of T1..Tn tokens to tests. Zero missing tokens.
 - `hygiene`: likely hardcoded secrets in changed files (fails the gate), and route files that mention no auth (heuristic: read each and confirm or dismiss it with file:line).
@@ -18,7 +19,14 @@ Run `python .claude/skills/product-engineering/scripts/check_loop.py NN` and ins
 - **Reachability**: a step a person can't perform once this unit ships (it needs a later unit, an account or key the human doesn't have, or a particular time of day without a dev override) is a finding at certainty 7+, not "pending human". "Pending human" is only for steps a person can do but you can't, such as a check on a real phone.
 - Confirm UI components, responsive breakpoints, error recovery states, and navigation work as specified.
 - Apply the `VIEWPORT_BREAKPOINTS` and `PARITY_REFERENCE_URL` rules in `CONFIG.md`.
-- Instrumentation: the `[Instrumentation]` T scenario covers events in tests. Include the orchestrator's live-arrival result when it applies ([Analytics](analytics.md)).
+- Instrumentation: the `[Instrumentation]` T scenario covers events offline; the `[Live]` T covers arrival in the dev project. When the read-back is semi-automated, use the orchestrator's result and say so in the verdict ([Analytics](analytics.md)).
+- Paid `[Live]` walkthroughs: confirm each states its cost and when it runs. Don't run them; they run at the Phase 6 checkpoint.
+
+## 2b. Tier audit
+
+- Every journey unit has an end-to-end happy-path T, and it really drives the app in a browser (not a route call dressed up as e2e).
+- Every outside service the unit calls has a live check: a `[Live]` T if free, a `[Live]` M with a cost if paid.
+- No unit, integration or end-to-end test reaches the network beyond the local machine; free live tests reach only `LIVE_ALLOWED_HOSTS`; no paid key is read by any test.
 
 ## 3. Test fidelity audit
 
@@ -58,7 +66,8 @@ Return this table, then the findings:
 | Manual E2E Tests (M1..Mk) | PASS | All browser walkthroughs verified |
 | CI & Linter Gates | PASS | Tests green; 0 lint/format warnings |
 | Seam & Architecture Invariants | PASS | Logic isolated in core; scoping verified |
-| Instrumentation | PASS | `[Instrumentation]` T passes; catalogue in sync; live arrival confirmed in the dev project |
+| Test tiers | PASS | Unit/integration/e2e/live as the contract lists; e2e happy path drives the browser; no free live test skipped |
+| Instrumentation | PASS | `[Instrumentation]` T passes; catalogue in sync; `[Live]` T confirms arrival in the dev project (or semi-automated read-back, labelled) |
 | Semantic Acceptance Criteria | PASS | All bullet criteria verified |
 | Guardrails (risk: low/medium/high) | PASS | Locks for this level present; negative tests pass; config unchanged or ADR'd |
 | Test Edits & Scope Drift | PASS | Every test edit traced to the contract; no unrequested changes |

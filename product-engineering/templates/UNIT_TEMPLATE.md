@@ -42,7 +42,9 @@
 
 ## Scenario Coverage
 
-*Consider every dimension from `references/scenarios.md`; test only where it pays. A row needs either the T/M tokens covering it or a one-line reason it's skipped. "Doesn't apply" and "low value for this unit" are both valid. Don't write a test just to fill a row. Low-risk units usually cover 2–4 dimensions. Level choice: `references/test-mapping-guide.md`.*
+*Consider every dimension from `references/scenarios.md`; test only where it pays. A row needs either the T/M tokens covering it or a one-line reason it's skipped. "Doesn't apply" and "low value for this unit" are both valid. Don't write a test just to fill a row. Low-risk units usually cover 2–4 dimensions. Tier choice: `references/test-mapping-guide.md`.*
+
+**Tiers used**: [unit, integration, end-to-end, live] — name any tier skipped and why (e.g. "live: no outside service in this unit").
 
 | Dimension | Covered by | Skipped (why) |
 |:---|:---|:---|
@@ -60,22 +62,24 @@
 ## Test Matrix (Automated & Manual E2E)
 
 ### A. Automated Test Scenarios (T1..Tn)
-*Deterministic, programmatic tests run via test runner / CI. Each line names its level `(unit | integration | browser | eval)` and what breaks if it's wrong.*
-- **T1 [Happy Path] (unit)** — [Given X, when Y, then Z. Exact behavior asserted]. *Fails if broken: [user-visible consequence, e.g. saved plan silently lost]*
-- **T2 [Edge Case / Boundary / Dirty Payload] (unit)** — [Given bad input or boundary condition, clean handling asserted]. *Fails if broken: [...]*
-- **T3 [Guardrail] (integration)** — *(medium and high risk)* [Each lock holds: the blocked action stays blocked, e.g. an unapproved recipient is rejected, a delete with the dev login fails]
-- **T4 [Abuse] (integration)** — *(high risk)* [Injection in a document does nothing, wrong-tenant access denied, replayed request rejected]
-- **T5 [Data Invariant / Security / Concurrency] (integration)** — [Data scoping, idempotency, or invariant held]. *Fails if broken: [e.g. duplicate records]*. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
+*Programmatic tests run by `TEST_COMMAND`. Each line names its tier `(unit | integration | e2e | live)` and what breaks if it's wrong. `live` = free calls to real dev/sandbox services on `LIVE_ALLOWED_HOSTS`; paid live checks go in section B as `[Live]` walkthroughs.*
+- **T1 [Happy Path] (e2e)** — *(journey units)* [The unit's main flow, automated end to end in a real browser against the real app, outside services stubbed]. *Fails if broken: [the journey doesn't work]*
+- **T2 [Rule] (unit)** — [Given X, when Y, then Z. Exact behavior asserted]. *Fails if broken: [user-visible consequence, e.g. saved plan silently lost]*
+- **T3 [Edge Case / Boundary / Dirty Payload] (unit)** — [Given bad input or boundary condition, clean handling asserted]. *Fails if broken: [...]*
+- **T4 [Guardrail] (integration)** — *(medium and high risk)* [Each lock holds: the blocked action stays blocked, e.g. an unapproved recipient is rejected, a delete with the dev login fails]
+- **T5 [Abuse] (integration)** — *(high risk)* [Injection in a document does nothing, wrong-tenant access denied, replayed request rejected]
+- **T6 [Data Invariant / Security / Concurrency] (integration)** — [Data scoping, idempotency, or invariant held]. *Fails if broken: [e.g. duplicate records]*. *Doesn't prove: [what a pass leaves untested, e.g. a mocked clock says nothing about the user's timezone] (optional)*
+- **T7 [Instrumentation] (integration + e2e)** — *(journey units)* Drive each flow in this unit; assert every event in section C fires with its listed properties via the fake sink's `assert_tracked` (server) and the intercepted analytics requests (browser). New events added to the catalogue. *Fails if broken: the metrics this unit feeds are silently empty.*
+- **T8 [Live] (live)** — *(units that call a free outside service)* [Run the flow against the real dev/sandbox service and read back the result, e.g. each section C event arrives in the dev analytics project with its properties, tagged with the run id]. Skipped and reported when the dev key is absent. *Fails if broken: [the real service rejects or drops what we send]*
 
-- **T6 [Instrumentation] (integration + browser)** — *(journey units)* Drive each flow in this unit; assert every event in section C fires with its listed properties via the fake sink's `assert_tracked` (server) and the intercepted analytics requests (browser). New events added to the catalogue. *Fails if broken: the metrics this unit feeds are silently empty.*
-
-*Browser coverage: `[tests/e2e/test_NN_*.spec.ts]` ([which T tokens]).*
+*End-to-end coverage: `[tests/e2e/test_NN_*.py]` ([which T tokens]). Live coverage: `[tests/live/test_NN_*.py]` ([which T tokens]).*
 
 ### B. Manual E2E Scenarios (M1..Mk)
 *Step-by-step user-verifiable walkthroughs: a human sanity pass over key flows (including ones the browser suite automates) plus anything automation can't judge.*
 - **M1 [Desktop Happy Path]** — **Steps**: 1. Navigate to `/...` 2. Click `...` 3. Verify `...`. **Expected**: [Exact visual/functional outcome].
 - **M2 [Responsive State]** — **Steps**: 1. At each width in `VIEWPORT_BREAKPOINTS` (CONFIG.md; else 375px) load `/...` 2. Tap `...`. **Expected**: [Layout matches each breakpoint tier, wide screens included; no horizontal overflow]. **Compare with**: [mock frames for these screens; reference screenshots added in Phase 6 at `NN-reference/`]. **What to look for**: [3–6 bullets: navigation, titles, key states, what must not appear].
 - **M3 [Edge / Error Recovery / Human Override]** — **Steps**: 1. Trigger `...` with bad input or cancel mid-flight. **Expected**: [Human-readable error state]. **Recovery**: [How the user gets back on track: retry, undo, edit, or resume].
+- **M4 [Live]** — *(units with a paid or non-automatable outside call)* **Cost**: [e.g. ~$0.30 per run: 12 model calls | free, but needs a real phone]. **When**: [unit checkpoint, P0 checkpoint, and whenever <prompt/model/provider> changes]. **Steps**: [...]. **Expected**: [...]. Run by the user, or by the orchestrator only with the user's OK for that run.
 
 ### C. Instrumentation
 *Events emitted through the analytics seam (`ANALYTICS_PLATFORM` in CONFIG.md). Journey units: one view + one primary-action event per capability; P0 journeys also emit their hypothesis-metric events. Reporting unit: list the dashboards/queries built instead.*
@@ -83,9 +87,16 @@
 
 ---
 
+## Open Questions
+
+*Unresolved items that block or shape this unit. Raised when this unit is next worked on, not at every checkpoint. Remove each once answered and written into the contract. Empty is normal.*
+- [Question] — **Recommend**: [default and why]
+
+---
+
 ## Acceptance Criteria
 
-- [ ] All automated test cases (`T1..Tn`) pass green.
+- [ ] All automated test cases (`T1..Tn`) pass green; free live tests ran (not skipped) or the service is marked not set up yet.
 - [ ] All manual E2E scenarios (`M1..Mk`) verified and documented.
 - [ ] Every Instrumentation event fires with its listed properties.
 - [ ] Locks for this unit's risk level exist and their `[Guardrail]` / `[Abuse]` tests pass; guardrail config unchanged, or the change is in the cited ADR.

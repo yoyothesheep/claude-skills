@@ -55,6 +55,8 @@ The user can also jump at any time in plain words: "skip to polish", "back to ex
 "one more round", "stop here". List these once, in the first status block. When the user jumps or stops early, still send
 the status block, naming what was skipped (e.g. `Stage 3 · Polish — skipped by user`).
 
+The status block's choices are the only question in the message. Don't append side items or other open questions after it; anything unresolved goes in DESIGN-LOG.md under **Open questions** and is raised when it blocks the next step.
+
 ### DESIGN-LOG.md — where the work stands
 
 Keep `specs/product/mocks/DESIGN-LOG.md` (or next to the mocks): current stage and round; one
