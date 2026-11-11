@@ -51,6 +51,35 @@ ERROR_TRACKERS = ("sentry", "bugsnag", "rollbar", "honeybadger", "datadog", "log
 RATE_LIMITERS = ("express-rate-limit", "rate-limiter-flexible", "@upstash/ratelimit", "slowapi", "flask-limiter", "django-ratelimit", "fastapi-limiter", "rate_limit", "ratelimit")
 LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "uv.lock", "poetry.lock", "Pipfile.lock", "go.sum", "Gemfile.lock")
 
+# Usage-billed services: (dependency names, env var names). A leaked or looping key bills until someone notices.
+PAID_SERVICES = {
+    "OpenAI": (("openai",), ("OPENAI_API_KEY",)),
+    "Anthropic": (("anthropic",), ("ANTHROPIC_API_KEY",)),
+    "Google Gemini": (("google-generativeai", "@google/genai", "google-genai"), ("GEMINI_API_KEY",)),
+    "ElevenLabs": (("elevenlabs",), ("ELEVENLABS_API_KEY",)),
+    "Replicate": (("replicate",), ("REPLICATE_API_TOKEN",)),
+    "Mistral": (("mistralai",), ("MISTRAL_API_KEY",)),
+    "Cohere": (("cohere",), ("COHERE_API_KEY",)),
+    "Twilio": (("twilio",), ("TWILIO_AUTH_TOKEN",)),
+    "Google Maps": (("googlemaps", "@googlemaps"), ("GOOGLE_MAPS_API_KEY",)),
+}
+# Hosts and clouds: (config files, env var names). Their tokens can delete production.
+INFRA_HOSTS = {
+    "Railway": (("railway.json", "railway.toml"), ("RAILWAY_TOKEN", "RAILWAY_API_TOKEN")),
+    "Render": (("render.yaml",), ("RENDER_API_KEY",)),
+    "Vercel": (("vercel.json",), ("VERCEL_TOKEN",)),
+    "Fly": (("fly.toml",), ("FLY_API_TOKEN",)),
+    "Netlify": (("netlify.toml",), ("NETLIFY_AUTH_TOKEN",)),
+    "Heroku": (("Procfile",), ("HEROKU_API_KEY",)),
+    "Cloudflare": (("wrangler.toml", "wrangler.json"), ("CLOUDFLARE_API_TOKEN",)),
+    "AWS": (("serverless.yml", "samconfig.toml", "cdk.json"), ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")),
+    "Supabase": (("supabase/config.toml",), ("SUPABASE_ACCESS_TOKEN", "SUPABASE_SERVICE_ROLE_KEY")),
+    "Terraform": ((), ()),  # any *.tf file
+}
+CI_FILES = (".gitlab-ci.yml", ".circleci/config.yml", "bitbucket-pipelines.yml")
+SECRET_SCANNERS = re.compile(r"(?i)gitleaks|trufflehog|detect-secrets|ggshield|check_loop\.py|secret[_-]?scan")
+ENV_NAME_RE = re.compile(r"\b[A-Z][A-Z0-9_]{3,}\b")
+
 
 def git(root: Path, *args: str) -> tuple[int, str]:
     try:
@@ -151,9 +180,17 @@ def main(argv: list[str]) -> int:
 
     checks.append(check("infra", "ci", "pass" if (root / ".github" / "workflows").is_dir() else "warn", "CI workflows " + ("found" if (root / ".github" / "workflows").is_dir() else "not found")))
     for cid, q in (("staging", "Is there a staging environment before production?"),
-                   ("hosting_defaults", "Hosting tier: dedicated or cold-start? Database backups on?"),
+                   ("hosting_defaults", "Hosting tier: dedicated or cold-start?"),
+                   ("backups", "Are database backups stored outside the volume and account the app and agent can reach? Has a restore been done once?"),
                    ("agent_permissions", "What can the AI agent read, write and delete?")):
         checks.append(check("infra", cid, "manual", q))
+
+    # Names and config files the app uses, for the per-service rows below
+    names = set()
+    for p in files:
+        if p.name.endswith(CODE_EXTS) or p.name.startswith(".env"):
+            names |= set(ENV_NAME_RE.findall(read(p)))
+    dep_text = " ".join(read(root / d).lower() for d in DEP_FILES)
 
     # Pillar 2: code quality and testing
     tests = [rel(p) for p in files if re.search(r"(^test_|\.test\.|\.spec\.)", p.name) or "/tests/" in "/" + rel(p)]
@@ -180,8 +217,26 @@ def main(argv: list[str]) -> int:
         checks.append(check("security", "dependency_audit", "manual", "Run `npm audit` / `pip-audit` and review what the AI pulled in."))
     checks.append(check("security", "ai_data_handling", "manual", "What customer data reaches third-party AI tools?"))
 
+    paths = {rel(p) for p in files}
+    hosts = [h for h, (configs, envs) in INFRA_HOSTS.items()
+             if any(c in paths for c in configs) or names & set(envs) or (h == "Terraform" and any(p.endswith(".tf") for p in paths))]
+    for h in hosts:
+        checks.append(check("security", f"infra_token:{h}", "manual",
+                            f"{h} tokens: each scoped to one environment and only the actions it needs? Production tokens only in the host's dashboard, never in the repo, CI logs or the agent's environment?"))
+    if not hosts:
+        checks.append(check("security", "infra_tokens", "manual",
+                            "Which deploy and cloud tokens exist? Each scoped to one environment and only the actions it needs? Production tokens only in the host's dashboard?"))
+
+    ci_text = " ".join(read(p) for p in files if rel(p).startswith(".github/workflows/") or rel(p) in CI_FILES)
+    if not ci_text:
+        checks.append(check("security", "ci_secret_scan", "warn", "No CI, so nothing scans for secrets on every push"))
+    else:
+        scanning = bool(SECRET_SCANNERS.search(ci_text))
+        checks.append(check("security", "ci_secret_scan", "pass" if scanning else "warn",
+                            "CI runs a secret scanner" if scanning else "CI runs no secret scanner (gitleaks, trufflehog or check_loop.py guardrails)"))
+
     # Pillar 3 (continued): runtime locks, only when the app calls a model
-    deps = " ".join(read(root / d).lower() for d in DEP_FILES)
+    deps = dep_text
     if any(sdk in deps for sdk in AI_SDKS):
         powerful = []
         for p in files:
@@ -202,12 +257,16 @@ def main(argv: list[str]) -> int:
             checks.append(check("security", cid, "manual", q))
 
     # Pillars 4 and 3: observability, cost, rate limits
-    dep_text = " ".join(read(root / d).lower() for d in DEP_FILES)
     tracker = [t for t in ERROR_TRACKERS if t in dep_text]
     checks.append(check("observability", "error_tracker", "pass" if tracker else "fail", f"Found: {', '.join(tracker)}" if tracker else "No error tracker dependency"))
     limiter = [r for r in RATE_LIMITERS if r in dep_text]
     checks.append(check("infra", "rate_limit", "pass" if limiter else "warn", f"Found: {', '.join(limiter)}" if limiter else "No rate-limit dependency (may be handled by the host)"))
-    checks.append(check("observability", "monthly_cost", "manual", "Add up hosting, database and AI/API spend. Is a spend cap set on the model provider?"))
+    paid = [s for s, (pkgs, envs) in PAID_SERVICES.items() if any(p in dep_text for p in pkgs) or names & set(envs)]
+    for s in paid:
+        checks.append(check("observability", f"paid_key:{s}", "manual",
+                            f"{s} key: hard spend cap set (or, if the provider can't cap this key, a limit in your own code)? Spend alerts on? Key restricted to the APIs it uses?"))
+    checks.append(check("observability", "monthly_cost", "manual", "Add up hosting, database and API spend." +
+                        ("" if paid else " Any paid API: spend cap, spend alerts, key restricted to the APIs it uses?")))
 
     # Pillar 5: failure and rollback
     checks.append(check("rollback", "rollback_dry_run", "manual", "Has anyone done a rollback dry run?"))

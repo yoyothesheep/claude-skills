@@ -8,6 +8,10 @@ import unittest
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
+# Assembled at runtime so this file holds no literal that looks like a key, card or SSN.
+FAKE_KEY = "sk-" + "abcdefghijklmnopqrstuvwxyz123456"
+REAL_LOOKING_CARD = " ".join(["4539", "1488", "0343", "6467"])
+REAL_LOOKING_SSN = "-".join(["219", "09", "9999"])
 GEN = SKILL / "scripts" / "gen_guardrails.py"
 CHECK = SKILL / "scripts" / "check_loop.py"
 GUARD = SKILL / "templates" / "guardrails" / "guard.py"
@@ -70,6 +74,79 @@ class GenerateTests(RepoCase):
         self.assertEqual(merged["model"], "x")
 
 
+class GitHookTests(RepoCase):
+    def pre_commit(self):
+        return self.root / ".git/hooks/pre-commit"
+
+    def test_hook_runs_the_check_and_survives_a_skill_rename(self):
+        run([GEN, "--git-hook"], self.root)
+        text = self.pre_commit().read_text()
+        self.assertIn(".claude/hooks/check_loop.py", text)
+        self.assertTrue((self.root / ".claude/hooks/check_loop.py").is_file(), "the checker is vendored next to guard.py")
+        self.assertEqual(subprocess.run(["sh", self.pre_commit()], cwd=self.root).returncode, 0)
+        (self.root / ".env").write_text("X=1\n")
+        git(self.root, "add", "-f", ".env")
+        self.assertEqual(subprocess.run(["sh", self.pre_commit()], cwd=self.root, capture_output=True).returncode, 1)
+
+    def test_rerun_refreshes_its_own_hook(self):
+        run([GEN, "--git-hook"], self.root)
+        self.assertIn("repaired", run([GEN, "--git-hook"], self.root).stdout)
+
+    def test_repairs_its_own_stale_hook(self):
+        self.pre_commit().write_text('#!/bin/sh\npython3 "/gone/product-loop-engineering/scripts/check_loop.py" guardrails > /dev/null || exit 1\n')
+        run([GEN, "--git-hook"], self.root)
+        self.assertNotIn("/gone/", self.pre_commit().read_text())
+
+    def test_ci_workflow_runs_the_check_and_gitleaks(self):
+        workflow = self.root / ".github/workflows/guardrails.yml"
+        self.assertFalse(workflow.exists(), "CI is opt-in")
+        run([GEN, "--ci"], self.root)
+        text = workflow.read_text()
+        for needle in ("python3 .claude/hooks/check_loop.py guardrails --base", "gitleaks/gitleaks-action", "fetch-depth: 0", "pull_request"):
+            self.assertIn(needle, text)
+        self.assertIn(".github/workflows/guardrails.yml", json.loads((self.root / ".agent/guardrails.json").read_text())["protected_paths"])
+        workflow.write_text("name: mine\n")
+        r = run([GEN, "--ci"], self.root)
+        self.assertEqual(workflow.read_text(), "name: mine\n")
+        self.assertIn("skipped", r.stdout)
+
+    def test_check_over_a_commit_range_catches_a_pushed_key(self):
+        (self.root / "src").mkdir()
+        (self.root / "src/client.ts").write_text(f'const key = "{FAKE_KEY}";\n')
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-qm", "key")
+        self.assertEqual(self.guardrails()[0], 0, "nothing uncommitted: the local check sees no change")
+        r = run([CHECK, "guardrails", "--base", "HEAD~1"], self.root)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("src/client.ts:1", r.stdout)
+
+    def test_first_commit_is_checked(self):
+        fresh = Path(self._tmp.name) / "fresh"
+        fresh.mkdir()
+        git(fresh, "init", "-q")
+        run([GEN, "--init"], fresh)
+        (fresh / "history/decisions").mkdir(parents=True)
+        (fresh / "history/decisions/001-baseline.md").write_text("# ADR-001\n")
+        (fresh / "src").mkdir()
+        (fresh / "src/client.ts").write_text(f'const key = "{FAKE_KEY}";\n')
+        git(fresh, "add", "-A")
+        r = run([CHECK, "guardrails"], fresh)
+        self.assertEqual(r.returncode, 1, "no HEAD yet: every staged file is new")
+        self.assertIn("src/client.ts:1", r.stdout)
+
+    def test_git_hook_before_git_init_says_what_to_do(self):
+        bare = Path(self._tmp.name) / "bare"
+        bare.mkdir()
+        r = run([GEN, "--init", "--git-hook"], bare)
+        self.assertIn("git init", r.stdout)
+
+    def test_leaves_a_foreign_hook_alone(self):
+        self.pre_commit().write_text("#!/bin/sh\necho mine\n")
+        r = run([GEN, "--git-hook"], self.root)
+        self.assertEqual(self.pre_commit().read_text(), "#!/bin/sh\necho mine\n")
+        self.assertIn("add `check_loop.py guardrails` to it by hand", r.stdout)
+
+
 class HookTests(RepoCase):
     def test_blocks(self):
         for tool, args in [
@@ -82,9 +159,22 @@ class HookTests(RepoCase):
             ("Edit", {"file_path": ".claude/settings.json"}),
             ("Bash", {"command": "git reset --hard HEAD~1"}),
             ("Bash", {"command": "git clean -fd"}),
+            ("Bash", {"command": "git commit --no-verify -m x"}),
+            ("Bash", {"command": "git commit -nm x"}),
+            ("Bash", {"command": "git push --no-verify origin main"}),
+            ("Bash", {"command": "git -c core.hooksPath=/dev/null commit -m x"}),
         ]:
             with self.subTest(tool=tool, args=args):
                 self.assertEqual(self.hook(tool, **args).returncode, 2)
+
+    def test_blocks_destructive_infra_commands(self):
+        for cmd in ("terraform destroy -auto-approve", "railway down", "railway volume delete pg-data",
+                    "aws rds delete-db-instance --db-instance-identifier prod", "aws s3 rb s3://backups --force",
+                    "gcloud sql instances delete prod", "kubectl delete pvc data", "fly volumes destroy vol_1",
+                    "flyctl apps destroy app", "heroku apps:destroy app", "vercel remove app --yes",
+                    "supabase db reset --linked"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.hook("Bash", command=cmd).returncode, 2)
 
     def test_allows(self):
         for tool, args in [
@@ -96,6 +186,14 @@ class HookTests(RepoCase):
             ("Bash", {"command": "cat history/decisions/001-baseline.md"}),
             ("Edit", {"file_path": "history/decisions/001-baseline.md"}),
             ("Bash", {"command": "git branch -D old-idea"}),
+            ("Bash", {"command": "grep -rn TOKEN src/"}),
+            ("Bash", {"command": "git commit --amend -m x"}),
+            ("Bash", {"command": "git commit -am x"}),
+            ("Bash", {"command": "git push -n origin main"}),
+            ("Bash", {"command": "terraform plan"}),
+            ("Bash", {"command": "railway logs"}),
+            ("Bash", {"command": "kubectl get pods"}),
+            ("Bash", {"command": "aws s3 ls"}),
         ]:
             with self.subTest(tool=tool, args=args):
                 self.assertEqual(self.hook(tool, **args).returncode, 0)
@@ -118,6 +216,8 @@ class RoleAgentTests(RepoCase):
                 self.assertIn(f"model: {model}\n", text)
         self.assertIn("disallowedTools: Write, Edit", (agents / "loop-verifier-strict.md").read_text())
         self.assertNotIn("disallowedTools", (agents / "loop-maker.md").read_text())
+        self.assertIn("Never look for another credential", (agents / "loop-maker.md").read_text())
+        self.assertIn("terraform destroy", (self.root / "AGENTS.md").read_text())
         self.assertFalse((self.root / ".codex").exists())
 
     def test_config_overrides_tiers_and_models(self):
@@ -467,7 +567,7 @@ class PrivacyTests(RepoCase):
     def test_card_and_ssn_fail_test_values_pass(self):
         self.write("src/fake.py", 'CARD = "4242 4242 4242 4242"\nSSN = "123-45-6789"\n')
         self.assertEqual(self.errors(), [])
-        self.write("src/real.py", 'CARD = "4539 1488 0343 6467"\nSSN = "219-09-9999"\n')
+        self.write("src/real.py", f'CARD = "{REAL_LOOKING_CARD}"\nSSN = "{REAL_LOOKING_SSN}"\n')
         errors = self.errors()
         self.assertTrue(any("card number: src/real.py:1" in e for e in errors), errors)
         self.assertTrue(any("SSN: src/real.py:2" in e for e in errors), errors)
@@ -483,9 +583,8 @@ class PrivacyTests(RepoCase):
         self.assertEqual(facts["privacy_warnings"], ["Real-looking email: src/contact.py:1"])
 
     def test_hardcoded_key_fails(self):
-        self.write("src/client.ts", 'const key = "sk-abcdefghijklmnopqrstuvwxyz123456";\n')
+        self.write("src/client.ts", f'const key = "{FAKE_KEY}";\n')
         self.assertTrue(any("Likely secret: src/client.ts:1" in e for e in self.errors()))
-
 
 def contract(risk="low", adr="ADR-001", extra=""):
     return f"""# Build Unit 02 — Thing

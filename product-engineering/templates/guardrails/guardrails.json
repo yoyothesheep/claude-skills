@@ -7,7 +7,7 @@
   "protected_paths": [
     ".agent/guardrails.json", ".claude/settings.json", ".claude/hooks/**",
     ".cursorignore", ".geminiignore", ".claude/agents/loop-*.md", ".codex/agents/loop_*.toml",
-    ".cursor/hooks.json", ".cursor/agents/loop-*.md", ".codex/hooks.json"
+    ".cursor/hooks.json", ".cursor/agents/loop-*.md", ".codex/hooks.json", ".github/workflows/guardrails.yml"
   ],
   "verifier_bash_allow": [],
   "append_only_paths": ["history/decisions/**", "history/milestones/**"],
@@ -28,6 +28,19 @@
     "\\bgit\\s+clean\\s+-[a-zA-Z]*f",
     "\\bDROP\\s+(?:TABLE|DATABASE|SCHEMA)\\b",
     "\\bTRUNCATE\\s+TABLE\\b",
-    "\\bcurl\\b[^|]*\\|\\s*(?:sh|bash)\\b"
+    "\\bcurl\\b[^|]*\\|\\s*(?:sh|bash)\\b",
+    "\\bgit\\s+commit\\b[^|;&]*\\s(?:--no-verify|-[a-zA-Z]*n[a-zA-Z]*)\\b",
+    "\\bgit\\s+push\\b[^|;&]*\\s--no-verify\\b",
+    "\\bcore\\.hooksPath\\b",
+    "\\bterraform\\s+(?:destroy\\b|apply\\b.*\\s-destroy\\b)",
+    "\\brailway\\s+(?:down|delete|(?:volume|environment|service|project)\\s+delete)\\b",
+    "\\baws\\s+\\S+\\s+(?:delete-\\S+|terminate-\\S+|rb)\\b",
+    "\\bgcloud\\b[^|;&]*\\s(?:delete|destroy)\\b",
+    "\\bkubectl\\s+delete\\b",
+    "\\bfly(?:ctl)?\\b[^|;&]*\\s(?:destroy|delete)\\b",
+    "\\bheroku\\s+\\S*destroy\\b",
+    "\\bvercel\\s+(?:remove|rm)\\b",
+    "\\bnetlify\\s+sites:delete\\b",
+    "\\bsupabase\\s+(?:db\\s+reset\\b[^|;&]*--linked|projects\\s+delete)\\b"
   ]
 }

@@ -749,6 +749,8 @@ def main(argv: list[str]) -> int:
         i = argv.index("--base")
         base = argv[i + 1] if i + 1 < len(argv) else base
         argv = argv[:i] + argv[i + 2:]
+    if base == "HEAD" and run_cmd(["git", "rev-parse", "--verify", "-q", "HEAD"])[0] != 0:
+        base = run_cmd(["git", "hash-object", "-t", "tree", "/dev/null"])[1].strip()  # no commit yet: diff against the empty tree
     target = argv[1] if len(argv) > 1 else "all"
     if target == "plan":
         return main_plan(argv)

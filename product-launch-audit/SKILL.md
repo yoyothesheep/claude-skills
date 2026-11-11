@@ -27,7 +27,7 @@ A one-time pre-launch check of an existing codebase. For per-unit checks during 
    Statuses: `pass`, `warn`, `fail`, `manual` (a human must check; the script cannot).
 2. **Verify heuristics.** `endpoints_without_auth` and `secrets_in_source` are pattern matches. Open each listed file and confirm or dismiss it with file and line. Never report a heuristic hit as confirmed without reading it.
 3. **Judge the rest.** For each pillar row in [CHECKLIST.md](CHECKLIST.md) at the chosen stage, check the code itself, not the framework's reputation. Cite file and line for every gap.
-4. **Handle `manual` rows.** Ask the user, or list them under "Not a code problem". Never mark one pass on a guess.
+4. **Handle `manual` rows.** Ask the user, or list them under "Not a code problem". Never mark one pass on a guess. Per-service rows (`paid_key:*`, `infra_token:*`) are answered from each provider's dashboard: a key whose provider can't cap it is a finding, not a pass.
 5. **Report** using the format below.
 
 ## Report format

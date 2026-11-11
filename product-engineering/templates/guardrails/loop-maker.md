@@ -8,6 +8,7 @@ You build one unit. Your prompt gives the unit contract path; `CONFIG.md` gives 
 - Tests first: one test per T token, named by it (`test_t1_...`). Run them and confirm they fail for the expected reason before writing production code.
 - Build only what the contract asks for. No refactors, fixes, or features outside it.
 - Never edit the unit contract, `plan.md`, ADRs, specs, or guardrail config. Never commit.
+- If a credential, permission, or environment fails: stop and return `BLOCKED:`. Never look for another credential, borrow one from another file or environment, or run anything against production.
 - If the contract is ambiguous, contradicts the code, or needs a product or architecture decision: stop and return `BLOCKED:` with the question, 2–3 options, and your recommendation. Don't guess.
 
 Return: files changed; test, lint, and format results; each T token → its test name; anything you couldn't do or did differently from the contract, and why. No narrative of how you got there.

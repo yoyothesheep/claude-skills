@@ -11,11 +11,11 @@ Two kinds, handled in different places:
 
 ## Setup (once, by a human, in Phase 0)
 
-1. `python scripts/gen_guardrails.py --init --git-hook` copies `templates/guardrails/guardrails.json` to `.agent/guardrails.json` and generates each agent's config from it. Run it yourself: the generated files are protected from the agent.
+1. `python scripts/gen_guardrails.py --init --git-hook --ci` copies `templates/guardrails/guardrails.json` to `.agent/guardrails.json` and generates each agent's config from it, the pre-commit hook, and a GitHub Actions workflow. Run it yourself: the generated files are protected from the agent. Commit and push `.github/workflows/guardrails.yml`; nothing else is needed on GitHub.
 2. Write the **baseline guardrails ADR** (`templates/GUARDRAILS_ADR_TEMPLATE.md`) and cite it from the skeleton unit.
 3. Credentials, which the scripts cannot do for you. This is the real boundary, because a shell can dodge pattern checks:
    - The dev database login has no `DELETE`/`DROP`.
-   - No production credentials in the agent's environment.
+   - Dev credentials only, each scoped and spend-limited. Assume the agent can read any file or variable on the machine, `.env` included: a token it can find, it can use. Production keys, host tokens and cloud credentials live in the host's dashboard, never where the agent runs.
    - Run the agent in a sandbox or container where it can't reach what it doesn't need.
    - The verifiers are `loop-verifier` and `loop-verifier-strict` (same rules, higher model tier for medium and high risk). How read-only they are depends on the tool:
      - **Claude Code** (`.claude/agents/`): no write tools, Bash limited by the hook to read-only commands, `check_loop.py`, and `verifier_bash_allow` (CONFIG.md's test/lint commands; add a dev-server command by hand if M walkthroughs need one).
@@ -31,8 +31,10 @@ Two kinds, handled in different places:
 | `rm -rf`, `reset --hard`, `clean -f` | They destroy uncommitted work |
 | Force-push | Rewrites the remote's history |
 | `DROP`/`TRUNCATE`, `curl \| sh` | They act outside the repo. The real lock is the dev login without delete |
+| `terraform destroy`, `railway down`, cloud `delete`/`destroy` | They act on infrastructure. The real lock is dev credentials only |
 | Editing the guardrail config | An agent that loosens its own locks can then do something irreversible |
 | Secrets and user data in commits | Once pushed, rolling back doesn't un-leak them |
+| Skipping the pre-commit hook (`--no-verify`, `core.hooksPath`) | It turns off the check above |
 
 ## What gets enforced
 
@@ -41,7 +43,7 @@ Two kinds, handled in different places:
 | Layer | Works for | How |
 | :--- | :--- | :--- |
 | Credentials, sandbox | Any agent | Outside the agent entirely. Strongest. |
-| `check_loop.py guardrails` in pre-commit and CI | Any agent | Fails on protected or frozen edits and on config changes without a new ADR. `--git-hook` installs it. |
+| `check_loop.py guardrails` in pre-commit and CI | Any agent | Fails on protected or frozen edits, config changes without a new ADR, and the privacy gates below. `--git-hook` installs it and `--ci` writes `.github/workflows/guardrails.yml`, which runs it over each push's commits plus gitleaks: the server-side copy no one can skip, free on GitHub Actions. Both use the copy vendored at `.claude/hooks/check_loop.py`. |
 | `.claude/settings.json` deny rules + `guard.py` PreToolUse hook | Claude Code | Generated. The hook blocks with exit code 2. |
 | `.cursor/hooks.json`: the same `guard.py` on `preToolUse` and `beforeReadFile` | Cursor | Generated. Exit code 2 plus a `deny` answer blocks; an allowed call answers `{"permission": "allow"}`, since Cursor blocks a permission hook whose output isn't valid JSON. `beforeReadFile` also covers files attached with `@`. Project hooks run only in a trusted workspace. |
 | `.codex/hooks.json`: the same `guard.py` on `PreToolUse` (`Bash`, `apply_patch`) | Codex | Generated when `CODEX_MODELS` is set. File edits arrive as patch text; the hook checks every `Add`/`Update`/`Delete`/`Move to` path in it. Trust the hook once with `/hooks`; Codex skips new or changed hooks until you do. Codex fails open when a hook errors or times out, so treat this layer as a guardrail, not a boundary. Still set the session's sandbox by hand (workspace-write, approval on request). |
@@ -49,7 +51,7 @@ Two kinds, handled in different places:
 
 `guard.py` finds the repo from its own location (`.claude/hooks/`), not from the environment, so all three tools enforce the same `.agent/guardrails.json`. `check_loop.py guardrails` fails when `.cursor/` or `.codex/` exists without its hook registered, or when a Cursor verifier lost `readonly: true`.
 
-Repos set up before these adapters existed: add `.cursor/hooks.json`, `.cursor/agents/loop-*.md` and `.codex/hooks.json` to `protected_paths` by hand (with an ADR), then re-run `gen_guardrails.py`. It warns until you do.
+Repos set up before these adapters existed: add `.cursor/hooks.json`, `.cursor/agents/loop-*.md` and `.codex/hooks.json` to `protected_paths` by hand (with an ADR), then re-run `gen_guardrails.py`. It warns until you do, and likewise until the template's `denied_bash_patterns` are copied in.
 
 ## Privacy gates (every commit)
 
@@ -102,6 +104,14 @@ When the product has a sign-in gate, the skeleton ships a one-click way in for l
 4. It creates the same session real sign-in creates; the auth check on every other route is unchanged.
 
 Proof: `[Guardrail]` T scenarios for 1–3, and the skeleton's "every route needs auth" test still passes. The unit that adds it cites a guardrails ADR naming these locks (auth work is high risk).
+
+## Production data
+
+Every unit that deploys to production or changes production data (migrations, backfills, imports, deletes) is high risk. Before each one is built, check that `denied_bash_patterns` covers the chosen host, cloud and tools (the template names common ones only). Add each missing destructive command (delete, destroy, down, reset on live data) to `.agent/guardrails.json` by hand, re-run `gen_guardrails.py`, and record it in the unit's guardrails ADR. Its locks:
+
+1. The agent writes deploy config only. A human holds the host's tokens and runs every production action; each token is scoped to one environment and the actions it needs.
+2. Backups leave the volume and the account the app and agent can reach (e.g. a bucket with write-only credentials and object lock). A backup on the same volume is deleted with it.
+3. A restore from backup into a fresh location is a T test, and a human does one real restore before launch.
 
 ## Runtime locks (AI features in the app)
 
