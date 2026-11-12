@@ -2,10 +2,30 @@
 
 SEO, AEO, and content distribution skills for Claude — a tested workflow for researching, writing, and distributing content that gets cited by AI answer engines and ranks in search.
 
-**Three skill groups:**
+**Four skill groups:**
 - **Research & Audit** — understand what AI engines are citing, find keyword gaps, audit existing pages
 - **Content & Distribution** — write AEO-optimized content, distribute it via Reddit/LinkedIn/etc, track citations
 - **Design & UI** — push a design past the generic "AI slop" look, then QA the rendered result against your guidelines
+- **Product build** — scope an idea into a spec, design it, build it tests-first, and audit it before launch
+
+## Product build skills
+
+Each skill's folder has a README with a flow chart showing each step and where it stops for you.
+
+```mermaid
+flowchart LR
+    scope[product-scoping<br/>idea → spec] --> design[product-design<br/>spec → mocks]
+    design --> eng[product-engineering<br/>spec + mocks → tested code]
+    scope -. no UI .-> eng
+    eng --> audit[product-launch-audit<br/>before real users]
+```
+
+| Skill | What it does |
+|---|---|
+| [product-scoping](product-scoping/README.md) | Turns an idea into a prioritized spec: the hypothesis and how to validate it, P0/P1/P2 tiers, metrics, and user flows |
+| [product-design](product-design/README.md) | Builds several distinct design directions, then refines and polishes your pick with an outside critic |
+| [product-engineering](product-engineering/README.md) | Plans every unit up front, then builds each tests-first with an independent verifier and guardrails |
+| [product-launch-audit](product-launch-audit/README.md) | Checks five areas before launch and reports blockers and findings |
 
 Designed to complement Ahrefs/Semrush by:
 - Understanding your site's content, intent, and target audience
@@ -374,12 +394,7 @@ Produces several genuinely distinct design directions instead of one templated r
 - "Give me a few design directions to choose between"
 
 ### How it works
-**Interactive and checkpointed — not one-shot.** Three stages, each stopping for your judgment:
-- **Discover** — draws N distinct directions, builds each as an isolated subagent, gates on diversity, critiques, then shows all N side by side
-- **Define** — pushes the chosen direction with fresh-context critic passes, before/after each round
-- **Deliver** — subtracts: cut dead weight, AI-tells pass, copy rewrite, one pass at a time
-
-Nothing advances without `auto-advance: true`. Re-invoking on an already-polished design is normal and expected.
+**Interactive and checkpointed, not one-shot.** Four stages, each stopping for your judgment: 0 Set up → 1 Explore → 2 Refine → 3 Polish & hand off. The full flow chart and every stop are in [product-design/README.md](product-design/README.md).
 
 ### Input
 - What you're designing, plus access to the product's **real** content — real names, copy, photographs. No placeholder geometry.
