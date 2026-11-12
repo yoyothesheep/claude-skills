@@ -13,32 +13,49 @@
 ## Users & Goals
 
 - **Who**: [Primary user role/audience and context in which they arrive]
+- **Moments**: [Each situation they arrive in: trigger, device, time available. Separate first session from steady state.]
+- **Realistic volume**: [Per moment: the largest plausible first session, and typical steady-state volume, e.g. "300 photos once; 2–5 a week after"]
+- **Effort budget**: [What they'll tolerate per item and per session: taps, waits, review]
 - **Goals**: [What they come to accomplish; outcome when successful]
 
 ## Core Hypothesis
 
 - **Hypothesis**: [The one belief that, if false, makes this not worth building]
-- **High-Intent Signal**: [The commitment action proving real skin-in-the-game: payment, pre-order deposit, proprietary data upload, team invite, replacing an active tool. Avoid vanity signals like pageviews or clicks.]
-- **Hypothesis Metric**: [Metric anchored on high-intent signal] — continue if [≥ threshold]; rethink if below.
+- **What they do today**: [The current alternative and what it costs them]
+- **Riskiest piece**: [The part most likely to make the hypothesis false]
+
+### How to validate
+*The test, in words. Numbers live in Metrics.*
+- **Who and how long**: [Who runs the test, over what time window]
+- **Commitment signal**: [The skin-in-the-game action that starts the test: payment, deposit, proprietary data uploaded, team invite. Not page views or clicks.]
+- **Proof**: [The repeat behavior that shows it works, e.g. replacing the tool they use today]
+- **Pass / fail**: [What each looks like; on a fail, which likely cause to check first]
+- **Hypothesis Metric**: [The one metric that measures the proof] — continue if [≥ threshold]; rethink if below.
+
+### Why this P0 is enough
+*Each P0 item is needed for the test, and together they let the user reach the proof.*
+- **[P0 item]**: [The part of the test it carries; or "kept by user choice, not needed by the test"]
 - **P0 Journeys**: [F1, …]
 
 ## Metrics & Observability
 
-### 1. Acquisition & Discovery (Google Analytics)
+*What to measure, not which tools or event names; `product-engineering` chooses the analytics platform and defines the events.*
+
+### 1. Acquisition & Discovery
 *How users arrive at the product.*
-- **Traffic Channels & Campaigns**: [Target acquisition channels, campaign UTMs, referrer attribution]
+- **Traffic Channels & Campaigns**: [Target acquisition channels, campaigns, referrers]
 - **Landing Conversion**: [Landing-page-to-activation conversion rate]
 
-### 2. In-App Usage & Adoption (PostHog / Mixpanel)
-*In-app product behavior, event telemetry, and session replays.*
-- **Onboarding & Activation**: [Activation event, time to first value (TTFV)]
-- **Feature Usage**: [One view + one primary-action event per P0–P2 capability]
-- **Session Replay Observability**: [Key journeys and drop-off points where session replays are reviewed]
+### 2. In-App Usage & Adoption
+*What users do in the product.*
+- **Onboarding & Activation**: [What counts as activated; time to first value (TTFV)]
+- **Feature Usage**: [For each P0–P2 capability: how often it's viewed and how often its primary action is used]
+- **Watching Real Sessions**: [Journeys and drop-off points where watching real sessions would explain what happened]
 - **Engagement & Retention**: [Active users, W1 and W4 cohort retention]
 
 ### 3. Feature Success Metrics
-*End-to-end funnel conversion showing each flow solved the user's problem.*
-- **[F1 funnel]**: [Start event → completion event conversion]
+*End-to-end conversion showing each flow solved the user's problem.*
+- **[F1]**: [Share of users who start this flow and finish it]
 
 ### 4. Production Quality & Reliability Metrics
 *Live quality and health signals in production.*
