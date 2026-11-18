@@ -18,15 +18,28 @@ flowchart TD
     end
 
     refs --> you0{{"You OK the screen plan<br/>and references"}}
-    you0 --> seeds
+    you0 --> fork{{"You choose: seeds, concepts, or both"}}
+    fork -- seeds --> seeds
+    fork -- concepts --> ideas
 
-    subgraph S1["Stage 1 · Explore"]
-        seeds[One random seed per variant] --> build[N builders, each in a fresh context,<br/>each a different direction]
-        build --> shots1[Screenshots side by side]
+    subgraph S1B["Stage 1 · Explore — Fork B · Concepts"]
+        ideas[A long list of bold design ideas,<br/>one line each] --> youB1{{"You pick favourites<br/>and react in plain words"}}
+        youB1 --> sharpen[Each pick sharpened<br/>into a short concept] --> youB2{{"You edit or OK the concepts"}}
+    end
+
+    youB2 --> brief
+
+    subgraph S1["Stage 1 · Explore — Fork A · Seeds"]
+        seeds[One random seed per variant] --> brief[Brief per surface:<br/>landing page = bold hero + plain rest<br/>app screens = screen plan, seed sets the look]
+        brief --> cards[Each builder turns its seed<br/>into a direction card<br/>no taste or references yet]
+        cards --> dedupe{Any two cards share<br/>colour loudness, hero layout or density,<br/>hue + font class, or name?}
+        dedupe -- yes --> reroll[Re-roll one with a new seed<br/>and a 'not that'] --> dedupe
+        dedupe -- no --> build[N builders build their cards,<br/>each in its own context]
+        build --> shots1[Screenshots side by side,<br/>landing pages: the first screen,<br/>with links to open each page]
     end
 
     shots1 --> you1{{"You pick one, or a mix"}}
-    you1 -- another batch --> seeds
+    you1 -- another batch --> fork
     you1 -- picked --> critic
 
     subgraph S2["Stage 2 · Refine, in rounds"]
@@ -36,7 +49,7 @@ flowchart TD
 
     shots2 --> you2{{"You add notes, then:<br/>another round / accept / back to explore"}}
     you2 -- another round --> critic
-    you2 -- back to explore --> seeds
+    you2 -- back to explore --> fork
     you2 -- accept --> cut
 
     subgraph S3["Stage 3 · Polish & hand off"]
@@ -50,17 +63,21 @@ flowchart TD
     done --> next[Next: product-engineering]
 
     classDef you fill:#fff4d6,stroke:#c99a2e,color:#3d2e00;
-    class you0,you1,you2,you3a,you3b,you3c you;
+    class you0,fork,youB1,youB2,you1,you2,you3a,you3b,you3c you;
 ```
 
-Yellow boxes are where the skill stops and waits for you. Every message starts with the stage name, and every stop ends with a status block listing your choices.
+Yellow boxes are where the skill stops and waits for you. Every message starts with the stage name, and every stop ends with a status block. Its **Decide** list names each open question with a default, and **Reply with** says exactly what to type ("1" accepts the defaults). The skill shows the output and then waits. There are no pop-up questions; you answer in plain words or with a number.
+
+For a landing page, the first screen is where the directions differ; the rest of the page is kept plain and functional. By default it shows no app screens or phone frames. Where a photo belongs and none exists, the mock shows a captioned colour block instead of a fake.
+
+Stage 1 has two forks. **Seeds** keep your taste and the reference set out on purpose: shared taste words pull every builder toward the same page, so variety comes from a random string. **Concepts** do the opposite: you pick bold ideas from a long list and say how they should and shouldn't look, so each direction carries your taste. The references stay out of both. For seeds, your taste comes in at Stage 2, through the critic and the refine briefs.
 
 ## Where it stops for you
 
 | Stage | What you see | What you do |
 |---|---|---|
 | 0 · Set up | Taste questions, screen plans and reference images | Answer the taste questions, edit the plans, swap any references |
-| 1 · Explore | N screenshots, each a different direction | Pick one, or name a mix ("A's colour, C's layout") |
+| 1 · Explore | First, a choice of fork: random seeds, concepts you steer, or both. Concepts: a list of bold ideas to pick and react to, then short concepts to OK. Then N screenshots, each a different direction (checked for duplicates before building), with links to open each page | Pick one, or name a mix ("A's colour, C's layout") |
 | 2 · Refine | Before/after screenshots, a score out of 10, the critic's fixes | Point at what you love or dislike, then choose another round, accept, or go back to explore. The score is a guide; you decide when it's done. |
 | 3 · Polish | One subtraction pass at a time | Approve each pass. Rewrite the copy: AI copy is a placeholder. |
 

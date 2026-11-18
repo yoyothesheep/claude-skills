@@ -28,7 +28,7 @@ only if the user says so (`auto-advance`). Re-invoking on an already-polished de
 | Stage | What happens | What the user does | Exit when |
 |---|---|---|---|
 | **0 · Set up** | Spec check, taste, real content, screen plan, reference images | Answers taste questions; edits the screen plan; swaps references | The user OKs the screen plan (product surface) and the reference set |
-| **1 · Explore** | N builders, each from a random seed, make N distinct directions | Picks one, or a mix ("A's colour, C's layout") | A direction is picked |
+| **1 · Explore** | Two forks. **Seeds:** N builders each turn a random seed into a direction card; collisions are re-rolled; then each builds. **Concepts:** an idea list → the user picks and reacts → sharpened concepts → each builds | Chooses the fork(s). Concepts: picks ideas, reacts, OKs the concepts. Then picks one result, or a mix ("A's colour, C's layout") | A direction is picked |
 | **2 · Refine** | Rounds: critic scores the pick → builder applies fixes + user notes | Reacts to each round: notes, then accept / another round / back to Explore | **The user accepts.** The score is a guide, not the exit |
 | **3 · Polish & hand off** | Three subtraction passes, then spec sync | Approves each pass; rewrites the copy | All three passes approved, copy has a human pass, spec's UI section updated |
 
@@ -42,20 +42,50 @@ Don't silently pick and proceed.
 
 ### Status block — end every stop with it
 
-Every checkpoint ends with this block, then the choices as an AskUserQuestion (default first):
+Every checkpoint ends with this block as plain text. It is the only place the user is asked
+anything, so it must say exactly what to reply. A user who reads only the block should know
+what is being decided and what to type.
 
 ```
-Stage 2 of 3 · Refine · round 2 (I check in after 3 rounds)
-Done: picked direction C · round 1 applied 6 fixes + your 3 notes
-Score: 6.6 (was 6.1) — a guide, not the bar for done
-Next: 1. Another round [default] · 2. Accept → Stage 3 Polish · 3. Back to Stage 1 with this as baseline
+Stage 1 of 3 · Explore
+Done: 3 directions built (A, B, C) · links above
+Decide:
+  Q1. Which direction do we refine? Default: A
+  Q2. Mix in anything from the others? Default: no
+Reply with:
+  "1"  → refine A as is [default]
+  "2"  → build another batch of 3 directions
+  or plain words for Q1/Q2, e.g. "C, with A's colours"
+Jump anytime: "skip to polish" · "back to explore" · "one more round" · "stop here"
 ```
 
-The user can also jump at any time in plain words: "skip to polish", "back to explore",
-"one more round", "stop here". List these once, in the first status block. When the user jumps or stops early, still send
-the status block, naming what was skipped (e.g. `Stage 3 · Polish — skipped by user`).
+- **Decide** lists every open decision that blocks the next step, one numbered question per
+  line, each with its default answer. Include taste questions, the Explore
+  fork, and must-not-show. If nothing is open, write `Decide: nothing — just pick below`.
+- **Reply with** lists the exact replies, the default first and marked `[default]`, each
+  with where it leads. End with one plain-words example that answers the questions.
+- Replying "1" (or "ok") accepts every default in **Decide** and the first option.
+- Stage 2 adds a `Score:` line after **Done**.
+- Keep the **Jump anytime** line in every block.
 
-The status block's choices are the only question in the message. Don't append side items or other open questions after it; anything unresolved goes in DESIGN-LOG.md under **Open questions** and is raised when it blocks the next step.
+When the user jumps or stops early, still send the block, naming what was skipped (e.g.
+`Stage 3 · Polish — skipped by user`).
+
+The status block holds the only questions in the message. Don't ask anything above it; anything unresolved that doesn't block the next step goes in DESIGN-LOG.md under **Open questions**.
+
+### Review before deciding — present, then end the turn
+
+The user needs time with the output before choosing. A pop-up question covers the screen and
+demands an answer before they've opened anything, so this skill never uses them
+(no AskUserQuestion).
+
+- Present the output, then the status block as text, then **end the turn**. The user reviews at
+  their own pace and replies with a number or plain words ("C, but with A's colours"; "2").
+- Make the output easy to open, not just to look at: link each mock file, and serve the folder
+  (`python3 -m http.server`) and give the `http://localhost:…` URL for each page. A downscaled
+  side-by-side screenshot is for comparing, not for judging detail.
+- Taste questions, the Explore fork, and clarifications all go in the status block's
+  **Decide** list.
 
 ### DESIGN-LOG.md — where the work stands
 
@@ -90,7 +120,8 @@ PNG back and show it.
 | Stage scope | `explore` / `refine` / `polish` / `full` | `full` (Stage 0 always runs, skipping what's already done) |
 | Auto-advance | `false` / `true` | `false` — pause after every stage |
 | Surface | `marketing` / `product` | Infer. Marketing (homepage, landing) can go big and bold; product UI is functional first, with personality |
-| Variant count (N) | integer | `3` |
+| Explore fork | `seeds` / `concepts` / `both` | Asked in the Stage 0 status block's **Decide** list. Seeds need nothing from the user; concepts take two extra stops but carry the user's taste |
+| Variant count (N) | integer | `3` per fork |
 | Critic loop ceiling | integer, per "keep going" answer | `3` |
 | Critic references | `auto` / `user-only` / `none` | `auto` — see Stage 0 |
 | Builder model | any available | `sonnet` |
@@ -109,7 +140,7 @@ Look in `specs/product/` for an existing product specification.
 
 **2. Ask for the user's taste.** Reference apps or sites, vibes they like, things they hate.
 Start `TASTE.md` with the answers (see Stage 2). Reference apps also feed the Stage 2 critic.
-Stage 1 doesn't use them — variety there comes from the seed.
+The seed fork of Stage 1 doesn't use them — variety there comes from the seed. The concept fork does.
 
 **3. Go get the product's actual content if they exist — real names, real copy, real photographs.** Query
 the database, read the fixtures, look in the image directory. This is the highest-leverage
@@ -146,29 +177,94 @@ Show the screen plans and stop for edits.
 
 Goal: breadth. Always produce N, never one.
 
+Two ways to push past the model's average, run as separate forks. The user picks one or both
+in the Stage 0 status block:
+- **Fork A · Seeds** (steps 1–4): variety comes from a random string. Needs nothing from the
+  user; good at surprising. Folders: `1-explore/<v>/`.
+- **Fork B · Concepts** (below step 4): variety comes from the user steering ambitious ideas.
+  Two extra stops; results carry the user's taste. Folders: `1-explore/concepts/<v>/`.
+With both, present all results together, labelled by fork.
+
+## Fork A · Seeds
+
 ### 1. Directions — one random seed per variant
 The model can't act randomly or out-think its own averages, so the push has to come from
 outside. Draw N long random alphanumeric strings with a shell script
 (`python3 -c 'import secrets,string;print("".join(secrets.choice(string.ascii_letters+string.digits) for _ in range(40)))'`).
-Each builder gets one string and the brief: look closely at the string — subpatterns,
-repeated characters, case shifts, special numbers — define a creative direction (color,
-layout, type, mood) from it, then build it. The string never appears in the UI. No concept
-list and no feedback loop before the build; the user reacts to pixels.
+Each builder gets one string and looks closely at it — subpatterns, repeated characters,
+case shifts, special numbers — to define a creative direction (color, layout, type, mood).
+The string never appears in the UI. The user reacts to pixels, not concepts: direction cards
+(step 3) are a duplicate check for you, not a menu for the user.
 
-### 2. Write briefs
+### 2. Write briefs — one template per surface
+Marketing: `references/builder-brief-marketing.md`. Product: `references/builder-brief-product.md`.
+- **Leave out the user's taste, TASTE.md and the reference set.** Shared taste words ("warm,
+  playful") outweigh a random string, and every builder lands on the same most-likely page.
+  Taste and references enter in Stage 2.
 - The orchestrator writes **zero prose copy.** Builders write their own.
-- List what the *other* variants are taking, so each avoids drifting there.
 - State what must not be invented — features, fields, or data the product doesn't have.
 - **Product surface:** product facts as bullets (≤60 words, no adjectives), real content, and
-  the screen plans verbatim. Function first — the seed shapes personality, not structure.
-- **Marketing surface:** product facts; leave room to go big and strange.
+  the screen plans verbatim. Function first — the seed shapes personality (colour, type,
+  density, component shape), not structure.
+- **Marketing surface:** product facts; leave room to go big and strange. The brief is split:
+  the **hero** (first 1440×900 screen) is where the seed goes all the way; the **rest of the
+  page** is functional, in the hero's palette and type. Fill **Must not show** — by default no
+  app screens or phone frames, since they become every builder's easy hero. Ask the user
+  before allowing them.
+- **No photo, no fake:** where a photo belongs and none exists, builders use a captioned photo
+  slot (both templates). Don't bundle stock or placeholder images in the skill — the same
+  stand-in on every project becomes its own sameness.
 - **Don't** paste `references/ai-tells-checklist.md` in as bans — banning makes the model
   swap in stranger substitutes. Tells are handled in Stage 3.
 
-### 3. Build, screenshot, present
-- Build each variant as an isolated subagent on the builder model, fresh context.
-- If two variants come out looking alike, rebuild one with an explicit "not that."
-- Screenshot all N side-by-side, present them, stop for the user's pick.
+### 3. Translate seeds, then dedupe — before anyone builds
+Builds are slow; cards are fast. Catch collisions on cards.
+1. Spawn N builders with the template's **Phase 1** only. Each returns a direction card and
+   waits.
+2. Compare the cards. Two cards **collide** when any of these match:
+   - the same **saturation/energy** (muted / mid / loud) — loudness reads as sameness first;
+   - marketing: the same **hero composition** (type wall, full-bleed image, split, one
+     object…) — colour and type changes on the same first screen still look like one page;
+   - product: the same **density** *and* the same **component shape** — the layout is fixed
+     by the screen plan, so these carry the difference;
+   - the same hue family *and* the same display-type class;
+   - the same working name.
+   With N > 3, energy and composition (or density) may repeat once each; nothing else changes.
+3. For each collision, keep one and re-roll the other: send it a fresh seed plus the kept
+   card as "not that". Re-check. Cap at 2 re-rolls per variant, then build anyway and note it.
+4. Send each builder **Phase 2** as a follow-up message, listing the other final cards.
+
+### 4. Build, screenshot, present
+- Builders run on the builder model, each in its own context (the same agent from step 3).
+- If two variants still come out looking alike, rebuild one with an explicit "not that."
+- Screenshot all N, present them side by side with links (see *Review before deciding*), and
+  end the turn. Marketing: the side-by-side is the 1440×900 hero shots; link the full pages.
+
+## Fork B · Concepts — ambitious prompts the user steers
+
+A bold, specific idea ("each section is a still from a video game") gives the builder a vision
+to decide from instead of averaging. Asking the model for ideas alone gets the same ideas
+everyone gets; the user's reactions are what make them unique.
+
+1. **Idea list.** Write 20–30 design-language ideas, one line each, no detail — they're there
+   to spark the user's imagination, not to be specs. Spread wide: games, interiors, art and
+   installations, print and packaging, machines and objects, places, eras, materials. Include
+   a few that sound like they can't work. Skip the first ideas anyone would have for this
+   product category. Present as text and end the turn.
+2. **The user picks and reacts.** Up to N favourites, each with reactions in plain words: what
+   they picture, what feels tacky, what to keep or avoid. Fewer than N is fine; offer to fill
+   the rest from Fork A.
+3. **Sharpen.** Turn each pick plus its reactions into a concept of 4–6 lines: the idea; how it
+   lands in the hero (marketing) or across the screens (product); what to avoid, in the user's
+   words; and how far to take it — consistent touches that land the look without going
+   overboard. TASTE.md may inform it; the reference set stays out. Show the concepts and stop
+   for edits or an OK.
+4. **Build.** One builder per concept, with the surface template's **concept** Phase 1 (the
+   concept, verbatim, in place of the seed), then the usual dedupe and Phase 2. A collision
+   here means a builder flattened its concept toward the safe middle: send it back with
+   "push the concept further; not that: <other card>" — no new seed.
+5. **Screenshot and present** as in Fork A step 4. Save the concepts that didn't work in
+   DESIGN-LOG.md; they're worth retrying when newer models come out.
 
 **Exit Stage 1** when the user picks one direction (or names a mix). Log the pick in
 DESIGN-LOG.md. Status block; choices: refine the pick [default] · another batch of directions.
@@ -312,10 +408,11 @@ Real existing content still beats generated content.
 ## Output contract
 
 - Stage 0: screen plans (product surface) and reference set shown and confirmed.
-- Stage 1: N seeded options, stops for a pick.
+- Stage 1: N seeded options, deduped on direction cards before building, stops for a pick.
 - Stage 2: before/after, score and the user's notes; stops after every critic pass.
 - Stage 3: one pass at a time, stops after each; ends with the handoff summary.
-- Every stop ends with the status block; DESIGN-LOG.md updated at every stop.
+- Every stop ends with the status block as text, then the turn ends — no pop-ups; the block's
+  **Decide** list holds every question and **Reply with** says what to type; DESIGN-LOG.md updated at every stop.
 - Every message starts with the stage label, progress updates included; an early exit still
   ends with the status block and the handoff summary.
 - A real screenshot, inline, at every point above.
