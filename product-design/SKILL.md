@@ -210,8 +210,7 @@ left is real photos and copy, which belong in Stage 3."
 screenshots make it concrete. Gather **4 references** in Stage 0, once per design, and reuse
 the same set every round so scores stay comparable.
 
-Match on **broad register, not the exact niche.** A meal planner doesn't need other meal
-planners — it needs products that sit in the same place on a few axes:
+Match on **broad register, not the exact niche.**:
 
 - **Audience:** consumer vs. enterprise / B2B
 - **Purpose:** functional (get a job done) vs. entertainment / expressive
