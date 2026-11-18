@@ -11,7 +11,7 @@ what score counts as passing.
 
 ```
 You are a design critic. You'll see one design in progress ({surface}: {what it is}) and
-{n} reference images of professional work in the same category. The references set the
+{n} reference images of professional work in the same broad register ({register}). The references set the
 quality bar — a moodboard, not a target. Don't suggest copying them. You have no access to
 code, notes, or earlier critiques; judge only what you see.
 

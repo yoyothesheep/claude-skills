@@ -207,14 +207,25 @@ left is real photos and copy, which belong in Stage 3."
 ### Reference set (critic visual bar)
 
 "Imagine a top studio" is a mushy bar — the model's imagined best is its average. Real
-screenshots make it concrete. Gather **4 references** in Stage 0, in the same category and
-platform, once per design, and reuse the same set every round so scores stay comparable.
+screenshots make it concrete. Gather **4 references** in Stage 0, once per design, and reuse
+the same set every round so scores stay comparable.
+
+Match on **broad register, not the exact niche.** A meal planner doesn't need other meal
+planners — it needs products that sit in the same place on a few axes:
+
+- **Audience:** consumer vs. enterprise / B2B
+- **Purpose:** functional (get a job done) vs. entertainment / expressive
+- **Who it's for:** e.g. Gen Z vs. Gen X / boomer, novice vs. expert
+- **Platform:** mobile app, desktop web, marketing site
+
+Name the register in one line ("consumer, functional, Gen Z-leaning, mobile") and pick
+well-made products from anywhere in that space. Broad references give the critic a quality
+bar without pulling the design toward a competitor's layout.
+
 Sources, in order:
 
 1. **User-supplied** — images they drop in, or products they named. Always first.
-2. **A design-reference tool, if one is connected and responds** (e.g. a screen-library MCP).
-   Probe with one call; if it errors or returns nothing usable, move on — don't retry.
-3. **Live products** — search for current, well-regarded products in this category (don't
+2. **Live products** — search for current, well-regarded products in that register (don't
    use a remembered list; it goes stale) and screenshot them with the Chrome command above.
    Skip any page that renders a login wall, cookie banner, or broken layout.
 

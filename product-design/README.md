@@ -14,7 +14,7 @@ flowchart TD
         spec[Read the product spec,<br/>if there is one] --> taste[Ask your taste:<br/>references, likes, dislikes]
         taste --> content[Gather real content:<br/>names, copy, photos]
         content --> plan[Screen plan per screen<br/>app screens only]
-        plan --> refs[Reference set for the critic:<br/>4 real products]
+        plan --> refs[Reference set for the critic:<br/>4 products in the same broad register]
     end
 
     refs --> you0{{"You OK the screen plan<br/>and references"}}
