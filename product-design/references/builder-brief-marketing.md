@@ -29,8 +29,8 @@ builders have other seeds. Commit to where yours points, not to the safe middle.
 ### Product facts
 <≤60 words, bullets, no adjectives>
 
-### Must not invent
-<features, fields, data, social proof the product doesn't have; the call to action if not launched>
+### Build only from these
+<the complete set of features, data and proof the product has, and the call to action as it stands (e.g. waitlist if not launched) — every claim on the page comes from this list>
 
 ### Must not show
 <what the page may not depict. Default: "No app screens, phone or laptop frames, or product UI."

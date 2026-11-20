@@ -22,6 +22,10 @@ def to_hex(c):
     if m:
         return "#%02x%02x%02x" % tuple(int(x) for x in m.groups())
     c = c.lower()
+    if not c.startswith("#"):
+        c = "#" + c
+    if not re.fullmatch(r"#(?:[0-9a-f]{3}|[0-9a-f]{6})", c):
+        raise ValueError(f"not a hex colour: {c}")
     return "#" + "".join(ch * 2 for ch in c[1:]) if len(c) == 4 else c
 
 

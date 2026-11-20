@@ -37,9 +37,13 @@ it's a risky call.
 - Legibility — text size and contrast readable at a glance; tap targets thumb-sized
 - Content first — how much of the first screen is real content vs. UI chrome
 - Type discipline — few sizes and weights, used consistently
-- Color discipline — a deliberate palette; color carries meaning, not decoration
+- Color discipline — a neutral ground with 1–3 small colour pops per screen, each marking an
+  action, a selection or a status; photos carry the colour. In the fix, name the one element
+  that should keep the colour
 - Alignment & spacing — consistent grid and rhythm
 - Personality — a distinct, intentional look that still serves the task
+- Native feel (phone screens only) — reads as a native {platform} app: platform navigation and
+  controls, safe areas, thumb-reach actions; nothing that looks like a website
 
 **Marketing surface** — big and bold allowed:
 - Stopping power — does it make you stop and look in the first second

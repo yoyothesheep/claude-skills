@@ -13,11 +13,14 @@ flowchart TD
     subgraph S0["Stage 0 · Set up"]
         spec[Read the product spec,<br/>if there is one] --> taste[Ask your taste:<br/>references, likes, dislikes]
         taste --> content[Gather real content:<br/>names, copy, photos]
-        content --> plan[Screen plan per screen<br/>app screens only]
+        content --> brandq{A brand already exists?<br/>accepted homepage, live site, tokens}
+        brandq -- yes --> brand[Brand kit: palette with roles,<br/>contrast-checked, fonts, motifs]
+        brandq -- no --> plan
+        brand --> plan[Screen plan per screen<br/>app screens only]
         plan --> refs[Reference set for the critic:<br/>4 products in the same broad register]
     end
 
-    refs --> you0{{"You OK the screen plan<br/>and references"}}
+    refs --> you0{{"You OK the brand kit,<br/>screen plan and references"}}
     you0 --> fork{{"You choose: seeds, concepts, or both"}}
     fork -- seeds --> seeds
     fork -- concepts --> ideas
@@ -30,9 +33,9 @@ flowchart TD
     youB2 --> brief
 
     subgraph S1["Stage 1 · Explore — Fork A · Seeds"]
-        seeds[One random seed per variant] --> brief[Brief per surface:<br/>landing page = bold hero + plain rest<br/>app screens = screen plan, seed sets the look]
+        seeds[One random seed per variant] --> brief[Brief per surface:<br/>landing page = bold hero + plain rest<br/>app screens = screen plan, mobile native,<br/>seed sets the look; brand kit fixes colours]
         brief --> cards[Each builder turns its seed<br/>into a direction card<br/>no taste or references yet]
-        cards --> dedupe{Any two cards share<br/>colour loudness, hero layout or density,<br/>hue + font class, or name?}
+        cards --> dedupe{Any two cards share<br/>colour loudness, hero layout or density,<br/>hue + font class, or name?<br/>brand kit: colour placement + shape,<br/>photo scale + density, or type pairing?}
         dedupe -- yes --> reroll[Re-roll one with a new seed<br/>and a 'not that'] --> dedupe
         dedupe -- no --> build[N builders build their cards,<br/>each in its own context]
         build --> shots1[Screenshots side by side,<br/>landing pages: the first screen,<br/>with links to open each page]
@@ -70,13 +73,17 @@ Yellow boxes are where the skill stops and waits for you. Every message starts w
 
 For a landing page, the first screen is where the directions differ; the rest of the page is kept plain and functional. By default it shows no app screens or phone frames. Where a photo belongs and none exists, the mock shows a captioned colour block instead of a fake.
 
+If a brand already exists, for example a homepage you accepted before designing the app, Stage 0 turns it into a **brand kit**: the palette with a role for each colour, checked for contrast, plus fonts and motifs. You say what's fixed (by default the palette). Every Stage 1 variant then uses those colours, and the seed varies the rest instead: where colour goes and how much, the type pairing, component shapes, photo size and density, and how strongly the brand's motifs show.
+
+App screens for a phone are always built mobile native, for iOS or Android (you pick; iOS by default), whether the product ships as a native app or a mobile web app. That means the platform's navigation and controls, safe areas, thumb-reach actions and full-size tap targets. A mobile web app is mocked as the installed home-screen app, with no browser bars, using only what a web app can do. The critic also scores how native the screens feel.
+
 Stage 1 has two forks. **Seeds** keep your taste and the reference set out on purpose: shared taste words pull every builder toward the same page, so variety comes from a random string. **Concepts** do the opposite: you pick bold ideas from a long list and say how they should and shouldn't look, so each direction carries your taste. The references stay out of both. For seeds, your taste comes in at Stage 2, through the critic and the refine briefs.
 
 ## Where it stops for you
 
 | Stage | What you see | What you do |
 |---|---|---|
-| 0 · Set up | Taste questions, screen plans and reference images | Answer the taste questions, edit the plans, swap any references |
+| 0 · Set up | Taste questions, the brand kit (if a brand exists), screen plans and reference images | Answer the taste questions, say what the brand kit fixes, edit the plans, swap any references |
 | 1 · Explore | First, a choice of fork: random seeds, concepts you steer, or both. Concepts: a list of bold ideas to pick and react to, then short concepts to OK. Then N screenshots, each a different direction (checked for duplicates before building), with links to open each page | Pick one, or name a mix ("A's colour, C's layout") |
 | 2 · Refine | Before/after screenshots, a score out of 10, the critic's fixes | Point at what you love or dislike, then choose another round, accept, or go back to explore. The score is a guide; you decide when it's done. |
 | 3 · Polish | One subtraction pass at a time | Approve each pass. Rewrite the copy: AI copy is a placeholder. |

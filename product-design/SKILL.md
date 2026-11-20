@@ -27,7 +27,7 @@ only if the user says so (`auto-advance`). Re-invoking on an already-polished de
 
 | Stage | What happens | What the user does | Exit when |
 |---|---|---|---|
-| **0 · Set up** | Spec check, taste, real content, screen plan, reference images | Answers taste questions; edits the screen plan; swaps references | The user OKs the screen plan (product surface) and the reference set |
+| **0 · Set up** | Spec check, taste, real content, brand kit (if a brand exists), screen plan, reference images | Answers taste questions; says what the brand kit fixes; edits the screen plan; swaps references | The user OKs the brand kit, the screen plan (product surface) and the reference set |
 | **1 · Explore** | Two forks. **Seeds:** N builders each turn a random seed into a direction card; collisions are re-rolled; then each builds. **Concepts:** an idea list → the user picks and reacts → sharpened concepts → each builds | Chooses the fork(s). Concepts: picks ideas, reacts, OKs the concepts. Then picks one result, or a mix ("A's colour, C's layout") | A direction is picked |
 | **2 · Refine** | Rounds: critic scores the pick → builder applies fixes + user notes | Reacts to each round: notes, then accept / another round / back to Explore | **The user accepts.** The score is a guide, not the exit |
 | **3 · Polish & hand off** | Three subtraction passes, then spec sync | Approves each pass; rewrites the copy | All three passes approved, copy has a human pass, spec's UI section updated |
@@ -120,6 +120,7 @@ PNG back and show it.
 | Stage scope | `explore` / `refine` / `polish` / `full` | `full` (Stage 0 always runs, skipping what's already done) |
 | Auto-advance | `false` / `true` | `false` — pause after every stage |
 | Surface | `marketing` / `product` | Infer. Marketing (homepage, landing) can go big and bold; product UI is functional first, with personality |
+| Platform (product surface) | `desktop web` / `mobile web` / `iOS` / `Android` | Infer from the spec's constraints; ask in the Stage 0 status block if unclear. A mobile web app also needs its look: `mobile web · iOS` (default) or `mobile web · Android`. Every phone platform is built mobile native |
 | Explore fork | `seeds` / `concepts` / `both` | Asked in the Stage 0 status block's **Decide** list. Seeds need nothing from the user; concepts take two extra stops but carry the user's taste |
 | Variant count (N) | integer | `3` per fork |
 | Critic loop ceiling | integer, per "keep going" answer | `3` |
@@ -146,12 +147,55 @@ The seed fork of Stage 1 doesn't use them — variety there comes from the seed.
 the database, read the fixtures, look in the image directory. This is the highest-leverage
 step in the whole skill and the easiest to skip.
 
-**4. Screen plan** (product surface only) — below.
+**4. Brand kit** — only when a brand already exists: an accepted marketing page from an earlier
+run, the live site, or design tokens in the codebase. See *Brand kit* below.
 
-**5. Reference set** for the Stage 2 critic — see *Reference set* under Stage 2. Gather it
+**5. Screen plan** (product surface only) — below.
+
+**6. Reference set** for the Stage 2 critic — see *Reference set* under Stage 2. Gather it
 now so Stage 2 starts straight into round 1.
 
-**Exit Stage 0** when the user OKs the screen plans and the reference set. Status block, stop.
+**Exit Stage 0** when the user OKs the brand kit (if any), the screen plans and the reference
+set. Status block, stop.
+
+### Brand kit — fix the brand, vary the rest
+
+When a brand already exists, a seed that picks colours wastes itself: the colours get replaced
+later and the variants collapse into one look. Fix the brand up front and let the seed vary
+everything that's still open.
+
+1. Pull the palette: `scripts/extract_palette.py <page.html>` (or a screenshot). Give each colour
+   a role — background, surface, tint, text, secondary text, primary action, selected state,
+   links, status/warning, any category colours. Check every text/background pair with
+   `--contrast`; drop or restrict pairs that fail (e.g. "accent text on white only").
+   **Product surface: translate the brand into app roles.** Page background is white `#FFFFFF`,
+   or a neutral system grey for grouped lists. The brand's ground colour becomes an optional
+   secondary surface (sheets, grouped-list backgrounds). The accent marks the primary action,
+   the selected state and links. Category colours become small labels or dots. One status
+   colour marks items that need attention.
+2. Note the fonts (display, body) and the signature motifs (texture, shapes, handwriting,
+   illustration style).
+3. Write `BRAND.md` next to the mocks: the role table with ratios, the fonts, the motifs.
+4. Ask in the status block which parts are fixed. Default: **palette and roles fixed; fonts and
+   motifs open** — type is one of the axes that keeps variants apart.
+5. **Colour budget (product surface):** neutrals and photos fill the screen; colour appears as
+   1–3 small pops per screen, for the primary action, the selected state and one status.
+   Photos carry the colour. Write it into `BRAND.md`.
+
+In Stage 1 the fixed parts go into every brief as a **Brand kit (fixed)** block. It's a
+constraint like the data model, not taste — TASTE.md and the reference set still stay out. The
+seed then varies the open axes (see the product brief template):
+- **Pop placement** (product surface) — where the few colour pops go: *action-led* (accent on
+  the primary action), *selection-led* (accent on the selected tab and active item), or
+  *category-led* (small category labels carry the colour).
+- **Colour placement** (marketing surface) — how much of the brand colour is on screen and
+  where: *quiet* (neutral ground, accent on actions only), *tinted* (category colours as tabs,
+  labels, panels), *bold* (brand colours as large surfaces).
+- **Type pairing** — brand display face, brand body face only, or a contrasting companion
+  (unless the user fixed fonts).
+- **Component shape** — corners, outline vs. fill, tabs vs. segmented control vs. chips.
+- **Photo scale & density** — thumbnail rows, large photo cards, or editorial full-bleed.
+- **Motif strength** — none, subtle (one touch per screen), or strong.
 
 ### Screen plan — edit before you design (product surface only)
 
@@ -194,7 +238,8 @@ outside. Draw N long random alphanumeric strings with a shell script
 Each builder gets one string and looks closely at it — subpatterns, repeated characters,
 case shifts, special numbers — to define a creative direction (color, layout, type, mood).
 The string never appears in the UI. The user reacts to pixels, not concepts: direction cards
-(step 3) are a duplicate check for you, not a menu for the user.
+(step 3) are a duplicate check for you, not a menu for the user. With a brand kit, the seed
+doesn't pick colours; it picks the open axes listed under *Brand kit*.
 
 ### 2. Write briefs — one template per surface
 Marketing: `references/builder-brief-marketing.md`. Product: `references/builder-brief-product.md`.
@@ -202,10 +247,18 @@ Marketing: `references/builder-brief-marketing.md`. Product: `references/builder
   playful") outweigh a random string, and every builder lands on the same most-likely page.
   Taste and references enter in Stage 2.
 - The orchestrator writes **zero prose copy.** Builders write their own.
-- State what must not be invented — features, fields, or data the product doesn't have.
+- List what to build from — the complete set of features, fields and data the product has (**Build only from these**).
 - **Product surface:** product facts as bullets (≤60 words, no adjectives), real content, and
   the screen plans verbatim. Function first — the seed shapes personality (colour, type,
-  density, component shape), not structure.
+  density, component shape), not structure. App screens sit on a white, neutral ground; the
+  photos and 1–3 small colour pops carry the brand. Add the **Brand kit (fixed)** block when
+  Stage 0 made one.
+- **Phone screens are mobile native.** If the mocks are phone screens — native app or mobile
+  web app — they must look and behave like a native app on the chosen platform (iOS or
+  Android), not a shrunken web page. The template's *Mobile native* section is mandatory for
+  every phone brief: fill in the platform, keep the matching platform block, and add the
+  *Mobile web app* rules when it ships as one (installed standalone app, no browser chrome,
+  only what a web app can do). The critic scores **Native feel** for phone screens.
 - **Marketing surface:** product facts; leave room to go big and strange. The brief is split:
   the **hero** (first 1440×900 screen) is where the seed goes all the way; the **rest of the
   page** is functional, in the hero's palette and type. Fill **Must not show** — by default no
@@ -222,7 +275,8 @@ Builds are slow; cards are fast. Catch collisions on cards.
 1. Spawn N builders with the template's **Phase 1** only. Each returns a direction card and
    waits.
 2. Compare the cards. Two cards **collide** when any of these match:
-   - the same **saturation/energy** (muted / mid / loud) — loudness reads as sameness first;
+   - marketing: the same **saturation/energy** (muted / mid / loud) — loudness reads as sameness first;
+   - product: the same **neutral** *and* the same **pop placement**;
    - marketing: the same **hero composition** (type wall, full-bleed image, split, one
      object…) — colour and type changes on the same first screen still look like one page;
    - product: the same **density** *and* the same **component shape** — the layout is fixed
@@ -230,6 +284,12 @@ Builds are slow; cards are fast. Catch collisions on cards.
    - the same hue family *and* the same display-type class;
    - the same working name.
    With N > 3, energy and composition (or density) may repeat once each; nothing else changes.
+   **With a brand kit** hue is fixed, so swap the colour rules for these. Two cards collide when:
+   - the same **pop placement** (product) or **colour placement** (marketing) *and* the same
+     **component shape**;
+   - the same **photo scale** *and* the same **density**;
+   - the same **type pairing**;
+   - the same working name.
 3. For each collision, keep one and re-roll the other: send it a fresh seed plus the kept
    card as "not that". Re-check. Cap at 2 re-rolls per variant, then build anyway and note it.
 4. Send each builder **Phase 2** as a follow-up message, listing the other final cards.
@@ -336,13 +396,17 @@ what the user loves, what they don't, and product facts they keep correcting ("n
 the week"). It goes into every Refine brief and into the critic's fixed-constraints slot, so
 the critic stops attacking choices the user made. Write entries as look and feel — palette,
 type, texture, spacing, shape language, mood — never as what a screen or element *is*
-("a stair of balconies"); builders take that literally.
+("a stair of balconies"); builders take that literally. A good colour entry reads like "App
+screens: white neutral ground, colour as small pops for action, selection and status."
 
-### Brand pass (product surface, when an accepted marketing page exists)
+### Brand pass (product surface, when a marketing page was accepted after Stage 1)
 
+Only when no brand kit went into Stage 1 — e.g. the marketing page was accepted after the app
+directions were built. If the brand existed at Stage 0, use the *Brand kit* instead.
 Bring the marketing site's colors into the product — not its fonts or layout. Run
 `scripts/extract_palette.py <marketing.html>` to pull its colors, assign them roles in the
-product (primary action, accent, "needs checking", background tint, selected state), and
+product (primary action, accent, "needs checking", background tint, selected state) using the
+same translation and colour budget as the *Brand kit* (white ground, 1–3 small pops), and
 check every text/background pair with `--contrast`. Give the builder the palette as a fixed
 constraint — colors in these roles; type and layout stay the product's own — then run the
 normal critic round. Do it in Stage 2, not Stage 1: in Stage 1 the seed sets the palette.
@@ -407,7 +471,8 @@ Real existing content still beats generated content.
 
 ## Output contract
 
-- Stage 0: screen plans (product surface) and reference set shown and confirmed.
+- Stage 0: brand kit (when a brand exists), screen plans (product surface) and reference set
+  shown and confirmed.
 - Stage 1: N seeded options, deduped on direction cards before building, stops for a pick.
 - Stage 2: before/after, score and the user's notes; stops after every critic pass.
 - Stage 3: one pass at a time, stops after each; ends with the handoff summary.
