@@ -10,7 +10,7 @@ what score counts as passing.
 ## Prompt
 
 ```
-You are a design critic. You'll see one design in progress ({surface}: {what it is}) and
+You are a design critic. You'll see one design in progress ({surface}: {what it is}{, built as {tier}}) and
 {n} reference images of professional work in the same broad register ({register}). The references set the
 quality bar — a moodboard, not a target. Don't suggest copying them. You have no access to
 code, notes, or earlier critiques; judge only what you see.
@@ -45,7 +45,9 @@ it's a risky call.
 - Native feel (phone screens only) — reads as a native {platform} app: platform navigation and
   controls, safe areas, thumb-reach actions; nothing that looks like a website
 
-**Marketing surface** — big and bold allowed:
+**Marketing surface** — big and bold allowed. With hero tiers, fill `{tier}` in the prompt
+("a classic split hero", "a split hero whose visual extends past its box", "an immersive
+full-bleed hero") and score against how the references would execute that tier:
 - Stopping power — does it make you stop and look in the first second
 - One memorable idea — a single concept you'd remember and describe to someone
 - Composition — scale, contrast, tension; nothing templated

@@ -12,6 +12,9 @@ the same "most likely" page. Taste enters in Stage 2.
 user decides. The rest of the page is functional: it carries the hero's palette and type and
 says what the product does, plainly.
 
+**Hero tiers.** With the Hero range setting on `tiers`, give each builder one tier in Phase 1
+(**Your hero tier**). The tier sets the composition; the seed sets everything else.
+
 ---
 
 ## Phase 1 · Translate (send first)
@@ -26,15 +29,29 @@ Look closely at the string: subpatterns, repeated characters, case shifts, digit
 numbers. Define a creative direction from it. The string never appears in the UI. Other
 builders have other seeds. Commit to where yours points, not to the safe middle.
 
+### Your hero tier
+<one of the three, verbatim:>
+- **Tier 1 · Classic split.** Headline, supporting line and call to action on the left; one
+  strong visual on the right. Your seed decides the visual, the palette, the type and the
+  background. Aim for instant clarity, executed beautifully.
+- **Tier 2 · Split, extended.** The classic reading order — headline, line and call to action
+  on the left — with the visual running past its box: a moving gradient, light or texture
+  behind the whole first screen, or a graphic that bleeds off the edge and flows under the next
+  section. Your seed decides what extends, how it moves, the palette and the type.
+- **Tier 3 · Immersive.** A full-bleed photo, video loop or animation fills the first screen and
+  is the hero; the headline and call to action sit over it. Your seed decides the image or
+  motion idea, the type treatment and how the copy sits on the image.
+
 ### Product facts
 <≤60 words, bullets, no adjectives>
 
 ### Build only from these
 <the complete set of features, data and proof the product has, and the call to action as it stands (e.g. waitlist if not launched) — every claim on the page comes from this list>
 
-### Must not show
-<what the page may not depict. Default: "No app screens, phone or laptop frames, or product UI."
-Drop this line only if the user wants the app shown.>
+### What the hero shows
+<Default: "The hero shows the outcome the product gives — people, food, place, type or
+graphics. Product UI, if the user wants it, sits further down the page." Change only if the
+user asks for product UI in the hero.>
 
 **Saturation / energy** is how loud the colour is: *muted* (dusty, greyed, low contrast),
 *mid* (clear colour, one accent on calm neutrals), *loud* (several saturated colours at full
@@ -42,7 +59,8 @@ strength). **Hero composition** is how the first screen is built before colour o
 *type wall* (the headline is the image), *full-bleed image* with type over it, *split* (two
 halves), *one object* (a single big graphic in the middle), *collage* (several pieces
 overlapping), *off-grid* (one element pushed to an edge, lots of empty space). These are
-examples, not a menu — read both from your seed.
+examples, not a menu — read both from your seed. With a hero tier, the tier sets the
+composition; read the energy and the way you build your tier from the seed.
 
 ### Reply with a direction card, and nothing else
 Write it to `<mocks>/1-explore/<v>/direction.md` and return it:
@@ -54,6 +72,7 @@ Saturation / energy: <muted | mid | loud>
 Palette: <4–6 hex codes, each with a role>
 Display type: <font> — class: <serif | grotesk | geometric | display/novelty | mono | script>
 Body type: <font>
+Hero tier: <1 classic split | 2 split, extended | 3 immersive — or "seed" without tiers>
 Hero composition: <named plainly — e.g. type wall | full-bleed image | split | one object | collage | off-grid | something else>
 Hero: <one line: what fills the first screen and where the headline and call to action sit>
 Imagery: <photo | type-only | graphics (shapes, pattern, texture, type as image) | mix>
@@ -85,10 +104,10 @@ apply here: the user's reactions are already in the concept. The reference set s
 Build the direction on your card.
 
 <If the orchestrator re-rolled you: "Your first card collided with another variant. New seed:
-<string>. Not that: <the other card's palette, energy, type class, hero composition, name>. Send a new card, then wait.">
+<string>. Not that: <the other card's palette, energy, type class, hero composition, name>. Keep your hero tier. Send a new card, then wait.">
 
 ### Other variants (avoid drifting toward them)
-<each other variant's card: palette, energy, type class, hero composition, name — one line each>
+<each other variant's card: hero tier, palette, energy, type class, hero composition, name — one line each>
 
 ### Real content
 <names, copy, photos from Stage 0 step 3; or "none yet">
@@ -101,13 +120,16 @@ Build the direction on your card.
   art-direction caption in small type, e.g. `PHOTO · overhead, open cookbook, flour on the
   counter, late light`. The slot stands in for that photo; the critic judges it as described.
 - Graphics you draw are fine: shapes, pattern, texture, type used as image.
-- <Must not show, repeated from Phase 1.>
+- <What the hero shows, repeated from Phase 1.>
 
 ### Part 1 · Hero (the first screen, 1440×900) — most of your effort
 - This is where your seed goes all the way. Everything visible at 1440×900 counts.
 - Holds: product name, headline, one supporting line, the call to action, and the hero visual.
   Nothing else needs to be above the fold.
 - Make it unmistakably yours: it should not look like the other variants' heroes.
+- Build your hero tier. Tiers 2–3 with motion: CSS animation or a looping video, with a strong
+  first frame — the screenshot shows that frame. Check the motion by screenshotting at two or
+  three `--virtual-time-budget` values.
 
 ### Part 2 · Rest of the page — functional
 - Same palette and type as the hero; quieter. Clear, plainly laid out sections, no new tricks.

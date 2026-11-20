@@ -33,9 +33,9 @@ flowchart TD
     youB2 --> brief
 
     subgraph S1["Stage 1 · Explore — Fork A · Seeds"]
-        seeds[One random seed per variant] --> brief[Brief per surface:<br/>landing page = bold hero + plain rest<br/>app screens = screen plan, mobile native,<br/>seed sets the look; brand kit fixes colours]
+        seeds[One random seed per variant] --> brief[Brief per surface:<br/>landing page = bold hero + plain rest,<br/>one hero tier each: classic split,<br/>split extended, immersive<br/>app screens = screen plan, mobile native,<br/>seed sets the look; brand kit fixes colours]
         brief --> cards[Each builder turns its seed<br/>into a direction card<br/>no taste or references yet]
-        cards --> dedupe{Any two cards share<br/>colour loudness, hero layout or density,<br/>hue + font class, or name?<br/>brand kit: colour placement + shape,<br/>photo scale + density, or type pairing?}
+        cards --> dedupe{Any two cards share<br/>colour loudness, hero layout (when no tiers)<br/>or density,<br/>hue + font class, or name?<br/>brand kit: colour placement + shape,<br/>photo scale + density, or type pairing?}
         dedupe -- yes --> reroll[Re-roll one with a new seed<br/>and a 'not that'] --> dedupe
         dedupe -- no --> build[N builders build their cards,<br/>each in its own context]
         build --> shots1[Screenshots side by side,<br/>landing pages: the first screen,<br/>with links to open each page]
@@ -71,7 +71,7 @@ flowchart TD
 
 Yellow boxes are where the skill stops and waits for you. Every message starts with the stage name, and every stop ends with a status block. Its **Decide** list names each open question with a default, and **Reply with** says exactly what to type ("1" accepts the defaults). The skill shows the output and then waits. There are no pop-up questions; you answer in plain words or with a number.
 
-For a landing page, the first screen is where the directions differ; the rest of the page is kept plain and functional. By default it shows no app screens or phone frames. Where a photo belongs and none exists, the mock shows a captioned colour block instead of a fake.
+For a landing page, the first screen is where the directions differ; the rest of the page is kept plain and functional. By default each direction gets a **hero tier**, so the set runs from familiar to immersive: a classic split (text left, visual right), a split whose visual runs past its box (a moving gradient or a graphic bleeding off the edge), and an immersive full-bleed photo, video or animation. The seed styles each hero within its tier. By default the hero shows the outcome the product gives (people, food, place, type, graphics); product UI goes further down the page, if anywhere. Where a photo belongs and none exists, the mock shows a captioned colour block instead of a fake.
 
 If a brand already exists, for example a homepage you accepted before designing the app, Stage 0 turns it into a **brand kit**: the palette with a role for each colour, checked for contrast, plus fonts and motifs. You say what's fixed (by default the palette). Every Stage 1 variant then uses those colours, and the seed varies the rest instead: where colour goes and how much, the type pairing, component shapes, photo size and density, and how strongly the brand's motifs show.
 

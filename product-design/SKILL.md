@@ -123,6 +123,7 @@ PNG back and show it.
 | Platform (product surface) | `desktop web` / `mobile web` / `iOS` / `Android` | Infer from the spec's constraints; ask in the Stage 0 status block if unclear. A mobile web app also needs its look: `mobile web · iOS` (default) or `mobile web · Android`. Every phone platform is built mobile native |
 | Explore fork | `seeds` / `concepts` / `both` | Asked in the Stage 0 status block's **Decide** list. Seeds need nothing from the user; concepts take two extra stops but carry the user's taste |
 | Variant count (N) | integer | `3` per fork |
+| Hero range (marketing) | `tiers` / `seed` | `tiers` — each variant gets a hero tier (1 classic split · 2 split, extended · 3 immersive), cycling when N > 3. `seed` lets the seed pick the composition |
 | Critic loop ceiling | integer, per "keep going" answer | `3` |
 | Critic references | `auto` / `user-only` / `none` | `auto` — see Stage 0 |
 | Builder model | any available | `sonnet` |
@@ -261,9 +262,19 @@ Marketing: `references/builder-brief-marketing.md`. Product: `references/builder
   only what a web app can do). The critic scores **Native feel** for phone screens.
 - **Marketing surface:** product facts; leave room to go big and strange. The brief is split:
   the **hero** (first 1440×900 screen) is where the seed goes all the way; the **rest of the
-  page** is functional, in the hero's palette and type. Fill **Must not show** — by default no
-  app screens or phone frames, since they become every builder's easy hero. Ask the user
-  before allowing them.
+  page** is functional, in the hero's palette and type. Fill **What the hero shows** — by
+  default the outcome the product gives (people, food, place, type, graphics), since product
+  UI becomes every builder's easy hero. Ask the user before putting product UI in the hero.
+- **Hero tiers (marketing):** assign each builder one tier so the set spans familiar to
+  immersive. The seed styles the hero within its tier.
+  - **Tier 1 · Classic split** — headline, supporting line and call to action on the left; one
+    strong visual on the right. Clear at a glance; the baseline the others are judged against.
+  - **Tier 2 · Split, extended** — the classic reading order, with the visual running past its
+    box: a moving gradient or texture behind the whole first screen, or a graphic that bleeds
+    off the edge and under the next section.
+  - **Tier 3 · Immersive** — a full-bleed photo, video loop or animation is the hero, with type
+    set over it.
+  Describe tiers by their qualities in briefs; reference brands go to the critic's reference set.
 - **No photo, no fake:** where a photo belongs and none exists, builders use a captioned photo
   slot (both templates). Don't bundle stock or placeholder images in the skill — the same
   stand-in on every project becomes its own sameness.
@@ -278,7 +289,8 @@ Builds are slow; cards are fast. Catch collisions on cards.
    - marketing: the same **saturation/energy** (muted / mid / loud) — loudness reads as sameness first;
    - product: the same **neutral** *and* the same **pop placement**;
    - marketing: the same **hero composition** (type wall, full-bleed image, split, one
-     object…) — colour and type changes on the same first screen still look like one page;
+     object…) — colour and type changes on the same first screen still look like one page.
+     With hero tiers, the assigned tiers carry this difference; compare the rest;
    - product: the same **density** *and* the same **component shape** — the layout is fixed
      by the screen plan, so these carry the difference;
    - the same hue family *and* the same display-type class;
