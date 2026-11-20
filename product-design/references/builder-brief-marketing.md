@@ -128,8 +128,9 @@ Build the direction on your card.
   Nothing else needs to be above the fold.
 - Make it unmistakably yours: it should not look like the other variants' heroes.
 - Build your hero tier. Tiers 2–3 with motion: CSS animation or a looping video, with a strong
-  first frame — the screenshot shows that frame. Check the motion by screenshotting at two or
-  three `--virtual-time-budget` values.
+  first frame — the screenshot shows that frame. Check the motion with temporary copies that
+  set a negative `animation-delay` (e.g. -3s, -9s) to freeze later moments, screenshot each,
+  then delete the copies. (Headless Chrome's virtual time doesn't advance CSS animations.)
 
 ### Part 2 · Rest of the page — functional
 - Same palette and type as the hero; quieter. Clear, plainly laid out sections, no new tricks.
